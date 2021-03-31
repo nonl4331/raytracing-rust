@@ -1,0 +1,12 @@
+[package]
+name = "cpu_raytracer"
+version = "0.1.0"
+authors = ["NonL4331 <nicholasl0003@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+image = "0.23.14"
+ultraviolet = "0.8.0"
+rand = "0.8.3"
