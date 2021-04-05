@@ -1,12 +1,16 @@
+use crate::image::math::near_zero;
 use crate::image::ray::Ray;
+use crate::image::scene::Material;
 use crate::image::scene::Sphere;
-use ultraviolet::Vec3;
+use std::sync::Arc;
+use ultraviolet::DVec3;
 
 pub struct Hit {
-    pub t: f32,
-    pub point: Vec3,
-    pub normal: Vec3,
+    pub t: f64,
+    pub point: DVec3,
+    pub normal: DVec3,
     pub out: bool,
+    pub material: Arc<Box<dyn Material>>,
 }
 
 pub trait Hittable {
@@ -23,11 +27,17 @@ impl Hittable for Sphere {
         let c = oc.dot(oc) - self.radius * self.radius;
         let disc = h * h - a * c;
         if disc > 0.0 {
-            let t = (-h - disc.sqrt()) / a;
+            let mut t = (-h - disc.sqrt()) / a;
             let point = ray.at(t);
-            let mut normal = point - self.center;
+
+            // check intersection with self
+            if near_zero(point - ray.origin) || t < 0.0 {
+                t = (-h + disc.sqrt()) / a;
+            }
+
+            let point = ray.at(t);
+            let mut normal = (point - self.center) / self.radius;
             let mut out = true;
-            normal.normalize();
             if normal.dot(ray.direction) > 0.0 {
                 normal *= -1.0;
                 out = false;
@@ -37,6 +47,7 @@ impl Hittable for Sphere {
                 point,
                 normal,
                 out,
+                material: self.material.clone(),
             })
         } else {
             None

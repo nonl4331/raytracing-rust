@@ -1,7 +1,7 @@
 use rand::Rng;
-use ultraviolet::vec::Vec3;
+use ultraviolet::vec::DVec3;
 
-pub fn random_unit_vector() -> Vec3 {
+pub fn random_unit_vector() -> DVec3 {
     let mut rng = rand::thread_rng();
     let (mut x, mut y, mut z) = (1.0, 1.0, 1.0);
     while x * x + y * y + z * z > 1.0 {
@@ -10,5 +10,15 @@ pub fn random_unit_vector() -> Vec3 {
         z = rng.gen_range(-1.0..1.0);
     }
 
-    Vec3::new(x, y, z).normalized()
+    DVec3::new(x, y, z).normalized()
+}
+
+pub fn random_f64() -> f64 {
+    let mut rng = rand::thread_rng();
+    rng.gen_range(0.0..1.0)
+}
+
+pub fn near_zero(vec: DVec3) -> bool {
+    let s = 0.00000001;
+    vec.x.abs() < s && vec.y.abs() < s && vec.z.abs() < s
 }
