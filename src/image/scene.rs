@@ -92,7 +92,7 @@ impl Scene {
         image
     }
 
-    fn _get_image_part(
+    fn get_image_part(
         &self,
         width: u32,
         height: u32,
@@ -186,7 +186,7 @@ impl Scene {
         image::save_buffer("test-mt.png", &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 
-    pub fn _generate_image_sample_threaded(&self, width: u32, pixel_samples: u32) {
+    pub fn generate_image_sample_threaded(&self, width: u32, pixel_samples: u32) {
         let height = (width as f64 / self.camera.aspect_ratio) as u32;
 
         let channels = 3;
@@ -214,12 +214,11 @@ impl Scene {
         }
 
         chunk_sizes.par_iter().for_each(|&chunk_size| {
+            let image_part = self.get_image_part(width, height, chunk_size, pixel_samples);
+
             let mut main_image = image.lock().unwrap();
 
-            for (value, sample) in (*main_image).iter_mut().zip(
-                self._get_image_part(width, height, chunk_size, pixel_samples)
-                    .iter(),
-            ) {
+            for (value, sample) in (*main_image).iter_mut().zip(image_part.iter()) {
                 *value += sample;
             }
         });
