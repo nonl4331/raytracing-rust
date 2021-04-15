@@ -9,4 +9,6 @@ edition = "2018"
 [dependencies]
 image = "0.23.14"
 ultraviolet = { version = "0.8.0", features = [ "f64"] }
-rand = "0.8.3"
+rand = { version = "0.8.3", features = [ "small_rng" ] }
+num_cpus = "1.13.0"
+rayon = "1.5.0"

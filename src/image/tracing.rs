@@ -13,6 +13,9 @@ pub struct Hit {
     pub material: Arc<Box<dyn Material>>,
 }
 
+unsafe impl Send for Sphere {}
+unsafe impl Sync for Sphere {}
+
 pub trait Hittable {
     fn get_int(&self, _: &Ray) -> Option<Hit> {
         None
