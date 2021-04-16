@@ -1,8 +1,7 @@
 use rand::rngs::SmallRng;
 use rand::thread_rng;
 
-use rand::Rng;
-use rand::SeedableRng;
+use rand::{Rng, SeedableRng};
 use ultraviolet::vec::DVec3;
 
 pub fn random_unit_vector() -> DVec3 {

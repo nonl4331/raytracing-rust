@@ -4,11 +4,9 @@ use crate::image::tracing::Hittable;
 
 use crate::image::ray::Color;
 
-use crate::image::scene::Sphere;
-
 use ultraviolet::DVec3;
 
-use crate::image::scene::{Diffuse, Reflect, Refract};
+use crate::image::hittables::{Diffuse, Reflect, Refract, Sphere};
 
 use crate::image::math;
 

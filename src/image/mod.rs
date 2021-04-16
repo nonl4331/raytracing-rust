@@ -9,3 +9,5 @@ pub mod scene;
 pub mod math;
 
 pub mod tracing;
+
+pub mod hittables;

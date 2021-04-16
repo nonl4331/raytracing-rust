@@ -1,7 +1,6 @@
+use crate::image::hittables::{Material, Sphere};
 use crate::image::math::near_zero;
 use crate::image::ray::Ray;
-use crate::image::scene::Material;
-use crate::image::scene::Sphere;
 use std::sync::Arc;
 use ultraviolet::DVec3;
 
