@@ -126,17 +126,20 @@ impl Scene {
         rgb_vec
     }
 
-    pub fn generate_image(&self, width: u32, pixel_samples: u32) {
+    #[allow(dead_code)]
+    pub fn generate_image(&self, filename: &str, width: u32, pixel_samples: u32) {
         let height = (width as f64 / self.camera.aspect_ratio) as u32;
         let image = self.get_image(width, height, pixel_samples);
         println!("Image done generating:");
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
-        image.save("test.png").unwrap();
+        image.save(filename).unwrap();
     }
 
-    pub fn _generate_image_threaded(&self, width: u32, pixel_samples: u32) {
+    // note generate_image_threaded multi-threading is broken
+    #[allow(dead_code)]
+    pub fn generate_image_threaded(&self, filename: &str, width: u32, pixel_samples: u32) {
         let height = (width as f64 / self.camera.aspect_ratio) as u32;
 
         let mut image = image::RgbImage::new(width, height).into_vec();
@@ -183,10 +186,10 @@ impl Scene {
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
-        image::save_buffer("test-mt.png", &image, width, height, image::ColorType::Rgb8).unwrap();
+        image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 
-    pub fn generate_image_sample_threaded(&self, width: u32, pixel_samples: u32) {
+    pub fn generate_image_sample_threaded(&self, filename: &str, width: u32, pixel_samples: u32) {
         let height = (width as f64 / self.camera.aspect_ratio) as u32;
 
         let channels = 3;
@@ -232,7 +235,7 @@ impl Scene {
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
-        image::save_buffer("test-mt.png", &image, width, height, image::ColorType::Rgb8).unwrap();
+        image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 }
 
