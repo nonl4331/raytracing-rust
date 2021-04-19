@@ -12,17 +12,19 @@ pub struct Ray {
     pub direction: DVec3,
     pub hittables: HittablesType,
     pub hit: Option<Hit>,
+    pub time: f64,
 }
 
 const MAX_DEPTH: u32 = 50;
 
 impl Ray {
-    pub fn new(origin: DVec3, mut direction: DVec3, hittables: HittablesType) -> Self {
+    pub fn new(origin: DVec3, mut direction: DVec3, time: f64, hittables: HittablesType) -> Self {
         direction.normalize();
         Ray {
             origin,
             direction,
             hittables,
+            time,
             hit: None,
         }
     }

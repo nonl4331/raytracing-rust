@@ -1,4 +1,6 @@
 use crate::image::hittables::Material;
+use crate::image::hittables::MovingSphere;
+use crate::image::math::random_f64;
 use crate::image::scene::Scene;
 
 use crate::image::tracing::Hittable;
@@ -18,7 +20,7 @@ pub fn check_percent(percent: u32, width: u32, x: u32, y: u32) {
     }
 }
 
-pub fn scene_one() -> Scene {
+pub fn scene_one(motion_blur: bool) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
     let ground_color = Color::new(0.5, 0.5, 0.5);
@@ -81,27 +83,39 @@ pub fn scene_one() -> Scene {
             if (center - DVec3::new(4.0, 0.2, 0.0)).mag() > 0.9 {
                 let choose_material = math::random_f64();
                 let color = Color::new(math::random_f64(), math::random_f64(), math::random_f64());
-                let sphere: Sphere;
 
                 if choose_material < 0.8 {
                     // diffuse sphere
-                    sphere = Sphere::new(center, 0.2, Material::Diffuse(Diffuse::new(color, 0.5)));
+                    if motion_blur {
+                        let sphere = MovingSphere::new(
+                            center,
+                            center - DVec3::new(0.0, random_f64() * 0.5, 0.0),
+                            0.2,
+                            Material::Diffuse(Diffuse::new(color, 0.5)),
+                        );
+                        hittables.push(Hittable::MovingSphere(sphere));
+                    } else {
+                        let sphere =
+                            Sphere::new(center, 0.2, Material::Diffuse(Diffuse::new(color, 0.5)));
+                        hittables.push(Hittable::Sphere(sphere));
+                    }
                 } else if choose_material < 0.95 {
                     // metal sphere
-                    sphere = Sphere::new(
+                    let sphere = Sphere::new(
                         center,
                         0.2,
                         Material::Reflect(Reflect::new(color, math::random_f64() / 2.0)),
                     );
+                    hittables.push(Hittable::Sphere(sphere));
                 } else {
                     // glass sphere
-                    sphere = Sphere::new(
+                    let sphere = Sphere::new(
                         center,
                         0.2,
                         Material::Refract(Refract::new(Color::one(), 1.5)),
                     );
+                    hittables.push(Hittable::Sphere(sphere));
                 }
-                hittables.push(Hittable::Sphere(sphere));
             }
         }
     }

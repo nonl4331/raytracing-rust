@@ -24,6 +24,24 @@ impl Sphere {
     }
 }
 
+pub struct MovingSphere {
+    pub start_pos: DVec3,
+    pub end_pos: DVec3,
+    pub radius: f64,
+    pub material: Arc<Material>,
+}
+
+impl MovingSphere {
+    pub fn new(start_pos: DVec3, end_pos: DVec3, radius: f64, material: Material) -> Self {
+        MovingSphere {
+            start_pos,
+            end_pos,
+            radius,
+            material: Arc::new(material),
+        }
+    }
+}
+
 pub enum Material {
     Diffuse(Diffuse),
     Reflect(Reflect),
@@ -100,6 +118,7 @@ impl MaterialTrait for Diffuse {
             direction,
             hittables: ray.hittables.clone(),
             hit: None,
+            time: ray.time,
         };
         return self.absorption * new_ray.get_color(depth + 1);
     }
@@ -117,6 +136,7 @@ impl MaterialTrait for Reflect {
             direction: direction + self.fuzz * math::random_unit_vector(),
             hittables: ray.hittables.clone(),
             hit: None,
+            time: ray.time,
         };
         return new_ray.get_color(depth + 1);
     }
@@ -152,6 +172,7 @@ impl MaterialTrait for Refract {
             direction,
             hittables: ray.hittables.clone(),
             hit: None,
+            time: ray.time,
         };
         return new_ray.get_color(depth + 1);
     }

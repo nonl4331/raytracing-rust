@@ -1,4 +1,4 @@
-use crate::image::math::random_in_unit_disk;
+use crate::image::math::{random_f64, random_in_unit_disk};
 use crate::image::ray::Ray;
 use crate::image::scene::HittablesType;
 
@@ -63,6 +63,7 @@ impl Camera {
         Ray::new(
             self.origin + offset,
             self.lower_left + self.horizontal * u - self.vertical * v - self.origin - offset,
+            random_f64(),
             self.hittables.clone(),
         )
     }
