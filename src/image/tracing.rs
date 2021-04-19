@@ -1,4 +1,5 @@
-use crate::image::hittables::{Material, Sphere};
+use crate::image::hittables::Material;
+use crate::image::hittables::Sphere;
 use crate::image::math::near_zero;
 use crate::image::ray::Ray;
 use std::sync::Arc;
@@ -9,19 +10,31 @@ pub struct Hit {
     pub point: DVec3,
     pub normal: DVec3,
     pub out: bool,
-    pub material: Arc<Box<dyn Material>>,
+    pub material: Arc<Material>,
 }
 
 unsafe impl Send for Sphere {}
 unsafe impl Sync for Sphere {}
 
-pub trait Hittable {
+pub trait HittableTrait {
     fn get_int(&self, _: &Ray) -> Option<Hit> {
         None
     }
 }
 
-impl Hittable for Sphere {
+pub enum Hittable {
+    Sphere(Sphere),
+}
+
+impl HittableTrait for Hittable {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+        match self {
+            Hittable::Sphere(sphere) => sphere.get_int(ray),
+        }
+    }
+}
+
+impl HittableTrait for Sphere {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);

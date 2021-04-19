@@ -11,11 +11,11 @@ use crate::image::math;
 pub struct Sphere {
     pub center: DVec3,
     pub radius: f64,
-    pub material: Arc<Box<dyn Material>>,
+    pub material: Arc<Material>,
 }
 
 impl Sphere {
-    pub fn new(center: DVec3, radius: f64, material: Box<dyn Material + 'static>) -> Self {
+    pub fn new(center: DVec3, radius: f64, material: Material) -> Self {
         Sphere {
             center,
             radius,
@@ -24,7 +24,30 @@ impl Sphere {
     }
 }
 
-pub trait Material {
+pub enum Material {
+    Diffuse(Diffuse),
+    Reflect(Reflect),
+    Refract(Refract),
+}
+
+impl MaterialTrait for Material {
+    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
+        match self {
+            Material::Diffuse(diffuse) => diffuse.scatter_ray(ray, hit, depth),
+            Material::Reflect(reflect) => reflect.scatter_ray(ray, hit, depth),
+            Material::Refract(refract) => refract.scatter_ray(ray, hit, depth),
+        }
+    }
+    fn color(&self) -> Color {
+        match self {
+            Material::Diffuse(diffuse) => diffuse.color,
+            Material::Reflect(reflect) => reflect.color,
+            Material::Refract(refract) => refract.color,
+        }
+    }
+}
+
+pub trait MaterialTrait {
     fn scatter_ray(&self, _: &Ray, _: &Hit, _: u32) -> Color {
         DVec3::new(0.0, 0.0, 0.0)
     }
@@ -66,7 +89,7 @@ impl Refract {
     }
 }
 
-impl Material for Diffuse {
+impl MaterialTrait for Diffuse {
     fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
         let mut direction = math::random_unit_vector() + hit.normal;
         if math::near_zero(direction) {
@@ -85,7 +108,7 @@ impl Material for Diffuse {
     }
 }
 
-impl Material for Reflect {
+impl MaterialTrait for Reflect {
     fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
         let mut direction = ray.direction;
         direction.reflect(hit.normal);
@@ -102,7 +125,7 @@ impl Material for Reflect {
     }
 }
 
-impl Material for Refract {
+impl MaterialTrait for Refract {
     fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
         let mut eta_fraction = 1.0 / self.eta;
         if !hit.out {

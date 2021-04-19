@@ -1,8 +1,9 @@
 use crate::image::camera::Camera;
 use crate::image::generate::check_percent;
+use crate::image::tracing::Hittable;
 
 use crate::image::ray::Color;
-use crate::image::tracing::Hittable;
+
 use image::Rgb;
 use std::sync::Mutex;
 
@@ -16,7 +17,7 @@ use ultraviolet::vec::DVec3;
 
 use rayon::prelude::*;
 
-pub type HittablesType = Arc<RwLock<Vec<Box<dyn Hittable + Send + Sync>>>>;
+pub type HittablesType = Arc<RwLock<Vec<Hittable>>>;
 
 pub struct Scene {
     pub hittables: HittablesType,
@@ -32,7 +33,7 @@ impl Scene {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
-        starting_hittables: Option<Vec<Box<dyn Hittable + Send + Sync>>>,
+        starting_hittables: Option<Vec<Hittable>>,
     ) -> Self {
         let hittables: HittablesType;
 
@@ -55,7 +56,7 @@ impl Scene {
         Scene { hittables, camera }
     }
 
-    pub fn _add(&mut self, hittable: Box<dyn Hittable + Send + Sync>) {
+    pub fn _add(&mut self, hittable: Hittable) {
         let mut vec = self.hittables.write().unwrap();
         vec.push(hittable);
     }

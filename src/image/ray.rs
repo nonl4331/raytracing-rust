@@ -1,6 +1,8 @@
 use crate::image::scene::HittablesType;
 use crate::image::tracing::Hit;
 
+use crate::image::hittables::MaterialTrait;
+use crate::image::tracing::HittableTrait;
 use ultraviolet::vec::DVec3;
 
 pub type Color = DVec3;
