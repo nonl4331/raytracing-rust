@@ -34,12 +34,13 @@ impl Camera {
         let viewport_height = viewport_width / aspect_ratio;
 
         let w = (origin - lookat).normalized();
-        let u = vup.cross(w).normalized();
-        let v = w.cross(u);
+        let u = w.cross(vup).normalized();
+        let v = u.cross(w);
 
         let horizontal = focus_dist * u * viewport_width;
         let vertical = focus_dist * v * viewport_height;
-        let lower_left = origin - horizontal / 2.0 + vertical / 2.0 - focus_dist * w;
+
+        let lower_left = origin - horizontal / 2.0 - vertical / 2.0 - focus_dist * w;
 
         Camera {
             viewport_width,
@@ -55,14 +56,12 @@ impl Camera {
             hittables,
         }
     }
-
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {
         let rd = self.lens_radius * random_in_unit_disk();
-        let offset = rd.x * self.u - rd.y * self.v;
-
+        let offset = rd.x * self.u + rd.y * self.v;
         Ray::new(
             self.origin + offset,
-            self.lower_left + self.horizontal * u - self.vertical * v - self.origin - offset,
+            self.lower_left + self.horizontal * u + self.vertical * v - self.origin - offset,
             random_f64(),
             self.hittables.clone(),
         )

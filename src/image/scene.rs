@@ -77,7 +77,7 @@ impl Scene {
             let mut color = Color::new(0.0, 0.0, 0.0);
             for _ in 0..pixel_samples {
                 let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
-                let v = (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
+                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
 
                 let mut ray = self.camera.get_ray(u, v);
                 color += ray.get_color(0);
@@ -113,7 +113,7 @@ impl Scene {
             let mut color = Color::new(0.0, 0.0, 0.0);
             for _ in 0..pixel_samples {
                 let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
-                let v = (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
+                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
 
                 let mut ray = self.camera.get_ray(u, v);
                 color += ray.get_color(0);

@@ -1,4 +1,4 @@
-use ultraviolet::DVec3;
+use ultraviolet::{DVec2, DVec3};
 
 use std::sync::Arc;
 
@@ -12,6 +12,24 @@ pub struct Sphere {
     pub center: DVec3,
     pub radius: f64,
     pub material: Arc<Material>,
+}
+
+pub struct AARect {
+    pub min: DVec2,
+    pub max: DVec2,
+    pub z: f64,
+    pub material: Arc<Material>,
+}
+
+impl AARect {
+    pub fn new(min: DVec2, max: DVec2, z: f64, material: Material) -> Self {
+        AARect {
+            min,
+            max,
+            z,
+            material: Arc::new(material),
+        }
+    }
 }
 
 impl Sphere {

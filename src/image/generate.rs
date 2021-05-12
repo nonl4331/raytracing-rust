@@ -2,6 +2,7 @@ use crate::image::hittables::Material;
 use crate::image::hittables::MovingSphere;
 use crate::image::math::random_f64;
 use crate::image::scene::Scene;
+use ultraviolet::DVec2;
 
 use crate::image::tracing::Hittable;
 
@@ -9,7 +10,7 @@ use crate::image::ray::Color;
 
 use ultraviolet::DVec3;
 
-use crate::image::hittables::{Diffuse, Reflect, Refract, Sphere};
+use crate::image::hittables::{AARect, Diffuse, Reflect, Refract, Sphere};
 
 use crate::image::math;
 
@@ -28,7 +29,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
     let ground: Sphere = Sphere::new(
         DVec3 {
             x: 0.0,
-            y: 1000.0,
+            y: -1000.0,
             z: 1.0,
         },
         1000.0,
@@ -38,7 +39,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
     let sphere_one = Sphere::new(
         DVec3 {
             x: 0.0,
-            y: -1.0,
+            y: 1.0,
             z: 0.0,
         },
         1.0,
@@ -49,7 +50,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
     let sphere_two = Sphere::new(
         DVec3 {
             x: -4.0,
-            y: -1.0,
+            y: 1.0,
             z: 0.0,
         },
         1.0,
@@ -60,7 +61,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
     let sphere_three = Sphere::new(
         DVec3 {
             x: 4.0,
-            y: -1.0,
+            y: 1.0,
             z: 0.0,
         },
         1.0,
@@ -76,7 +77,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
         for b in -11..11 {
             let center = DVec3::new(
                 a as f64 + 0.9 * math::random_f64(),
-                -0.2,
+                0.2,
                 b as f64 + 0.9 * math::random_f64(),
             );
 
@@ -120,12 +121,144 @@ pub fn scene_one(motion_blur: bool) -> Scene {
         }
     }
     Scene::new(
-        DVec3::new(13.0, -2.0, 3.0),
-        DVec3::new(0.0, 0.0, 0.0),
-        DVec3::new(0.0, -1.0, 0.0),
+        DVec3::new(13.0, 2.0, -3.0),
+        DVec3::new(0.0, 1.0, 0.1),
+        DVec3::new(0.0, 1.0, 0.0),
         34.0,
         16.0 / 9.0,
         0.1,
+        10.0,
+        Some(hittables),
+    )
+}
+
+pub fn scene_two() -> Scene {
+    let mut hittables: Vec<Hittable> = Vec::new();
+
+    let ground_color = Color::new(0.5, 0.5, 0.5);
+
+    let ground: Sphere = Sphere::new(
+        DVec3 {
+            x: 0.0,
+            y: -1000.0,
+            z: 1.0,
+        },
+        1000.0,
+        Material::Diffuse(Diffuse::new(ground_color, 0.5)),
+    );
+
+    let sphere_three = Sphere::new(
+        DVec3 {
+            x: 0.0,
+            y: 1.5,
+            z: 0.0,
+        },
+        0.5,
+        Material::Diffuse(Diffuse::new(Color::new(1.0, 1.0, 0.0), 0.5)),
+    );
+
+    let sphere_four = Sphere::new(
+        DVec3 {
+            x: -1.0,
+            y: 1.5,
+            z: 0.0,
+        },
+        0.5,
+        Material::Diffuse(Diffuse::new(Color::new(0.0, 1.0, 1.0), 0.5)),
+    );
+
+    let sphere_two = Sphere::new(
+        DVec3 {
+            x: -1.5,
+            y: 0.5,
+            z: 1.5,
+        },
+        0.5,
+        Material::Diffuse(Diffuse::new(Color::new(0.0, 1.0, 0.0), 0.5)),
+    );
+
+    let rect_one = AARect::new(
+        DVec2::new(-2.5, 0.5),
+        DVec2::new(2.5, 2.5),
+        2.0,
+        Material::Reflect(Reflect::new(Color::new(1.0, 0.9, 0.9), 0.001)),
+    );
+
+    hittables.push(Hittable::Sphere(ground));
+    hittables.push(Hittable::AARect(rect_one));
+    hittables.push(Hittable::Sphere(sphere_two));
+    hittables.push(Hittable::Sphere(sphere_three));
+    hittables.push(Hittable::Sphere(sphere_four));
+
+    Scene::new(
+        DVec3::new(3.0, 1.0, -15.0),
+        DVec3::new(0.0, 1.0, 0.0),
+        DVec3::new(0.0, 1.0, 0.0),
+        34.0,
+        16.0 / 9.0,
+        0.0,
+        10.0,
+        Some(hittables),
+    )
+}
+
+pub fn scene_three() -> Scene {
+    let mut hittables: Vec<Hittable> = Vec::new();
+
+    let ground_color = Color::new(0.5, 0.5, 0.5);
+
+    let ground: Sphere = Sphere::new(
+        DVec3 {
+            x: 0.0,
+            y: -1000.0,
+            z: 0.0,
+        },
+        1000.0,
+        Material::Diffuse(Diffuse::new(ground_color, 0.5)),
+    );
+
+    let sphere_left = Sphere::new(
+        DVec3 {
+            x: -1.0,
+            y: 1.5,
+            z: 0.0,
+        },
+        0.5,
+        Material::Diffuse(Diffuse::new(Color::new(1.0, 0.0, 0.0), 0.5)),
+    );
+
+    let sphere_middle = Sphere::new(
+        DVec3 {
+            x: 0.0,
+            y: 1.5,
+            z: 0.0,
+        },
+        0.5,
+        Material::Diffuse(Diffuse::new(Color::new(0.0, 1.0, 0.0), 0.5)),
+    );
+
+    let sphere_right = Sphere::new(
+        DVec3 {
+            x: 1.0,
+            y: 1.5,
+            z: 0.0,
+        },
+        0.5,
+        Material::Diffuse(Diffuse::new(Color::new(0.0, 0.0, 1.0), 0.5)),
+    );
+
+    hittables.push(Hittable::Sphere(ground));
+    hittables.push(Hittable::Sphere(sphere_left));
+    hittables.push(Hittable::Sphere(sphere_middle));
+    hittables.push(Hittable::Sphere(sphere_right));
+
+    Scene::new(
+        DVec3::new(-5.0, 2.0, -3.0),
+        DVec3::new(0.0, 1.5, 0.0),
+        DVec3::new(0.0, 1.0, 0.0),
+        34.0,
+        16.0 / 9.0,
+        0.0,
         10.0,
         Some(hittables),
     )
