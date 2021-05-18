@@ -10,7 +10,7 @@ use crate::image::ray::Color;
 
 use ultraviolet::DVec3;
 
-use crate::image::hittables::{AARect, Diffuse, Reflect, Refract, Sphere};
+use crate::image::hittables::{AABox, AARect, Axis, Diffuse, Reflect, Refract, Sphere};
 
 use crate::image::math;
 
@@ -181,6 +181,7 @@ pub fn scene_two() -> Scene {
         DVec2::new(-2.5, 0.5),
         DVec2::new(2.5, 2.5),
         2.0,
+        Axis::Z,
         Material::Reflect(Reflect::new(Color::new(1.0, 0.9, 0.9), 0.001)),
     );
 
@@ -217,43 +218,62 @@ pub fn scene_three() -> Scene {
         Material::Diffuse(Diffuse::new(ground_color, 0.5)),
     );
 
-    let sphere_left = Sphere::new(
+    let box_left = AABox::new(
         DVec3 {
-            x: -1.0,
-            y: 1.5,
-            z: 0.0,
+            x: -1.6,
+            y: 1.0,
+            z: -0.5,
         },
-        0.5,
+        DVec3 {
+            x: -0.6,
+            y: 2.0,
+            z: 0.5,
+        },
         Material::Diffuse(Diffuse::new(Color::new(1.0, 0.0, 0.0), 0.5)),
     );
 
-    let sphere_middle = Sphere::new(
+    let box_middle = AABox::new(
         DVec3 {
-            x: 0.0,
-            y: 1.5,
-            z: 0.0,
+            x: -0.5,
+            y: 1.0,
+            z: -0.5,
         },
-        0.5,
-        Material::Diffuse(Diffuse::new(Color::new(0.0, 1.0, 0.0), 0.5)),
+        DVec3 {
+            x: 0.5,
+            y: 2.0,
+            z: 0.5,
+        },
+        Material::Reflect(Reflect::new(Color::one(), 0.0)),
     );
 
-    let sphere_right = Sphere::new(
+    let sphere_middle = Sphere::new(
+        DVec3::new(0.0, 2.5, 0.0),
+        0.3,
+        Material::Reflect(Reflect::new(Color::new(1.0, 1.0, 1.0), 0.0)),
+    );
+
+    let box_right = AABox::new(
         DVec3 {
-            x: 1.0,
-            y: 1.5,
-            z: 0.0,
+            x: 0.6,
+            y: 1.0,
+            z: -0.5,
         },
-        0.5,
+        DVec3 {
+            x: 1.6,
+            y: 2.0,
+            z: 0.5,
+        },
         Material::Diffuse(Diffuse::new(Color::new(0.0, 0.0, 1.0), 0.5)),
     );
 
     hittables.push(Hittable::Sphere(ground));
-    hittables.push(Hittable::Sphere(sphere_left));
+    hittables.push(Hittable::AABox(box_left));
+    hittables.push(Hittable::AABox(box_middle));
     hittables.push(Hittable::Sphere(sphere_middle));
-    hittables.push(Hittable::Sphere(sphere_right));
+    hittables.push(Hittable::AABox(box_right));
 
     Scene::new(
-        DVec3::new(-5.0, 2.0, -3.0),
+        DVec3::new(-5.0, 3.0, -3.0),
         DVec3::new(0.0, 1.5, 0.0),
         DVec3::new(0.0, 1.0, 0.0),
         34.0,
