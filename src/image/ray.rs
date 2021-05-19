@@ -1,7 +1,8 @@
 use crate::image::scene::HittablesType;
+use crate::image::sky::Sky;
 use crate::image::tracing::Hit;
 
-use crate::image::hittables::MaterialTrait;
+use crate::image::material::MaterialTrait;
 use crate::image::tracing::HittableTrait;
 use ultraviolet::vec::DVec3;
 
@@ -11,6 +12,7 @@ pub struct Ray {
     pub origin: DVec3,
     pub direction: DVec3,
     pub hittables: HittablesType,
+    pub sky: Sky,
     pub hit: Option<Hit>,
     pub time: f64,
 }
@@ -18,13 +20,20 @@ pub struct Ray {
 const MAX_DEPTH: u32 = 50;
 
 impl Ray {
-    pub fn new(origin: DVec3, mut direction: DVec3, time: f64, hittables: HittablesType) -> Self {
+    pub fn new(
+        origin: DVec3,
+        mut direction: DVec3,
+        time: f64,
+        sky: Sky,
+        hittables: HittablesType,
+    ) -> Self {
         direction.normalize();
         Ray {
             origin,
             direction,
             hittables,
             time,
+            sky,
             hit: None,
         }
     }
@@ -69,8 +78,6 @@ impl Ray {
             return hit.material.color() * hit.material.scatter_ray(self, hit, depth);
         }
 
-        // if no intersection return "sky" color (which is lerp from white to blue)
-        let t: f64 = 0.5 * (self.direction.y + 1.0);
-        (1.0 - t) * Color::one() + t * Color::new(0.5, 0.7, 1.0)
+        self.sky.get_color(&self)
     }
 }

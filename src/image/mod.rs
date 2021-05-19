@@ -11,3 +11,7 @@ pub mod math;
 pub mod tracing;
 
 pub mod hittables;
+
+pub mod material;
+
+pub mod sky;

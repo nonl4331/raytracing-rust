@@ -1,6 +1,6 @@
-use crate::image::hittables::Material;
 use crate::image::hittables::MovingSphere;
 use crate::image::hittables::{AABox, AARect, Sphere};
+use crate::image::material::Material;
 use crate::image::math::near_zero;
 use crate::image::ray::Ray;
 use std::sync::Arc;

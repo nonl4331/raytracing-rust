@@ -1,7 +1,8 @@
-use crate::image::hittables::Material;
 use crate::image::hittables::MovingSphere;
+use crate::image::material::Material;
 use crate::image::math::random_f64;
 use crate::image::scene::Scene;
+use crate::image::sky::Sky;
 use ultraviolet::DVec2;
 
 use crate::image::tracing::Hittable;
@@ -10,7 +11,8 @@ use crate::image::ray::Color;
 
 use ultraviolet::DVec3;
 
-use crate::image::hittables::{AABox, AARect, Axis, Diffuse, Reflect, Refract, Sphere};
+use crate::image::hittables::{AABox, AARect, Axis, Sphere};
+use crate::image::material::*;
 
 use crate::image::math;
 
@@ -120,6 +122,9 @@ pub fn scene_one(motion_blur: bool) -> Scene {
             }
         }
     }
+
+    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+
     Scene::new(
         DVec3::new(13.0, 2.0, -3.0),
         DVec3::new(0.0, 1.0, 0.1),
@@ -128,6 +133,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
         16.0 / 9.0,
         0.1,
         10.0,
+        sky,
         Some(hittables),
     )
 }
@@ -191,6 +197,8 @@ pub fn scene_two() -> Scene {
     hittables.push(Hittable::Sphere(sphere_three));
     hittables.push(Hittable::Sphere(sphere_four));
 
+    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+
     Scene::new(
         DVec3::new(3.0, 1.0, -15.0),
         DVec3::new(0.0, 1.0, 0.0),
@@ -199,6 +207,7 @@ pub fn scene_two() -> Scene {
         16.0 / 9.0,
         0.0,
         10.0,
+        sky,
         Some(hittables),
     )
 }
@@ -272,6 +281,8 @@ pub fn scene_three() -> Scene {
     hittables.push(Hittable::Sphere(sphere_middle));
     hittables.push(Hittable::AABox(box_right));
 
+    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+
     Scene::new(
         DVec3::new(-5.0, 3.0, -3.0),
         DVec3::new(0.0, 1.5, 0.0),
@@ -280,6 +291,52 @@ pub fn scene_three() -> Scene {
         16.0 / 9.0,
         0.0,
         10.0,
+        sky,
+        Some(hittables),
+    )
+}
+
+pub fn scene_four() -> Scene {
+    let mut hittables: Vec<Hittable> = Vec::new();
+
+    let ground_color = Color::new(0.5, 0.5, 0.5);
+
+    let ground: Sphere = Sphere::new(
+        DVec3 {
+            x: 0.0,
+            y: -1000.0,
+            z: 0.0,
+        },
+        1000.0,
+        Material::Diffuse(Diffuse::new(ground_color, 0.5)),
+    );
+
+    let glowy = Sphere::new(
+        DVec3::new(0.0, 0.5, 0.0),
+        0.5,
+        Material::Emit(Emit::new(Color::one(), 1.5)),
+    );
+    let cube = AABox::new(
+        DVec3::new(-0.5, 0.1, -0.5),
+        DVec3::new(-0.4, 0.2, -0.4),
+        Material::Diffuse(Diffuse::new(ground_color, 0.5)),
+    );
+
+    hittables.push(Hittable::Sphere(ground));
+    hittables.push(Hittable::Sphere(glowy));
+    hittables.push(Hittable::AABox(cube));
+
+    let sky = Sky::new(None);
+
+    Scene::new(
+        DVec3::new(-5.0, 3.0, -3.0),
+        DVec3::new(0.0, 0.5, 0.0),
+        DVec3::new(0.0, 1.0, 0.0),
+        34.0,
+        16.0 / 9.0,
+        0.0,
+        10.0,
+        sky,
         Some(hittables),
     )
 }

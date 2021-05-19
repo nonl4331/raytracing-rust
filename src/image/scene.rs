@@ -4,6 +4,8 @@ use crate::image::tracing::Hittable;
 
 use crate::image::ray::Color;
 
+use crate::image::sky::Sky;
+
 use image::Rgb;
 use std::sync::Mutex;
 
@@ -22,6 +24,7 @@ pub type HittablesType = Arc<RwLock<Vec<Hittable>>>;
 pub struct Scene {
     pub hittables: HittablesType,
     pub camera: Camera,
+    pub sky: Sky,
 }
 
 impl Scene {
@@ -33,6 +36,7 @@ impl Scene {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
+        sky: Sky,
         starting_hittables: Option<Vec<Hittable>>,
     ) -> Self {
         let hittables: HittablesType;
@@ -50,10 +54,15 @@ impl Scene {
             aspect_ratio,
             aperture,
             focus_dist,
+            sky,
             hittables.clone(),
         );
 
-        Scene { hittables, camera }
+        Scene {
+            hittables,
+            camera,
+            sky,
+        }
     }
 
     pub fn _add(&mut self, hittable: Hittable) {

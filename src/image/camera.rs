@@ -1,6 +1,7 @@
 use crate::image::math::{random_f64, random_in_unit_disk};
 use crate::image::ray::Ray;
 use crate::image::scene::HittablesType;
+use crate::image::sky::Sky;
 
 use ultraviolet::vec::DVec3;
 
@@ -16,6 +17,7 @@ pub struct Camera {
     pub v: DVec3,
     pub lower_left: DVec3,
     pub lens_radius: f64,
+    pub sky: Sky,
     pub hittables: HittablesType,
 }
 
@@ -28,6 +30,7 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
+        sky: Sky,
         hittables: HittablesType,
     ) -> Self {
         let viewport_width = 2.0 * (fov.to_radians() / 2.0).tan();
@@ -53,6 +56,7 @@ impl Camera {
             v,
             lower_left,
             lens_radius: aperture / 2.0,
+            sky,
             hittables,
         }
     }
@@ -63,6 +67,7 @@ impl Camera {
             self.origin + offset,
             self.lower_left + self.horizontal * u + self.vertical * v - self.origin - offset,
             random_f64(),
+            self.sky,
             self.hittables.clone(),
         )
     }
