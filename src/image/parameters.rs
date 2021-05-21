@@ -2,8 +2,43 @@ use crate::image::generate;
 use crate::image::scene::Scene;
 use std::process;
 
-pub fn process_args(args: Vec<String>) -> Option<Scene> {
-    let mut ret = None;
+const SAMPLES_DEFAULT: u32 = 30;
+const WIDTH_DEFAULT: u32 = 800;
+const HEIGHT_DEFAULT: u32 = 600;
+const FILENAME_DEFAULT: &str = "out.png";
+
+pub struct Parameters {
+    pub scene: Scene,
+    pub samples: u32,
+    pub width: u32,
+    pub height: u32,
+    pub filename: String,
+}
+
+impl Parameters {
+    pub fn new(
+        scene: Scene,
+        samples: Option<u32>,
+        width: Option<u32>,
+        height: Option<u32>,
+        filename: Option<String>,
+    ) -> Self {
+        Parameters {
+            scene,
+            samples: samples.unwrap_or(SAMPLES_DEFAULT),
+            width: width.unwrap_or(WIDTH_DEFAULT),
+            height: height.unwrap_or(HEIGHT_DEFAULT),
+            filename: filename.unwrap_or(FILENAME_DEFAULT.to_string()),
+        }
+    }
+}
+
+pub fn process_args(args: Vec<String>) -> Option<Parameters> {
+    let mut scene = None;
+    let mut samples = None;
+    let mut width = None;
+    let mut height = None;
+    let mut filename = None;
     for arg_i in (0..(args.len() / 2)).map(|i| i * 2 + 1) {
         match args.get(arg_i) {
             Some(arg) => match &arg[..] {
@@ -28,17 +63,44 @@ pub fn process_args(args: Vec<String>) -> Option<Scene> {
                     get_info(&args, arg_i + 1);
                 }
                 "-S" => {
-                    ret = Some(get_scene(&args, arg_i + 1));
+                    scene = Some(get_scene(&args, arg_i + 1));
                 }
                 "--scene" => {
-                    ret = Some(get_scene(&args, arg_i + 1));
+                    scene = Some(get_scene(&args, arg_i + 1));
+                }
+                "-N" => {
+                    samples = Some(get_samples(&args, arg_i + 1));
+                }
+                "--samples" => {
+                    samples = Some(get_samples(&args, arg_i + 1));
+                }
+                "-X" => {
+                    width = Some(get_dimension(&args, arg_i + 1));
+                }
+                "--width" => {
+                    width = Some(get_dimension(&args, arg_i + 1));
+                }
+                "-Y" => {
+                    height = Some(get_dimension(&args, arg_i + 1));
+                }
+                "--height" => {
+                    height = Some(get_dimension(&args, arg_i + 1));
+                }
+                "-O" => {
+                    filename = Some(get_filename(&args, arg_i + 1));
+                }
+                "--output" => {
+                    filename = Some(get_filename(&args, arg_i + 1));
                 }
                 _ => {}
             },
             None => {}
         }
     }
-    ret
+    match scene {
+        Some(scene) => Some(Parameters::new(scene, samples, width, height, filename)),
+        None => None,
+    }
 }
 
 fn display_help() {
@@ -53,6 +115,15 @@ fn display_help() {
     println!("\t Prints info for scene");
     println!("-S [index](m), --scene [index](m)");
     println!("\t Renders scene. Adding a \"m\" will enable motion (only works on scenes with motion blur)");
+    println!("-N [samples], --samples [samples]");
+    println!("\t Set samples per pixel");
+    println!("-X [pixels], --width [pixels]");
+    println!("\t Sets width of image");
+    println!("-Y [pixels], --height [pixels] (TODO)");
+    println!("\t Sets height of image");
+    println!("-O [filename], --output [filename]");
+    println!("\t filename of output with supported file extension.");
+    println!("\t supported file extensions: png, jpeg");
 }
 
 fn get_list() {
@@ -151,5 +222,90 @@ fn get_scene(args: &Vec<String>, index: usize) -> Scene {
                 process::exit(0);
             }
         },
+    }
+}
+
+fn get_filename(args: &Vec<String>, index: usize) -> String {
+    match args.get(index) {
+        Some(string) => {
+            let split_vec: Vec<&str> = string.split(".").collect();
+            if split_vec.len() < 2 {
+                println!("Please specify a valid extension!");
+                println!("Do -H or --help for more information.");
+                process::exit(0);
+            }
+
+            match split_vec[split_vec.len() - 1] {
+                "jpeg" => return string.to_string(),
+                "png" => return string.to_string(),
+                _ => {
+                    println!(
+                        "Unsupported file extension: {}",
+                        split_vec[split_vec.len() - 1]
+                    );
+                    println!("Do -H or --help for more information.");
+                    process::exit(0);
+                }
+            }
+        }
+        None => {
+            println!("Please specify a valid filename!");
+            println!("Do -H or --help for more information.");
+            process::exit(0);
+        }
+    }
+}
+
+fn get_samples(args: &Vec<String>, index: usize) -> u32 {
+    match args.get(index) {
+        Some(string) => match string.parse::<u32>() {
+            Ok(parsed) => match parsed {
+                0 => {
+                    println!("Samples must be non zero positive integer.");
+                    println!("Please specify a valid value for height!");
+                    println!("Do -H or --help for more information.");
+                    process::exit(0);
+                }
+                _ => return parsed,
+            },
+            Err(_) => {
+                println!("{} is not a valid value for samples!", string);
+                println!("Please specify a valid value for height!");
+                println!("Do -H or --help for more information.");
+                process::exit(0);
+            }
+        },
+        None => {
+            println!("Please specify a valid value for samples!");
+            println!("Do -H or --help for more information.");
+            process::exit(0);
+        }
+    }
+}
+
+fn get_dimension(args: &Vec<String>, index: usize) -> u32 {
+    match args.get(index) {
+        Some(string) => match string.parse::<u32>() {
+            Ok(parsed) => match parsed {
+                0 => {
+                    println!("Height must be non zero positive integer.");
+                    println!("Please specify a valid value for height!");
+                    println!("Do -H or --help for more information.");
+                    process::exit(0);
+                }
+                _ => return parsed,
+            },
+            Err(_) => {
+                println!("{} is not a valid value for height!", string);
+                println!("Please specify a valid value for height!");
+                println!("Do -H or --help for more information.");
+                process::exit(0);
+            }
+        },
+        None => {
+            println!("Please specify a valid value for height!");
+            println!("Do -H or --help for more information.");
+            process::exit(0);
+        }
     }
 }
