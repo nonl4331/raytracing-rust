@@ -1,6 +1,7 @@
 use crate::image::camera::Camera;
 use crate::image::generate::check_percent;
 use crate::image::tracing::Hittable;
+use crate::parameters::Parameters;
 
 use crate::image::ray::Color;
 
@@ -63,11 +64,6 @@ impl Scene {
             camera,
             sky,
         }
-    }
-
-    pub fn _add(&mut self, hittable: Hittable) {
-        let mut vec = self.hittables.write().unwrap();
-        vec.push(hittable);
     }
 
     fn get_image(
@@ -147,10 +143,12 @@ impl Scene {
         image.save(filename).unwrap();
     }
 
-    // note generate_image_threaded multi-threading is broken
     #[allow(dead_code)]
-    pub fn generate_image_threaded(&self, filename: &str, width: u32, pixel_samples: u32) {
-        let height = (width as f64 / self.camera.aspect_ratio) as u32;
+    pub fn generate_image_threaded(&self, options: Parameters) {
+        let pixel_samples = options.samples;
+        let width = options.width;
+        let filename = options.filename;
+        let height = options.height;
 
         let mut image = image::RgbImage::new(width, height).into_vec();
 
@@ -199,8 +197,11 @@ impl Scene {
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 
-    pub fn generate_image_sample_threaded(&self, filename: &str, width: u32, pixel_samples: u32) {
-        let height = (width as f64 / self.camera.aspect_ratio) as u32;
+    pub fn generate_image_sample_threaded(&self, options: Parameters) {
+        let pixel_samples = options.samples;
+        let width = options.width;
+        let filename = options.filename;
+        let height = options.height;
 
         let channels = 3;
 
@@ -241,10 +242,13 @@ impl Scene {
             .map(|value| (value.sqrt() * 255.0) as u8)
             .collect();
 
-        println!("Image done generating:");
+        println!("------------------------------");
+        println!("Finised rendering image!");
+        println!("------------------------------");
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
+        println!("------------------------------");
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 }

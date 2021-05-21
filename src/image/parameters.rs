@@ -8,7 +8,6 @@ const HEIGHT_DEFAULT: u32 = 600;
 const FILENAME_DEFAULT: &str = "out.png";
 
 pub struct Parameters {
-    pub scene: Scene,
     pub samples: u32,
     pub width: u32,
     pub height: u32,
@@ -17,14 +16,12 @@ pub struct Parameters {
 
 impl Parameters {
     pub fn new(
-        scene: Scene,
         samples: Option<u32>,
         width: Option<u32>,
         height: Option<u32>,
         filename: Option<String>,
     ) -> Self {
         Parameters {
-            scene,
             samples: samples.unwrap_or(SAMPLES_DEFAULT),
             width: width.unwrap_or(WIDTH_DEFAULT),
             height: height.unwrap_or(HEIGHT_DEFAULT),
@@ -33,8 +30,8 @@ impl Parameters {
     }
 }
 
-pub fn process_args(args: Vec<String>) -> Option<Parameters> {
-    let mut scene = None;
+pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
+    let mut scene_index = None;
     let mut samples = None;
     let mut width = None;
     let mut height = None;
@@ -63,10 +60,10 @@ pub fn process_args(args: Vec<String>) -> Option<Parameters> {
                     get_info(&args, arg_i + 1);
                 }
                 "-S" => {
-                    scene = Some(get_scene(&args, arg_i + 1));
+                    scene_index = Some(arg_i + 1);
                 }
                 "--scene" => {
-                    scene = Some(get_scene(&args, arg_i + 1));
+                    scene_index = Some(arg_i + 1);
                 }
                 "-N" => {
                     samples = Some(get_samples(&args, arg_i + 1));
@@ -97,8 +94,15 @@ pub fn process_args(args: Vec<String>) -> Option<Parameters> {
             None => {}
         }
     }
-    match scene {
-        Some(scene) => Some(Parameters::new(scene, samples, width, height, filename)),
+    match scene_index {
+        Some(scene_index) => {
+            let aspect_ratio =
+                width.unwrap_or(WIDTH_DEFAULT) as f64 / height.unwrap_or(HEIGHT_DEFAULT) as f64;
+            let scene = get_scene(&args, scene_index, aspect_ratio);
+
+            let parameters = Parameters::new(samples, width, height, filename);
+            Some((scene, parameters))
+        }
         None => None,
     }
 }
@@ -119,7 +123,7 @@ fn display_help() {
     println!("\t Set samples per pixel");
     println!("-X [pixels], --width [pixels]");
     println!("\t Sets width of image");
-    println!("-Y [pixels], --height [pixels] (TODO)");
+    println!("-Y [pixels], --height [pixels]");
     println!("\t Sets height of image");
     println!("-O [filename], --output [filename]");
     println!("\t filename of output with supported file extension.");
@@ -202,7 +206,7 @@ fn get_info(args: &Vec<String>, index: usize) {
     }
 }
 
-fn get_scene(args: &Vec<String>, index: usize) -> Scene {
+fn get_scene(args: &Vec<String>, index: usize, aspect_ratio: f64) -> Scene {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");
@@ -210,11 +214,11 @@ fn get_scene(args: &Vec<String>, index: usize) -> Scene {
             process::exit(0);
         }
         Some(string) => match &string[..] {
-            "1" => return generate::scene_one(false),
-            "1m" => return generate::scene_one(true),
-            "2" => return generate::scene_two(),
-            "3" => return generate::scene_three(),
-            "4" => return generate::scene_four(),
+            "1" => return generate::scene_one(aspect_ratio, false),
+            "1m" => return generate::scene_one(aspect_ratio, true),
+            "2" => return generate::scene_two(aspect_ratio),
+            "3" => return generate::scene_three(aspect_ratio),
+            "4" => return generate::scene_four(aspect_ratio),
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");

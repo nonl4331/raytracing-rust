@@ -23,7 +23,7 @@ pub fn check_percent(percent: u32, width: u32, x: u32, y: u32) {
     }
 }
 
-pub fn scene_one(motion_blur: bool) -> Scene {
+pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
     let ground_color = Color::new(0.5, 0.5, 0.5);
@@ -130,7 +130,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
         DVec3::new(0.0, 1.0, 0.1),
         DVec3::new(0.0, 1.0, 0.0),
         34.0,
-        16.0 / 9.0,
+        aspect_ratio,
         0.1,
         10.0,
         sky,
@@ -138,7 +138,7 @@ pub fn scene_one(motion_blur: bool) -> Scene {
     )
 }
 
-pub fn scene_two() -> Scene {
+pub fn scene_two(aspect_ratio: f64) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
     let ground_color = Color::new(0.5, 0.5, 0.5);
@@ -204,7 +204,7 @@ pub fn scene_two() -> Scene {
         DVec3::new(0.0, 1.0, 0.0),
         DVec3::new(0.0, 1.0, 0.0),
         34.0,
-        16.0 / 9.0,
+        aspect_ratio,
         0.0,
         10.0,
         sky,
@@ -212,7 +212,7 @@ pub fn scene_two() -> Scene {
     )
 }
 
-pub fn scene_three() -> Scene {
+pub fn scene_three(aspect_ratio: f64) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
     let ground_color = Color::new(0.5, 0.5, 0.5);
@@ -288,7 +288,7 @@ pub fn scene_three() -> Scene {
         DVec3::new(0.0, 1.5, 0.0),
         DVec3::new(0.0, 1.0, 0.0),
         34.0,
-        16.0 / 9.0,
+        aspect_ratio,
         0.0,
         10.0,
         sky,
@@ -296,7 +296,7 @@ pub fn scene_three() -> Scene {
     )
 }
 
-pub fn scene_four() -> Scene {
+pub fn scene_four(aspect_ratio: f64) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
     let ground_color = Color::new(0.5, 0.5, 0.5);
@@ -333,7 +333,7 @@ pub fn scene_four() -> Scene {
         DVec3::new(0.0, 0.5, 0.0),
         DVec3::new(0.0, 1.0, 0.0),
         34.0,
-        16.0 / 9.0,
+        aspect_ratio,
         0.0,
         10.0,
         sky,
