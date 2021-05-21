@@ -15,3 +15,5 @@ pub mod hittables;
 pub mod material;
 
 pub mod sky;
+
+pub mod parameters;
