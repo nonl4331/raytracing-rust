@@ -17,3 +17,7 @@ pub mod material;
 pub mod sky;
 
 pub mod parameters;
+
+pub mod aabb;
+
+pub mod bvh;

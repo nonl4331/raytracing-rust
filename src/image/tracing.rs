@@ -1,3 +1,4 @@
+use crate::image::aabb::AABB;
 use crate::image::hittables::MovingSphere;
 use crate::image::hittables::{AABox, AARect, Sphere};
 use crate::image::material::Material;
@@ -24,6 +25,9 @@ pub trait HittableTrait {
     fn does_int(&self, _: &Ray) -> bool {
         false
     }
+    fn get_aabb(&self) -> Option<AABB> {
+        None
+    }
 }
 
 pub enum Hittable {
@@ -49,6 +53,15 @@ impl HittableTrait for Hittable {
             Hittable::MovingSphere(sphere) => sphere.does_int(ray),
             Hittable::AARect(rect) => rect.does_int(ray),
             Hittable::AABox(rect) => rect.does_int(ray),
+        }
+    }
+
+    fn get_aabb(&self) -> Option<AABB> {
+        match self {
+            Hittable::Sphere(sphere) => Some(sphere.aabb),
+            Hittable::MovingSphere(sphere) => Some(sphere.aabb),
+            Hittable::AARect(rect) => Some(rect.aabb),
+            Hittable::AABox(rect) => Some(rect.aabb),
         }
     }
 }

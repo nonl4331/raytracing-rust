@@ -1,3 +1,4 @@
+use crate::image::bvh::BVH;
 use crate::image::camera::Camera;
 use crate::image::generate::check_percent;
 use crate::image::tracing::Hittable;
@@ -24,6 +25,7 @@ pub type HittablesType = Arc<RwLock<Vec<Hittable>>>;
 
 pub struct Scene {
     pub hittables: HittablesType,
+    pub bvh: BVH,
     pub camera: Camera,
     pub sky: Sky,
 }
@@ -47,6 +49,8 @@ impl Scene {
             None => Arc::new(RwLock::new(vec![])),
         };
 
+        let bvh = BVH::new(&hittables);
+
         let camera = Camera::new(
             origin,
             lookat,
@@ -61,6 +65,7 @@ impl Scene {
 
         Scene {
             hittables,
+            bvh,
             camera,
             sky,
         }
