@@ -134,7 +134,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
         0.1,
         10.0,
         sky,
-        Some(hittables),
+        hittables,
     )
 }
 
@@ -208,7 +208,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
         0.0,
         10.0,
         sky,
-        Some(hittables),
+        hittables,
     )
 }
 
@@ -292,7 +292,7 @@ pub fn scene_three(aspect_ratio: f64) -> Scene {
         0.0,
         10.0,
         sky,
-        Some(hittables),
+        hittables,
     )
 }
 
@@ -337,6 +337,6 @@ pub fn scene_four(aspect_ratio: f64) -> Scene {
         0.0,
         10.0,
         sky,
-        Some(hittables),
+        hittables,
     )
 }

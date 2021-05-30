@@ -40,14 +40,9 @@ impl Scene {
         aperture: f64,
         focus_dist: f64,
         sky: Sky,
-        starting_hittables: Option<Vec<Hittable>>,
+        hittables: Vec<Hittable>,
     ) -> Self {
-        let hittables: HittablesType;
-
-        hittables = match starting_hittables {
-            Some(value) => Arc::new(RwLock::new(value)),
-            None => Arc::new(RwLock::new(vec![])),
-        };
+        let hittables: HittablesType = Arc::new(RwLock::new(hittables));
 
         let bvh = BVH::new(&hittables);
 
