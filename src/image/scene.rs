@@ -1,6 +1,9 @@
 use crate::image::bvh::BVH;
 use crate::image::camera::Camera;
-use crate::image::generate::check_percent;
+
+use crate::image::math::random_f64;
+use crate::image::math::random_in_unit_disk;
+use crate::image::ray::Ray;
 use crate::image::tracing::Hittable;
 use crate::parameters::Parameters;
 
@@ -8,10 +11,8 @@ use crate::image::ray::Color;
 
 use crate::image::sky::Sky;
 
-use image::Rgb;
 use std::sync::Mutex;
 
-use image::ImageBuffer;
 use rand::Rng;
 
 use std::sync::Arc;
@@ -54,7 +55,6 @@ impl Scene {
             aperture,
             focus_dist,
             sky,
-            hittables.clone(),
         );
 
         Scene {
@@ -63,38 +63,6 @@ impl Scene {
             camera,
             sky,
         }
-    }
-
-    fn get_image(
-        &self,
-        width: u32,
-        height: u32,
-        pixel_samples: u32,
-    ) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
-        let percent = ((width * height) as f64 / 100.0) as u32;
-
-        let mut image = ImageBuffer::new(width, height);
-
-        let mut rng = rand::thread_rng();
-        for (x, y, pixel) in image.enumerate_pixels_mut() {
-            check_percent(percent, width, x, y);
-            let mut color = Color::new(0.0, 0.0, 0.0);
-            for _ in 0..pixel_samples {
-                let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
-                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
-
-                let mut ray = self.camera.get_ray(u, v);
-                color += ray.get_color(0);
-            }
-            color /= pixel_samples as f64;
-
-            *pixel = image::Rgb([
-                (color.x.sqrt() * 255.0) as u8,
-                (color.y.sqrt() * 255.0) as u8,
-                (color.z.sqrt() * 255.0) as u8,
-            ]);
-        }
-        image
     }
 
     fn get_image_part(
@@ -119,7 +87,7 @@ impl Scene {
                 let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
                 let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
 
-                let mut ray = self.camera.get_ray(u, v);
+                let mut ray = self.get_ray(u, v);
                 color += ray.get_color(0);
             }
             color /= real_pixel_samples as f64;
@@ -131,72 +99,7 @@ impl Scene {
         rgb_vec
     }
 
-    #[allow(dead_code)]
-    pub fn generate_image(&self, filename: &str, width: u32, pixel_samples: u32) {
-        let height = (width as f64 / self.camera.aspect_ratio) as u32;
-        let image = self.get_image(width, height, pixel_samples);
-        println!("Image done generating:");
-        println!("Width: {}", width);
-        println!("Height: {}", height);
-        println!("Samples per pixel: {}", pixel_samples);
-        image.save(filename).unwrap();
-    }
-
-    #[allow(dead_code)]
     pub fn generate_image_threaded(&self, options: Parameters) {
-        let pixel_samples = options.samples;
-        let width = options.width;
-        let filename = options.filename;
-        let height = options.height;
-
-        let mut image = image::RgbImage::new(width, height).into_vec();
-
-        let channels = 3;
-
-        let threads = num_cpus::get();
-
-        let pixel_chunk_size = ((width * height) as f64 / threads as f64).ceil() as u32;
-
-        image
-            .par_chunks_mut((pixel_chunk_size * channels) as usize)
-            .enumerate()
-            .for_each(|(chunk_index, chunk)| {
-                let mut color = Color::new(0.0, 0.0, 0.0);
-                let mut rng = rand::thread_rng();
-
-                for (index, value) in chunk.iter_mut().enumerate() {
-                    let rgb_i = index % 3;
-                    if rgb_i == 0 {
-                        color = Color::new(0.0, 0.0, 0.0);
-                        let pixel_i = chunk_index as u32 * pixel_chunk_size + index as u32 / 3;
-                        let x = pixel_i % width;
-                        let y = (pixel_i - x) / width;
-
-                        for _ in 0..pixel_samples {
-                            let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
-                            let v = (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
-
-                            let mut ray = self.camera.get_ray(u, v);
-                            color += ray.get_color(0);
-                        }
-                        color /= pixel_samples as f64;
-
-                        *value = (color.x.sqrt() * 255.0) as u8;
-                    } else if rgb_i % 3 == 1 {
-                        *value = (color.y.sqrt() * 255.0) as u8;
-                    } else {
-                        *value = (color.z.sqrt() * 255.0) as u8;
-                    }
-                }
-            });
-        println!("Image done generating:");
-        println!("Width: {}", width);
-        println!("Height: {}", height);
-        println!("Samples per pixel: {}", pixel_samples);
-        image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
-    }
-
-    pub fn generate_image_sample_threaded(&self, options: Parameters) {
         let pixel_samples = options.samples;
         let width = options.width;
         let filename = options.filename;
@@ -249,5 +152,19 @@ impl Scene {
         println!("Samples per pixel: {}", pixel_samples);
         println!("------------------------------");
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
+    }
+
+    fn get_ray(&self, u: f64, v: f64) -> Ray {
+        let rd = self.camera.lens_radius * random_in_unit_disk();
+        let offset = rd.x * self.camera.u + rd.y * self.camera.v;
+        Ray::new(
+            self.camera.origin + offset,
+            self.camera.lower_left + self.camera.horizontal * u + self.camera.vertical * v
+                - self.camera.origin
+                - offset,
+            random_f64(),
+            self.sky,
+            self.hittables.clone(),
+        )
     }
 }

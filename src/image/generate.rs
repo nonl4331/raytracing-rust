@@ -16,13 +16,6 @@ use crate::image::material::*;
 
 use crate::image::math;
 
-pub fn check_percent(percent: u32, width: u32, x: u32, y: u32) {
-    let pixel_num = (x + 1) + y * width;
-    if pixel_num % percent == 0 {
-        println!("generating image: {}%", pixel_num / percent);
-    }
-}
-
 pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
