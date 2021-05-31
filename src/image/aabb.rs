@@ -1,3 +1,4 @@
+use crate::image::ray::Ray;
 use ultraviolet::DVec3;
 
 #[derive(Copy, Clone)]
@@ -36,5 +37,27 @@ impl AABB {
             AABB::new(min, max);
         }
         panic!("AABB::new_contains() was called with an empty vector!");
+    }
+
+    pub fn does_int(&self, ray: &Ray) -> bool {
+        let t1 = (self.min.x - ray.origin.x) * ray.d_inverse.x;
+        let t2 = (self.max.x - ray.origin.x) * ray.d_inverse.x;
+
+        let tmin = t1.min(t2);
+        let tmax = t1.max(t2);
+
+        let t1 = (self.min.y - ray.origin.y) * ray.d_inverse.y;
+        let t2 = (self.max.y - ray.origin.y) * ray.d_inverse.y;
+
+        let tmin = tmin.max(t1.min(t2));
+        let tmax = tmax.min(t1.max(t2));
+
+        let t1 = (self.min.z - ray.origin.z) * ray.d_inverse.z;
+        let t2 = (self.max.z - ray.origin.z) * ray.d_inverse.z;
+
+        let tmin = tmin.max(t1.min(t2));
+        let tmax = tmax.min(t1.max(t2));
+
+        return tmax > tmin.max(0.0);
     }
 }

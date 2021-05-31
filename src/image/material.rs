@@ -92,14 +92,13 @@ impl MaterialTrait for Diffuse {
         if math::near_zero(direction) {
             direction = hit.normal;
         }
-        let mut new_ray = Ray {
-            origin: hit.point,
+        let mut new_ray = Ray::new(
+            hit.point,
             direction,
-            hittables: ray.hittables.clone(),
-            hit: None,
-            sky: ray.sky,
-            time: ray.time,
-        };
+            ray.time,
+            ray.sky,
+            ray.hittables.clone(),
+        );
         return self.absorption * new_ray.get_color(depth + 1);
     }
     fn color(&self) -> Color {
@@ -111,14 +110,13 @@ impl MaterialTrait for Reflect {
     fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
         let mut direction = ray.direction;
         direction.reflect(hit.normal);
-        let mut new_ray = Ray {
-            origin: hit.point,
-            direction: direction + self.fuzz * math::random_unit_vector(),
-            hittables: ray.hittables.clone(),
-            sky: ray.sky,
-            hit: None,
-            time: ray.time,
-        };
+        let mut new_ray = Ray::new(
+            hit.point,
+            direction + self.fuzz * math::random_unit_vector(),
+            ray.time,
+            ray.sky,
+            ray.hittables.clone(),
+        );
         return new_ray.get_color(depth + 1);
     }
     fn color(&self) -> Color {
@@ -148,14 +146,13 @@ impl MaterialTrait for Refract {
         let perp = eta_fraction * (ray.direction + cos_theta * hit.normal);
         let para = -1.0 * (1.0 - perp.mag_sq()).abs().sqrt() * hit.normal;
         let direction = perp + para;
-        let mut new_ray = Ray {
-            origin: hit.point,
+        let mut new_ray = Ray::new(
+            hit.point,
             direction,
-            hittables: ray.hittables.clone(),
-            sky: ray.sky,
-            hit: None,
-            time: ray.time,
-        };
+            ray.time,
+            ray.sky,
+            ray.hittables.clone(),
+        );
         return new_ray.get_color(depth + 1);
     }
 }

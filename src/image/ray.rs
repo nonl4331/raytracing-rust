@@ -11,6 +11,7 @@ pub type Color = DVec3;
 pub struct Ray {
     pub origin: DVec3,
     pub direction: DVec3,
+    pub d_inverse: DVec3,
     pub hittables: HittablesType,
     pub sky: Sky,
     pub hit: Option<Hit>,
@@ -31,6 +32,7 @@ impl Ray {
         Ray {
             origin,
             direction,
+            d_inverse: DVec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
             hittables,
             time,
             sky,
