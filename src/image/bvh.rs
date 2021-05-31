@@ -20,9 +20,6 @@ impl BVH {
     fn generate_bvh(&mut self, hittables: &HittablesType) {
         self.nodes = Vec::new();
 
-        // get a readcopy of scene hittables
-        let hittables = hittables.read().unwrap();
-
         // get hittable indexes
         let mut index_vec = Vec::new();
         for i in 0..hittables.len() {

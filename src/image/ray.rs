@@ -43,8 +43,7 @@ impl Ray {
     }
 
     fn check_hit(&mut self) {
-        let hittables = self.hittables.read().unwrap();
-        for object in &*hittables {
+        for object in self.hittables.iter() {
             // check for hit
             if let Some(current_hit) = object.get_int(&self) {
                 // make sure ray is going forwards

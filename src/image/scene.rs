@@ -16,12 +16,11 @@ use rand::Rng;
 
 use std::sync::Arc;
 
-use std::sync::RwLock;
 use ultraviolet::vec::DVec3;
 
 use rayon::prelude::*;
 
-pub type HittablesType = Arc<RwLock<Vec<Hittable>>>;
+pub type HittablesType = Arc<Vec<Hittable>>;
 
 pub struct Scene {
     pub hittables: HittablesType,
@@ -42,7 +41,7 @@ impl Scene {
         sky: Sky,
         hittables: Vec<Hittable>,
     ) -> Self {
-        let hittables: HittablesType = Arc::new(RwLock::new(hittables));
+        let hittables: HittablesType = Arc::new(hittables);
 
         let bvh = BVH::new(&hittables);
 
