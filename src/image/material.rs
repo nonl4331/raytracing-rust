@@ -98,6 +98,7 @@ impl MaterialTrait for Diffuse {
             ray.time,
             ray.sky,
             ray.hittables.clone(),
+            ray.bvh.clone(),
         );
         return self.absorption * new_ray.get_color(depth + 1);
     }
@@ -116,6 +117,7 @@ impl MaterialTrait for Reflect {
             ray.time,
             ray.sky,
             ray.hittables.clone(),
+            ray.bvh.clone(),
         );
         return new_ray.get_color(depth + 1);
     }
@@ -152,6 +154,7 @@ impl MaterialTrait for Refract {
             ray.time,
             ray.sky,
             ray.hittables.clone(),
+            ray.bvh.clone(),
         );
         return new_ray.get_color(depth + 1);
     }

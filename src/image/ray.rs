@@ -1,6 +1,8 @@
+use crate::image::bvh::BVH;
 use crate::image::scene::HittablesType;
 use crate::image::sky::Sky;
 use crate::image::tracing::Hit;
+use std::sync::Arc;
 
 use crate::image::material::MaterialTrait;
 use crate::image::tracing::HittableTrait;
@@ -13,6 +15,7 @@ pub struct Ray {
     pub direction: DVec3,
     pub d_inverse: DVec3,
     pub hittables: HittablesType,
+    pub bvh: Arc<BVH>,
     pub sky: Sky,
     pub hit: Option<Hit>,
     pub time: f64,
@@ -27,13 +30,16 @@ impl Ray {
         time: f64,
         sky: Sky,
         hittables: HittablesType,
+        bvh: Arc<BVH>,
     ) -> Self {
         direction.normalize();
+
         Ray {
             origin,
             direction,
             d_inverse: DVec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
             hittables,
+            bvh,
             time,
             sky,
             hit: None,
@@ -45,7 +51,11 @@ impl Ray {
     }
 
     fn check_hit(&mut self) {
-        for object in self.hittables.iter() {
+        let candidates = self.bvh.get_intersection_candidates(&self);
+
+        for object_index in candidates {
+            let object = &self.hittables[object_index as usize];
+
             // check for hit
             if let Some(current_hit) = object.get_int(&self) {
                 // make sure ray is going forwards

@@ -58,8 +58,6 @@ impl BVH {
     }
 
     fn new_node(&mut self, hittable_tuples: &mut [(AABB, u32)]) -> NodeIndex {
-        let node_index = self.nodes.len() as u32;
-
         // get node AABB that contains all AABB's in hittable_tuples
         let containing_aabb =
             AABB::new_contains(&hittable_tuples.iter().map(|(aabb, _)| *aabb).collect());
@@ -91,7 +89,7 @@ impl BVH {
             new_node.add_child_nodes(left_index, right_index);
         }
         self.nodes.push(new_node);
-        node_index
+        self.nodes.len() as u32 - 1
     }
 
     pub fn get_intersection_candidates(&self, ray: &Ray) -> Vec<NodeIndex> {

@@ -25,7 +25,7 @@ pub type HittablesType = Arc<Vec<Hittable>>;
 
 pub struct Scene {
     pub hittables: HittablesType,
-    pub bvh: BVH,
+    pub bvh: Arc<BVH>,
     pub camera: Camera,
     pub sky: Sky,
 }
@@ -44,7 +44,7 @@ impl Scene {
     ) -> Self {
         let hittables: HittablesType = Arc::new(hittables);
 
-        let bvh = BVH::new(&hittables);
+        let bvh = Arc::new(BVH::new(&hittables));
 
         let camera = Camera::new(
             origin,
@@ -165,6 +165,7 @@ impl Scene {
             random_f64(),
             self.sky,
             self.hittables.clone(),
+            self.bvh.clone(),
         )
     }
 }

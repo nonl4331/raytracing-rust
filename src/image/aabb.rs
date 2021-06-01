@@ -1,7 +1,7 @@
 use crate::image::ray::Ray;
 use ultraviolet::DVec3;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct AABB {
     pub min: DVec3,
     pub max: DVec3,
@@ -15,28 +15,28 @@ impl AABB {
         AABB { min, max }
     }
     pub fn new_contains(boxes: &Vec<AABB>) -> Self {
-        if boxes.len() != 0 {
-            let mut min = DVec3::new(std::f64::INFINITY, std::f64::INFINITY, std::f64::INFINITY);
-            let mut max = DVec3::new(
-                std::f64::NEG_INFINITY,
-                std::f64::NEG_INFINITY,
-                std::f64::NEG_INFINITY,
-            );
-            for bb in boxes {
-                min = DVec3::new(
-                    min.x.min(bb.min.x),
-                    min.y.min(bb.min.y),
-                    min.z.min(bb.min.z),
-                );
-                max = DVec3::new(
-                    max.x.min(bb.max.x),
-                    max.y.min(bb.max.y),
-                    max.z.min(bb.max.z),
-                );
-            }
-            AABB::new(min, max);
+        if boxes.len() == 0 {
+            panic!("AABB::new_contains() was called with an empty vector!");
         }
-        panic!("AABB::new_contains() was called with an empty vector!");
+        let mut min = DVec3::new(std::f64::INFINITY, std::f64::INFINITY, std::f64::INFINITY);
+        let mut max = DVec3::new(
+            std::f64::NEG_INFINITY,
+            std::f64::NEG_INFINITY,
+            std::f64::NEG_INFINITY,
+        );
+        for bb in boxes {
+            min = DVec3::new(
+                min.x.min(bb.min.x),
+                min.y.min(bb.min.y),
+                min.z.min(bb.min.z),
+            );
+            max = DVec3::new(
+                max.x.max(bb.max.x),
+                max.y.max(bb.max.y),
+                max.z.max(bb.max.z),
+            );
+        }
+        AABB::new(min, max)
     }
 
     pub fn does_int(&self, ray: &Ray) -> bool {
