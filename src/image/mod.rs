@@ -21,3 +21,5 @@ pub mod parameters;
 pub mod aabb;
 
 pub mod bvh;
+
+pub mod texture;

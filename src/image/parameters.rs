@@ -156,6 +156,12 @@ fn get_list() {
     println!("Sky: No");
     println!("Motion Blur: No");
     println!("-------------------");
+    println!("5: WIP");
+    println!("-------------------");
+    println!("Objects: 1");
+    println!("Sky: Yes");
+    println!("Motion Blur: No");
+    println!("-------------------");
 }
 
 fn get_info(args: &Vec<String>, index: usize) {
@@ -196,6 +202,12 @@ fn get_info(args: &Vec<String>, index: usize) {
                 println!("Sky: No");
                 println!("Motion Blur: No");
             }
+            "5" => {
+                println!("5: WIP");
+                println!("Objects: 1");
+                println!("Sky: Yes");
+                println!("Motion Blur: No");
+            }
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");
@@ -219,6 +231,7 @@ fn get_scene(args: &Vec<String>, index: usize, aspect_ratio: f64) -> Scene {
             "2" => return generate::scene_two(aspect_ratio),
             "3" => return generate::scene_three(aspect_ratio),
             "4" => return generate::scene_four(aspect_ratio),
+            "5" => return generate::scene_five(aspect_ratio),
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");

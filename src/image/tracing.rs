@@ -1,22 +1,20 @@
 use crate::image::aabb::AABB;
-use crate::image::hittables::MovingSphere;
-use crate::image::hittables::{AABox, AARect, Sphere};
-use crate::image::material::Material;
+use crate::image::hittables::{AABox, AARect, MovingSphere, Sphere};
+use crate::image::material::{Material, MaterialTrait};
 use crate::image::math::near_zero;
 use crate::image::ray::Ray;
+use std::f64::consts::PI;
 use std::sync::Arc;
-use ultraviolet::DVec3;
+use ultraviolet::{DVec2, DVec3};
 
 pub struct Hit {
     pub t: f64,
     pub point: DVec3,
     pub normal: DVec3,
+    pub uv: Option<DVec2>,
     pub out: bool,
     pub material: Arc<Material>,
 }
-
-unsafe impl Send for Sphere {}
-unsafe impl Sync for Sphere {}
 
 pub trait HittableTrait {
     fn get_int(&self, _: &Ray) -> Option<Hit> {
@@ -26,6 +24,12 @@ pub trait HittableTrait {
         false
     }
     fn get_aabb(&self) -> Option<AABB> {
+        None
+    }
+    fn requires_uv(&self) -> bool {
+        false
+    }
+    fn get_uv(&self, _: DVec3) -> Option<DVec2> {
         None
     }
 }
@@ -64,6 +68,23 @@ impl HittableTrait for Hittable {
             Hittable::AABox(rect) => Some(rect.aabb),
         }
     }
+    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+        match self {
+            Hittable::Sphere(sphere) => sphere.get_uv(point),
+            Hittable::MovingSphere(sphere) => sphere.get_uv(point),
+            Hittable::AARect(rect) => rect.get_uv(point),
+            Hittable::AABox(rect) => rect.get_uv(point),
+        };
+        None
+    }
+    fn requires_uv(&self) -> bool {
+        match self {
+            Hittable::Sphere(sphere) => (*sphere.material).requires_uv(),
+            Hittable::MovingSphere(sphere) => sphere.material.requires_uv(),
+            Hittable::AARect(rect) => rect.material.requires_uv(),
+            Hittable::AABox(rect) => rect.material.requires_uv(),
+        }
+    }
 }
 
 impl HittableTrait for Sphere {
@@ -93,12 +114,22 @@ impl HittableTrait for Sphere {
                 t,
                 point,
                 normal,
+                uv: self.get_uv(point),
                 out,
                 material: self.material.clone(),
             })
         } else {
             None
         }
+    }
+    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+        if self.material.requires_uv() {
+            let phi = (-1.0 * point.z).atan2(point.x) + PI;
+            let theta = (-1.0 * point.y).acos();
+
+            return Some(DVec2::new(phi / (2.0 * PI), theta / PI));
+        }
+        None
     }
 }
 
@@ -130,12 +161,22 @@ impl HittableTrait for MovingSphere {
                 t,
                 point,
                 normal,
+                uv: self.get_uv(point),
                 out,
                 material: self.material.clone(),
             })
         } else {
             None
         }
+    }
+    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+        if self.material.requires_uv() {
+            let phi = (-1.0 * point.z).atan2(point.x) + PI;
+            let theta = (-1.0 * point.y).acos();
+
+            return Some(DVec2::new(phi / (2.0 * PI), theta / PI));
+        }
+        None
     }
 }
 
@@ -159,6 +200,7 @@ impl HittableTrait for AARect {
                     .axis
                     .return_point_with_axis(-1.0 * ray.direction)
                     .normalized(),
+                uv: self.get_uv(point),
                 out: true,
                 material: self.material.clone(),
             })
@@ -178,6 +220,16 @@ impl HittableTrait for AARect {
             && point_2d.x < self.max.x
             && point_2d.y > self.min.y
             && point_2d.y < self.max.y
+    }
+    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+        if self.material.requires_uv() {
+            let pwa = self.axis.point_without_axis(point);
+            return Some(DVec2::new(
+                (pwa.x - self.min.x) / self.max.x,
+                (pwa.y - self.min.y) / self.max.y,
+            ));
+        }
+        None
     }
 }
 
