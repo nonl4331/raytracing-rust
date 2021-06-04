@@ -21,6 +21,8 @@ use ultraviolet::vec::DVec3;
 
 use rayon::prelude::*;
 
+use std::time::{Duration, Instant};
+
 pub type HittablesType = Arc<Vec<Hittable>>;
 
 pub struct Scene {
@@ -129,6 +131,8 @@ impl Scene {
             chunk_sizes.push(last_chunk_size);
         }
 
+        let start = Instant::now();
+
         chunk_sizes.par_iter().for_each(|&chunk_size| {
             let image_part = self.get_image_part(width, height, chunk_size, pixel_samples);
 
@@ -138,6 +142,8 @@ impl Scene {
                 *value += sample;
             }
         });
+
+        let end = Instant::now();
 
         let image: Vec<u8> = (*(image.lock().unwrap()))
             .iter()
@@ -150,6 +156,10 @@ impl Scene {
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
+        println!(
+            "Render Time: {}",
+            get_readable_duration(end.checked_duration_since(start).unwrap())
+        );
         println!("------------------------------");
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
@@ -168,4 +178,36 @@ impl Scene {
             self.bvh.clone(),
         )
     }
+}
+
+fn get_readable_duration(duration: Duration) -> String {
+    let days = duration.as_secs() / 86400;
+
+    let days_string = match days {
+        0 => "".to_string(),
+        1 => format!("{} day, ", days),
+        _ => format!("{} days, ", days),
+    };
+
+    let hours = (duration.as_secs() - days * 86400) / 3600;
+    let hours_string = match hours {
+        0 => "".to_string(),
+        1 => format!("{} hour, ", hours),
+        _ => format!("{} hours, ", hours),
+    };
+
+    let minutes = (duration.as_secs() - days * 86400 - hours * 3600) / 60;
+    let minutes_string = match minutes {
+        0 => "".to_string(),
+        1 => format!("{} minute, ", minutes),
+        _ => format!("{} minutes, ", minutes),
+    };
+
+    let seconds = duration.as_secs() % 60;
+    let seconds_string = match seconds {
+        0 => "~0 seconds".to_string(),
+        1 => format!("{} second", seconds),
+        _ => format!("{} seconds", seconds),
+    };
+    days_string + &hours_string + &minutes_string + &seconds_string
 }
