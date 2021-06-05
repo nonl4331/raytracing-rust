@@ -124,8 +124,11 @@ impl HittableTrait for Sphere {
     }
     fn get_uv(&self, point: DVec3) -> Option<DVec2> {
         if self.material.requires_uv() {
-            let phi = (-1.0 * point.z).atan2(point.x) + PI;
-            let theta = (-1.0 * point.y).acos();
+            let x = (self.center.x - point.x) / self.radius;
+            let y = (self.center.y - point.y) / self.radius;
+            let z = (self.center.z - point.z) / self.radius;
+            let phi = (-1.0 * z).atan2(x) + PI;
+            let theta = (-1.0 * y).acos();
 
             return Some(DVec2::new(phi / (2.0 * PI), theta / PI));
         }

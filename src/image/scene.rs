@@ -48,16 +48,7 @@ impl Scene {
 
         let bvh = Arc::new(BVH::new(&hittables));
 
-        let camera = Camera::new(
-            origin,
-            lookat,
-            vup,
-            fov,
-            aspect_ratio,
-            aperture,
-            focus_dist,
-            sky,
-        );
+        let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 
         Scene {
             hittables,

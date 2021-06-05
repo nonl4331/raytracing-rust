@@ -7,7 +7,6 @@ use crate::image::tracing::Hit;
 
 use crate::image::math;
 
-#[derive(Clone, Copy)]
 pub enum Material {
     Diffuse(Diffuse),
     Reflect(Reflect),
@@ -34,7 +33,7 @@ impl MaterialTrait for Material {
     }
     fn requires_uv(&self) -> bool {
         match self {
-            Material::Diffuse(_diffuse) => false, //diffuse.texture.requires_uv(),
+            Material::Diffuse(diffuse) => diffuse.texture.requires_uv(),
             Material::Reflect(_) => false,
             Material::Refract(_) => false,
             Material::Emit(_) => false,
@@ -53,7 +52,7 @@ pub trait MaterialTrait {
         false
     }
 }
-#[derive(Clone, Copy)]
+
 pub struct Diffuse {
     texture: Texture,
     absorption: f64,
@@ -68,7 +67,7 @@ impl Diffuse {
         }
     }
 }
-#[derive(Clone, Copy)]
+
 pub struct Reflect {
     pub color: Color,
     pub fuzz: f64,
@@ -79,7 +78,7 @@ impl Reflect {
         Reflect { color, fuzz }
     }
 }
-#[derive(Clone, Copy)]
+
 pub struct Refract {
     pub color: Color,
     pub eta: f64,
@@ -91,7 +90,6 @@ impl Refract {
     }
 }
 
-#[derive(Clone, Copy)]
 pub struct Emit {
     pub color: Color,
     pub strength: f64,

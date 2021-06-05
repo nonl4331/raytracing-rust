@@ -4,6 +4,7 @@ use crate::image::math::random_f64;
 use crate::image::scene::Scene;
 use crate::image::sky::Sky;
 use crate::image::texture::CheckeredTexture;
+use crate::image::texture::ImageTexture;
 use crate::image::texture::{SolidColor, Texture};
 use ultraviolet::DVec2;
 
@@ -360,6 +361,7 @@ pub fn scene_four(aspect_ratio: f64) -> Scene {
     )
 }
 
+// WIP
 pub fn scene_five(aspect_ratio: f64) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
@@ -384,13 +386,20 @@ pub fn scene_five(aspect_ratio: f64) -> Scene {
         Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
     );
 
+    let earth_mat = Material::Diffuse(Diffuse::new(
+        Texture::ImageTexture(ImageTexture::new("res/earth.png")),
+        0.5,
+    ));
+    let earth = Sphere::new(DVec3::new(0.0, 1.2, 0.0), 0.5, earth_mat);
+
     hittables.push(Hittable::Sphere(ground));
     hittables.push(Hittable::AABox(cube));
+    hittables.push(Hittable::Sphere(earth));
 
     let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
 
     Scene::new(
-        DVec3::new(-5.0, 3.0, -3.0),
+        DVec3::new(-5.0, 4.0, -3.0),
         DVec3::new(0.0, 0.5, 0.0),
         DVec3::new(0.0, 1.0, 0.0),
         34.0,

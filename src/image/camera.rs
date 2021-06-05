@@ -1,8 +1,5 @@
-use crate::image::sky::Sky;
-
 use ultraviolet::vec::DVec3;
 
-#[derive(Clone)]
 pub struct Camera {
     pub viewport_width: f64,
     pub viewport_height: f64,
@@ -14,7 +11,6 @@ pub struct Camera {
     pub v: DVec3,
     pub lower_left: DVec3,
     pub lens_radius: f64,
-    pub sky: Sky,
 }
 
 impl Camera {
@@ -26,7 +22,6 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
-        sky: Sky,
     ) -> Self {
         let viewport_width = 2.0 * (fov.to_radians() / 2.0).tan();
         let viewport_height = viewport_width / aspect_ratio;
@@ -51,7 +46,6 @@ impl Camera {
             v,
             lower_left,
             lens_radius: aperture / 2.0,
-            sky,
         }
     }
 }

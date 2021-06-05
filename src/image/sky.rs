@@ -2,7 +2,7 @@ use crate::image::ray::Color;
 
 use crate::image::ray::Ray;
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone)]
 pub struct Sky {
     color: Option<Color>,
 }

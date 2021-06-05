@@ -80,52 +80,70 @@ impl AARect {
             material: Arc::new(material),
         }
     }
+    pub fn new_with_arc(
+        min: DVec2,
+        max: DVec2,
+        k: f64,
+        axis: Axis,
+        material: &Arc<Material>,
+    ) -> Self {
+        let kvec = k * axis.return_point_with_axis(DVec3::one());
+        AARect {
+            min,
+            max,
+            k,
+            axis,
+            aabb: AABB::new(kvec - 0.0001 * DVec3::one(), kvec + 0.0001 * DVec3::one()),
+            material: material.clone(),
+        }
+    }
 }
 
 impl AABox {
     pub fn new(min: DVec3, max: DVec3, material: Material) -> Self {
+        let arc = Arc::new(material);
         let rects = [
-            AARect::new(
+            AARect::new_with_arc(
                 Axis::X.point_without_axis(min),
                 Axis::X.point_without_axis(max),
                 min.x,
                 Axis::X,
-                material,
+                &arc,
             ),
-            AARect::new(
+            AARect::new_with_arc(
                 Axis::X.point_without_axis(min),
                 Axis::X.point_without_axis(max),
                 max.x,
                 Axis::X,
-                material,
+                &arc,
             ),
-            AARect::new(
+            AARect::new_with_arc(
                 Axis::Y.point_without_axis(min),
                 Axis::Y.point_without_axis(max),
                 min.y,
                 Axis::Y,
-                material,
+                &arc,
             ),
-            AARect::new(
+            AARect::new_with_arc(
                 Axis::Y.point_without_axis(min),
                 Axis::Y.point_without_axis(max),
                 max.y,
                 Axis::Y,
-                material,
+                &arc,
             ),
-            AARect::new(
+            AARect::new_with_arc(
                 Axis::Z.point_without_axis(min),
                 Axis::Z.point_without_axis(max),
                 min.z,
                 Axis::Z,
-                material,
+                &arc,
             ),
-            AARect::new(
+            AARect::new_with_arc(
                 Axis::Z.point_without_axis(min),
                 Axis::Z.point_without_axis(max),
                 max.z,
                 Axis::Z,
-                material,
+                &arc,
             ),
         ];
         AABox {
@@ -133,7 +151,7 @@ impl AABox {
             max,
             rects,
             aabb: AABB::new(min, max),
-            material: Arc::new(material),
+            material: arc.clone(),
         }
     }
 }
