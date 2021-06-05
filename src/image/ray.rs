@@ -3,7 +3,6 @@ use crate::image::scene::HittablesType;
 use crate::image::sky::Sky;
 use crate::image::tracing::Hit;
 use std::sync::Arc;
-use ultraviolet::DVec2;
 
 use crate::image::material::MaterialTrait;
 use crate::image::tracing::HittableTrait;
@@ -87,7 +86,7 @@ impl Ray {
         self.check_hit();
 
         if let Some(hit) = &self.hit {
-            return hit.material.color(Some(DVec2::zero()), hit.point)
+            return hit.material.color(hit.uv, hit.point)
                 * hit.material.scatter_ray(self, hit, depth);
         }
 
