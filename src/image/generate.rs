@@ -331,10 +331,11 @@ pub fn scene_four(aspect_ratio: f64) -> Scene {
         Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
     );
 
+    let glowy_mat = Texture::SolidColor(SolidColor::new(Color::one()));
     let glowy = Sphere::new(
         DVec3::new(0.0, 0.5, 0.0),
         0.5,
-        Material::Emit(Emit::new(Color::one(), 1.5)),
+        Material::Emit(Emit::new(glowy_mat, 1.5)),
     );
     let cube = AABox::new(
         DVec3::new(-0.5, 0.1, -0.5),

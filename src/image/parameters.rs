@@ -158,7 +158,7 @@ fn get_list() {
     println!("-------------------");
     println!("5: WIP");
     println!("-------------------");
-    println!("Objects: 1");
+    println!("Objects: 3");
     println!("Sky: Yes");
     println!("Motion Blur: No");
     println!("-------------------");
@@ -204,7 +204,7 @@ fn get_info(args: &Vec<String>, index: usize) {
             }
             "5" => {
                 println!("5: WIP");
-                println!("Objects: 1");
+                println!("Objects: 3");
                 println!("Sky: Yes");
                 println!("Motion Blur: No");
             }

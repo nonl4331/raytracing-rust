@@ -104,12 +104,12 @@ impl ImageTexture {
 
         // get raw pixel data as Vec<u16> then convert to Vec<Color>
         let mut data: Vec<Color> = Vec::new();
-        for col in (*img.as_rgba8().unwrap().to_vec())
+        for col in (img.to_rgb8().to_vec())
             .to_vec()
             .iter()
             .map(|val| *val as f64 / 255.999)
             .collect::<Vec<f64>>()
-            .chunks(4)
+            .chunks(3)
         {
             data.push(Color::new(
                 *col.get(0).unwrap(),

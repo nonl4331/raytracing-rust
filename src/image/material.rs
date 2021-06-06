@@ -28,7 +28,7 @@ impl MaterialTrait for Material {
             Material::Diffuse(diffuse) => diffuse.color(uv, point),
             Material::Reflect(reflect) => reflect.color,
             Material::Refract(refract) => refract.color,
-            Material::Emit(emit) => emit.color,
+            Material::Emit(emit) => emit.color(uv, point),
         }
     }
     fn requires_uv(&self) -> bool {
@@ -36,7 +36,7 @@ impl MaterialTrait for Material {
             Material::Diffuse(diffuse) => diffuse.texture.requires_uv(),
             Material::Reflect(_) => false,
             Material::Refract(_) => false,
-            Material::Emit(_) => false,
+            Material::Emit(emit) => emit.texture.requires_uv(),
         }
     }
 }
@@ -91,13 +91,13 @@ impl Refract {
 }
 
 pub struct Emit {
-    pub color: Color,
+    pub texture: Texture,
     pub strength: f64,
 }
 
 impl Emit {
-    pub fn new(color: DVec3, strength: f64) -> Self {
-        Emit { color, strength }
+    pub fn new(texture: Texture, strength: f64) -> Self {
+        Emit { texture, strength }
     }
 }
 
@@ -176,11 +176,11 @@ impl MaterialTrait for Refract {
 }
 
 impl MaterialTrait for Emit {
-    fn scatter_ray(&self, _: &Ray, _: &Hit, _: u32) -> Color {
-        self.strength * self.color
+    fn scatter_ray(&self, _: &Ray, hit: &Hit, _: u32) -> Color {
+        self.strength * self.color(hit.uv, hit.point)
     }
-    fn color(&self, _: Option<DVec2>, _: DVec3) -> Color {
-        self.color
+    fn color(&self, uv: Option<DVec2>, point: DVec3) -> Color {
+        self.texture.color_value(uv, point)
     }
 }
 
