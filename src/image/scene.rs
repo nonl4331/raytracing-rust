@@ -7,7 +7,7 @@ use crate::image::ray::Ray;
 use crate::image::tracing::Hittable;
 use crate::parameters::Parameters;
 
-use crate::image::ray::Color;
+use crate::image::ray::Colour;
 
 use crate::image::sky::Sky;
 
@@ -75,19 +75,19 @@ impl Scene {
         for pixel_i in 0..pixel_num {
             let x = pixel_i % width;
             let y = (pixel_i - x) / width;
-            let mut color = Color::new(0.0, 0.0, 0.0);
+            let mut colour = Colour::new(0.0, 0.0, 0.0);
             for _ in 0..pixel_samples {
                 let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
                 let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
 
                 let mut ray = self.get_ray(u, v);
-                color += ray.get_color(0);
+                colour += ray.get_colour(0);
             }
-            color /= real_pixel_samples as f64;
+            colour /= real_pixel_samples as f64;
 
-            rgb_vec.push(color.x);
-            rgb_vec.push(color.y);
-            rgb_vec.push(color.z);
+            rgb_vec.push(colour.x);
+            rgb_vec.push(colour.y);
+            rgb_vec.push(colour.z);
         }
         rgb_vec
     }

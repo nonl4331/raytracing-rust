@@ -2,19 +2,19 @@ use ultraviolet::DVec3;
 
 use ultraviolet::DVec2;
 
-use crate::image::ray::Color;
+use crate::image::ray::Colour;
 
 use image::GenericImageView;
 
 pub enum Texture {
     CheckeredTexture(CheckeredTexture),
-    SolidColor(SolidColor),
+    SolidColour(SolidColour),
     ImageTexture(ImageTexture),
 }
 
 pub trait TextureTrait {
-    fn color_value(&self, _: Option<DVec2>, _: DVec3) -> Color {
-        Color::new(1.0, 1.0, 1.0)
+    fn colour_value(&self, _: Option<DVec2>, _: DVec3) -> Colour {
+        Colour::new(1.0, 1.0, 1.0)
     }
     fn requires_uv(&self) -> bool {
         false
@@ -22,43 +22,43 @@ pub trait TextureTrait {
 }
 
 impl TextureTrait for Texture {
-    fn color_value(&self, uv: Option<DVec2>, point: DVec3) -> Color {
+    fn colour_value(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
         match self {
-            Texture::CheckeredTexture(texture) => texture.color_value(uv, point),
-            Texture::SolidColor(texture) => texture.color_value(uv, point),
-            Texture::ImageTexture(texture) => texture.color_value(uv, point),
+            Texture::CheckeredTexture(texture) => texture.colour_value(uv, point),
+            Texture::SolidColour(texture) => texture.colour_value(uv, point),
+            Texture::ImageTexture(texture) => texture.colour_value(uv, point),
         }
     }
     fn requires_uv(&self) -> bool {
         match self {
             Texture::CheckeredTexture(_) => false,
-            Texture::SolidColor(_) => false,
+            Texture::SolidColour(_) => false,
             Texture::ImageTexture(_) => true,
         }
     }
 }
 
 pub struct CheckeredTexture {
-    primary_color: Color,
-    secondary_color: Color,
+    primary_colour: Colour,
+    secondary_colour: Colour,
 }
 
 impl CheckeredTexture {
-    pub fn new(primary_color: Color, secondary_color: Color) -> Self {
+    pub fn new(primary_colour: Colour, secondary_colour: Colour) -> Self {
         CheckeredTexture {
-            primary_color,
-            secondary_color,
+            primary_colour,
+            secondary_colour,
         }
     }
 }
 
 impl TextureTrait for CheckeredTexture {
-    fn color_value(&self, _: Option<DVec2>, point: DVec3) -> Color {
+    fn colour_value(&self, _: Option<DVec2>, point: DVec3) -> Colour {
         let sign = (10.0 * point.x).sin() * (10.0 * point.y).sin() * (10.0 * point.z).sin();
         if sign > 0.0 {
-            self.primary_color
+            self.primary_colour
         } else {
-            self.secondary_color
+            self.secondary_colour
         }
     }
     fn requires_uv(&self) -> bool {
@@ -66,19 +66,19 @@ impl TextureTrait for CheckeredTexture {
     }
 }
 
-pub struct SolidColor {
-    pub color: Color,
+pub struct SolidColour {
+    pub colour: Colour,
 }
 
-impl SolidColor {
-    pub fn new(color: Color) -> Self {
-        SolidColor { color }
+impl SolidColour {
+    pub fn new(colour: Colour) -> Self {
+        SolidColour { colour }
     }
 }
 
-impl TextureTrait for SolidColor {
-    fn color_value(&self, _: Option<DVec2>, _: DVec3) -> Color {
-        self.color
+impl TextureTrait for SolidColour {
+    fn colour_value(&self, _: Option<DVec2>, _: DVec3) -> Colour {
+        self.colour
     }
     fn requires_uv(&self) -> bool {
         false
@@ -86,7 +86,7 @@ impl TextureTrait for SolidColor {
 }
 
 pub struct ImageTexture {
-    pub data: Vec<Color>,
+    pub data: Vec<Colour>,
     pub dim: (usize, usize),
 }
 
@@ -99,11 +99,11 @@ impl ImageTexture {
         let dim = img.dimensions();
         assert!(dim.0 != 0 && dim.1 != 0);
 
-        // - 1 to prevent indices out of range in color_value
+        // - 1 to prevent indices out of range in colour_value
         let dim = ((dim.0 - 1) as usize, (dim.1 - 1) as usize);
 
-        // get raw pixel data as Vec<u16> then convert to Vec<Color>
-        let mut data: Vec<Color> = Vec::new();
+        // get raw pixel data as Vec<u16> then convert to Vec<Colour>
+        let mut data: Vec<Colour> = Vec::new();
         for col in (img.to_rgb8().to_vec())
             .to_vec()
             .iter()
@@ -111,7 +111,7 @@ impl ImageTexture {
             .collect::<Vec<f64>>()
             .chunks(3)
         {
-            data.push(Color::new(
+            data.push(Colour::new(
                 *col.get(0).unwrap(),
                 *col.get(1).unwrap(),
                 *col.get(2).unwrap(),
@@ -123,7 +123,7 @@ impl ImageTexture {
 }
 
 impl TextureTrait for ImageTexture {
-    fn color_value(&self, uv: Option<DVec2>, _: DVec3) -> Color {
+    fn colour_value(&self, uv: Option<DVec2>, _: DVec3) -> Colour {
         let uv = uv.unwrap();
         let x_pixel = (self.dim.0 as f64 * uv.x) as usize;
         let y_pixel = (self.dim.1 as f64 * uv.y) as usize;

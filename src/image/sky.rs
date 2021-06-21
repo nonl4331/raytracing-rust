@@ -1,24 +1,24 @@
-use crate::image::ray::Color;
+use crate::image::ray::Colour;
 
 use crate::image::ray::Ray;
 
 #[derive(Copy, Clone)]
 pub struct Sky {
-    color: Option<Color>,
+    colour: Option<Colour>,
 }
 
 impl Sky {
-    pub fn new(color: Option<Color>) -> Self {
-        Sky { color }
+    pub fn new(colour: Option<Colour>) -> Self {
+        Sky { colour }
     }
 
-    pub fn get_color(&self, ray: &Ray) -> Color {
-        match self.color {
-            Some(color) => {
+    pub fn get_colour(&self, ray: &Ray) -> Colour {
+        match self.colour {
+            Some(colour) => {
                 let t: f64 = 0.5 * (ray.direction.y + 1.0);
-                (1.0 - t) * Color::one() + t * color
+                (1.0 - t) * Colour::one() + t * colour
             }
-            None => Color::zero(),
+            None => Colour::zero(),
         }
     }
 }

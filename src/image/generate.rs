@@ -5,12 +5,12 @@ use crate::image::scene::Scene;
 use crate::image::sky::Sky;
 use crate::image::texture::CheckeredTexture;
 use crate::image::texture::ImageTexture;
-use crate::image::texture::{SolidColor, Texture};
+use crate::image::texture::{SolidColour, Texture};
 use ultraviolet::DVec2;
 
 use crate::image::tracing::Hittable;
 
-use crate::image::ray::Color;
+use crate::image::ray::Colour;
 
 use ultraviolet::DVec3;
 
@@ -19,8 +19,8 @@ use crate::image::material::*;
 
 use crate::image::math;
 
-const GROUND_COLOR: Texture = Texture::SolidColor(SolidColor {
-    color: Color {
+const GROUND_COLOUR: Texture = Texture::SolidColour(SolidColour {
+    colour: Colour {
         x: 0.5,
         y: 0.5,
         z: 0.5,
@@ -37,7 +37,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
             z: 1.0,
         },
         1000.0,
-        Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
+        Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
     let sphere_one = Sphere::new(
@@ -47,10 +47,10 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
             z: 0.0,
         },
         1.0,
-        Material::Refract(Refract::new(Color::one(), 1.5)),
+        Material::Refract(Refract::new(Colour::one(), 1.5)),
     );
 
-    let two_color = Texture::SolidColor(SolidColor::new(Color::new(0.4, 0.2, 0.1)));
+    let two_colour = Texture::SolidColour(SolidColour::new(Colour::new(0.4, 0.2, 0.1)));
     let sphere_two = Sphere::new(
         DVec3 {
             x: -4.0,
@@ -58,10 +58,10 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
             z: 0.0,
         },
         1.0,
-        Material::Diffuse(Diffuse::new(two_color, 0.5)),
+        Material::Diffuse(Diffuse::new(two_colour, 0.5)),
     );
 
-    let three_color = Color::new(0.7, 0.6, 0.5);
+    let three_colour = Colour::new(0.7, 0.6, 0.5);
     let sphere_three = Sphere::new(
         DVec3 {
             x: 4.0,
@@ -69,7 +69,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
             z: 0.0,
         },
         1.0,
-        Material::Reflect(Reflect::new(three_color, 0.0)),
+        Material::Reflect(Reflect::new(three_colour, 0.0)),
     );
 
     hittables.push(Hittable::Sphere(ground));
@@ -87,7 +87,8 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
 
             if (center - DVec3::new(4.0, 0.2, 0.0)).mag() > 0.9 {
                 let choose_material = math::random_f64();
-                let color = Color::new(math::random_f64(), math::random_f64(), math::random_f64());
+                let colour =
+                    Colour::new(math::random_f64(), math::random_f64(), math::random_f64());
 
                 if choose_material < 0.8 {
                     // diffuse sphere
@@ -97,7 +98,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
                             center - DVec3::new(0.0, random_f64() * 0.5, 0.0),
                             0.2,
                             Material::Diffuse(Diffuse::new(
-                                Texture::SolidColor(SolidColor::new(color)),
+                                Texture::SolidColour(SolidColour::new(colour)),
                                 0.5,
                             )),
                         );
@@ -107,7 +108,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
                             center,
                             0.2,
                             Material::Diffuse(Diffuse::new(
-                                Texture::SolidColor(SolidColor::new(color)),
+                                Texture::SolidColour(SolidColour::new(colour)),
                                 0.5,
                             )),
                         );
@@ -118,7 +119,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
                     let sphere = Sphere::new(
                         center,
                         0.2,
-                        Material::Reflect(Reflect::new(color, math::random_f64() / 2.0)),
+                        Material::Reflect(Reflect::new(colour, math::random_f64() / 2.0)),
                     );
                     hittables.push(Hittable::Sphere(sphere));
                 } else {
@@ -126,7 +127,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
                     let sphere = Sphere::new(
                         center,
                         0.2,
-                        Material::Refract(Refract::new(Color::one(), 1.5)),
+                        Material::Refract(Refract::new(Colour::one(), 1.5)),
                     );
                     hittables.push(Hittable::Sphere(sphere));
                 }
@@ -134,7 +135,7 @@ pub fn scene_one(aspect_ratio: f64, motion_blur: bool) -> Scene {
         }
     }
 
-    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
     Scene::new(
         DVec3::new(13.0, 2.0, -3.0),
@@ -159,7 +160,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
             z: 1.0,
         },
         1000.0,
-        Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
+        Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
     let sphere_three = Sphere::new(
@@ -170,7 +171,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
         },
         0.5,
         Material::Diffuse(Diffuse::new(
-            Texture::SolidColor(SolidColor::new(Color::new(1.0, 1.0, 0.0))),
+            Texture::SolidColour(SolidColour::new(Colour::new(1.0, 1.0, 0.0))),
             0.5,
         )),
     );
@@ -183,7 +184,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
         },
         0.5,
         Material::Diffuse(Diffuse::new(
-            Texture::SolidColor(SolidColor::new(Color::new(0.0, 1.0, 1.0))),
+            Texture::SolidColour(SolidColour::new(Colour::new(0.0, 1.0, 1.0))),
             0.5,
         )),
     );
@@ -196,7 +197,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
         },
         0.5,
         Material::Diffuse(Diffuse::new(
-            Texture::SolidColor(SolidColor::new(Color::new(0.0, 1.0, 0.0))),
+            Texture::SolidColour(SolidColour::new(Colour::new(0.0, 1.0, 0.0))),
             0.5,
         )),
     );
@@ -206,7 +207,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
         DVec2::new(2.5, 2.5),
         2.0,
         Axis::Z,
-        Material::Reflect(Reflect::new(Color::new(1.0, 0.9, 0.9), 0.001)),
+        Material::Reflect(Reflect::new(Colour::new(1.0, 0.9, 0.9), 0.001)),
     );
 
     hittables.push(Hittable::Sphere(ground));
@@ -215,7 +216,7 @@ pub fn scene_two(aspect_ratio: f64) -> Scene {
     hittables.push(Hittable::Sphere(sphere_three));
     hittables.push(Hittable::Sphere(sphere_four));
 
-    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
     Scene::new(
         DVec3::new(3.0, 1.0, -15.0),
@@ -240,7 +241,7 @@ pub fn scene_three(aspect_ratio: f64) -> Scene {
             z: 0.0,
         },
         1000.0,
-        Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
+        Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
     let box_left = AABox::new(
@@ -255,7 +256,7 @@ pub fn scene_three(aspect_ratio: f64) -> Scene {
             z: 0.5,
         },
         Material::Diffuse(Diffuse::new(
-            Texture::SolidColor(SolidColor::new(Color::new(1.0, 0.0, 0.0))),
+            Texture::SolidColour(SolidColour::new(Colour::new(1.0, 0.0, 0.0))),
             0.5,
         )),
     );
@@ -271,13 +272,13 @@ pub fn scene_three(aspect_ratio: f64) -> Scene {
             y: 2.0,
             z: 0.5,
         },
-        Material::Reflect(Reflect::new(Color::one(), 0.0)),
+        Material::Reflect(Reflect::new(Colour::one(), 0.0)),
     );
 
     let sphere_middle = Sphere::new(
         DVec3::new(0.0, 2.5, 0.0),
         0.3,
-        Material::Reflect(Reflect::new(Color::new(1.0, 1.0, 1.0), 0.0)),
+        Material::Reflect(Reflect::new(Colour::new(1.0, 1.0, 1.0), 0.0)),
     );
 
     let box_right = AABox::new(
@@ -292,7 +293,7 @@ pub fn scene_three(aspect_ratio: f64) -> Scene {
             z: 0.5,
         },
         Material::Diffuse(Diffuse::new(
-            Texture::SolidColor(SolidColor::new(Color::new(0.0, 0.0, 1.0))),
+            Texture::SolidColour(SolidColour::new(Colour::new(0.0, 0.0, 1.0))),
             0.5,
         )),
     );
@@ -303,7 +304,7 @@ pub fn scene_three(aspect_ratio: f64) -> Scene {
     hittables.push(Hittable::Sphere(sphere_middle));
     hittables.push(Hittable::AABox(box_right));
 
-    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
     Scene::new(
         DVec3::new(-5.0, 3.0, -3.0),
@@ -328,10 +329,10 @@ pub fn scene_four(aspect_ratio: f64) -> Scene {
             z: 0.0,
         },
         1000.0,
-        Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
+        Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
-    let glowy_mat = Texture::SolidColor(SolidColor::new(Color::one()));
+    let glowy_mat = Texture::SolidColour(SolidColour::new(Colour::one()));
     let glowy = Sphere::new(
         DVec3::new(0.0, 0.5, 0.0),
         0.5,
@@ -340,7 +341,7 @@ pub fn scene_four(aspect_ratio: f64) -> Scene {
     let cube = AABox::new(
         DVec3::new(-0.5, 0.1, -0.5),
         DVec3::new(-0.4, 0.2, -0.4),
-        Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
+        Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
     hittables.push(Hittable::Sphere(ground));
@@ -367,8 +368,8 @@ pub fn scene_five(aspect_ratio: f64) -> Scene {
     let mut hittables: Vec<Hittable> = Vec::new();
 
     let ground_mat = Texture::CheckeredTexture(CheckeredTexture::new(
-        Color::new(0.0, 0.0, 0.0),
-        Color::new(0.5, 0.5, 0.5),
+        Colour::new(0.0, 0.0, 0.0),
+        Colour::new(0.5, 0.5, 0.5),
     ));
 
     let ground: Sphere = Sphere::new(
@@ -384,7 +385,7 @@ pub fn scene_five(aspect_ratio: f64) -> Scene {
     let cube = AABox::new(
         DVec3::new(-0.5, 0.1, -0.5),
         DVec3::new(1.0, 0.6, 1.0),
-        Material::Diffuse(Diffuse::new(GROUND_COLOR, 0.5)),
+        Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
     let earth_mat = Material::Diffuse(Diffuse::new(
@@ -397,7 +398,7 @@ pub fn scene_five(aspect_ratio: f64) -> Scene {
     hittables.push(Hittable::AABox(cube));
     hittables.push(Hittable::Sphere(earth));
 
-    let sky = Sky::new(Some(Color::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
     Scene::new(
         DVec3::new(-5.0, 4.0, -3.0),

@@ -8,7 +8,7 @@ use crate::image::material::MaterialTrait;
 use crate::image::tracing::HittableTrait;
 use ultraviolet::vec::DVec3;
 
-pub type Color = DVec3;
+pub type Colour = DVec3;
 
 pub struct Ray {
     pub origin: DVec3,
@@ -76,20 +76,20 @@ impl Ray {
         }
     }
 
-    pub fn get_color(&mut self, depth: u32) -> Color {
+    pub fn get_colour(&mut self, depth: u32) -> Colour {
         // stop generating new bounce rays after MAX_DEPTH
         if depth >= MAX_DEPTH {
-            return Color::one();
+            return Colour::one();
         }
 
         // check for intersection with any of the objects in scene
         self.check_hit();
 
         if let Some(hit) = &self.hit {
-            return hit.material.color(hit.uv, hit.point)
+            return hit.material.colour(hit.uv, hit.point)
                 * hit.material.scatter_ray(self, hit, depth);
         }
 
-        self.sky.get_color(&self)
+        self.sky.get_colour(&self)
     }
 }

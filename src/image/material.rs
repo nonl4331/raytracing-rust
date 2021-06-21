@@ -1,4 +1,4 @@
-use crate::image::ray::{Color, Ray};
+use crate::image::ray::{Colour, Ray};
 use crate::image::texture::{Texture, TextureTrait};
 use ultraviolet::DVec2;
 use ultraviolet::DVec3;
@@ -15,7 +15,7 @@ pub enum Material {
 }
 
 impl MaterialTrait for Material {
-    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
+    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Colour {
         match self {
             Material::Diffuse(diffuse) => diffuse.scatter_ray(ray, hit, depth),
             Material::Reflect(reflect) => reflect.scatter_ray(ray, hit, depth),
@@ -23,12 +23,12 @@ impl MaterialTrait for Material {
             Material::Emit(emit) => emit.scatter_ray(ray, hit, depth),
         }
     }
-    fn color(&self, uv: Option<DVec2>, point: DVec3) -> Color {
+    fn colour(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
         match self {
-            Material::Diffuse(diffuse) => diffuse.color(uv, point),
-            Material::Reflect(reflect) => reflect.color,
-            Material::Refract(refract) => refract.color,
-            Material::Emit(emit) => emit.color(uv, point),
+            Material::Diffuse(diffuse) => diffuse.colour(uv, point),
+            Material::Reflect(reflect) => reflect.colour,
+            Material::Refract(refract) => refract.colour,
+            Material::Emit(emit) => emit.colour(uv, point),
         }
     }
     fn requires_uv(&self) -> bool {
@@ -42,10 +42,10 @@ impl MaterialTrait for Material {
 }
 
 pub trait MaterialTrait {
-    fn scatter_ray(&self, _: &Ray, _: &Hit, _: u32) -> Color {
+    fn scatter_ray(&self, _: &Ray, _: &Hit, _: u32) -> Colour {
         DVec3::new(0.0, 0.0, 0.0)
     }
-    fn color(&self, _: Option<DVec2>, _: DVec3) -> Color {
+    fn colour(&self, _: Option<DVec2>, _: DVec3) -> Colour {
         DVec3::new(1.0, 1.0, 1.0)
     }
     fn requires_uv(&self) -> bool {
@@ -60,7 +60,7 @@ pub struct Diffuse {
 
 impl Diffuse {
     pub fn new(texture: Texture, absorption: f64) -> Self {
-        //let color = DVec3::one();
+        //let colour = DVec3::one();
         Diffuse {
             texture,
             absorption,
@@ -69,24 +69,24 @@ impl Diffuse {
 }
 
 pub struct Reflect {
-    pub color: Color,
+    pub colour: Colour,
     pub fuzz: f64,
 }
 
 impl Reflect {
-    pub fn new(color: DVec3, fuzz: f64) -> Self {
-        Reflect { color, fuzz }
+    pub fn new(colour: DVec3, fuzz: f64) -> Self {
+        Reflect { colour, fuzz }
     }
 }
 
 pub struct Refract {
-    pub color: Color,
+    pub colour: Colour,
     pub eta: f64,
 }
 
 impl Refract {
-    pub fn new(color: DVec3, eta: f64) -> Self {
-        Refract { color, eta }
+    pub fn new(colour: DVec3, eta: f64) -> Self {
+        Refract { colour, eta }
     }
 }
 
@@ -102,7 +102,7 @@ impl Emit {
 }
 
 impl MaterialTrait for Diffuse {
-    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
+    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Colour {
         let mut direction = math::random_unit_vector() + hit.normal;
         if math::near_zero(direction) {
             direction = hit.normal;
@@ -115,15 +115,15 @@ impl MaterialTrait for Diffuse {
             ray.hittables.clone(),
             ray.bvh.clone(),
         );
-        return self.absorption * new_ray.get_color(depth + 1);
+        return self.absorption * new_ray.get_colour(depth + 1);
     }
-    fn color(&self, uv: Option<DVec2>, point: DVec3) -> Color {
-        self.texture.color_value(uv, point)
+    fn colour(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
+        self.texture.colour_value(uv, point)
     }
 }
 
 impl MaterialTrait for Reflect {
-    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
+    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Colour {
         let mut direction = ray.direction;
         direction.reflect(hit.normal);
         let mut new_ray = Ray::new(
@@ -134,15 +134,15 @@ impl MaterialTrait for Reflect {
             ray.hittables.clone(),
             ray.bvh.clone(),
         );
-        return new_ray.get_color(depth + 1);
+        return new_ray.get_colour(depth + 1);
     }
-    fn color(&self, _: Option<DVec2>, _: DVec3) -> Color {
-        self.color
+    fn colour(&self, _: Option<DVec2>, _: DVec3) -> Colour {
+        self.colour
     }
 }
 
 impl MaterialTrait for Refract {
-    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Color {
+    fn scatter_ray(&self, ray: &Ray, hit: &Hit, depth: u32) -> Colour {
         let mut eta_fraction = 1.0 / self.eta;
         if !hit.out {
             eta_fraction = self.eta;
@@ -154,7 +154,7 @@ impl MaterialTrait for Refract {
         let cannot_refract = eta_fraction * sin_theta > 1.0;
         if cannot_refract || reflectance(cos_theta, eta_fraction) > math::random_f64() {
             let ref_mat = Reflect {
-                color: self.color,
+                colour: self.colour,
                 fuzz: 0.0,
             };
             return ref_mat.scatter_ray(ray, hit, depth);
@@ -171,16 +171,16 @@ impl MaterialTrait for Refract {
             ray.hittables.clone(),
             ray.bvh.clone(),
         );
-        return new_ray.get_color(depth + 1);
+        return new_ray.get_colour(depth + 1);
     }
 }
 
 impl MaterialTrait for Emit {
-    fn scatter_ray(&self, _: &Ray, hit: &Hit, _: u32) -> Color {
-        self.strength * self.color(hit.uv, hit.point)
+    fn scatter_ray(&self, _: &Ray, hit: &Hit, _: u32) -> Colour {
+        self.strength * self.colour(hit.uv, hit.point)
     }
-    fn color(&self, uv: Option<DVec2>, point: DVec3) -> Color {
-        self.texture.color_value(uv, point)
+    fn colour(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
+        self.texture.colour_value(uv, point)
     }
 }
 
