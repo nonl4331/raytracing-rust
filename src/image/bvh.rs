@@ -101,22 +101,37 @@ impl BVH {
     }
 
     fn get_indices(&self, node: NodeIndex, ray: &Ray) -> Vec<NodeIndex> {
-        let node = &self.nodes[node as usize];
+        let mut queue: std::collections::VecDeque<NodeIndex> = std::collections::VecDeque::new();
+        let mut result: Vec<NodeIndex> = Vec::new();
 
-        if !node.aabb.does_int(ray) {
-            return Vec::new();
-        }
+        queue.push_back(node);
 
-        match (node.left_child, node.right_child) {
-            (Some(left), Some(right)) => {
-                let mut a = self.get_indices(left, ray);
-                a.extend(self.get_indices(right, ray));
-                a
+        while queue.len() > 0 {
+            let idx = queue.pop_front().unwrap();
+            let node = &self.nodes[idx as usize];
+
+            if !node.aabb.does_int(ray) {
+                continue;
             }
-            (Some(left), None) => self.get_indices(left, ray),
-            (None, Some(right)) => self.get_indices(right, ray),
-            (None, None) => node.data.clone(),
+
+            match (node.left_child, node.right_child) {
+                (Some(left), Some(right)) => {
+                    queue.push_back(left);
+                    queue.push_back(right);
+                }
+                (Some(left), None) => {
+                    queue.push_back(left);
+                }
+                (None, Some(right)) => {
+                    queue.push_back(right);
+                }
+                (None, None) => {
+                    result.extend(node.data.clone());
+                }
+            }
         }
+
+        result
     }
 }
 
