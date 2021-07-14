@@ -76,20 +76,31 @@ impl Ray {
         }
     }
 
-    pub fn get_colour(&mut self, depth: u32) -> Colour {
+    pub fn get_colour(ray: &mut Ray) -> Colour {
+        let mut colour = Colour::one();
+        let mut depth = 0;
+
         // stop generating new bounce rays after MAX_DEPTH
-        if depth >= MAX_DEPTH {
-            return Colour::one();
+        while depth < MAX_DEPTH {
+            // check for intersection with any of the objects in the scene
+            ray.check_hit();
+
+            if ray.hit.is_some() {
+                let hit = ray.hit.take().unwrap();
+
+                // scatter_ray can only change ray direction, multiply colour by a factor or exit
+                let (multiplier, exit) = hit.material.scatter_ray(ray, &hit);
+
+                colour *= hit.material.colour(hit.uv, hit.point) * multiplier;
+
+                if exit {
+                    return colour * ray.sky.get_colour(&ray);
+                }
+                depth += 1;
+            } else {
+                return colour * ray.sky.get_colour(&ray);
+            }
         }
-
-        // check for intersection with any of the objects in scene
-        self.check_hit();
-
-        if let Some(hit) = &self.hit {
-            return hit.material.colour(hit.uv, hit.point)
-                * hit.material.scatter_ray(self, hit, depth);
-        }
-
-        self.sky.get_colour(&self)
+        colour
     }
 }

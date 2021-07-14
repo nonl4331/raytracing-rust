@@ -81,7 +81,7 @@ impl Scene {
                 let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
 
                 let mut ray = self.get_ray(u, v);
-                colour += ray.get_colour(0);
+                colour += Ray::get_colour(&mut ray);
             }
             colour /= real_pixel_samples as f64;
 
