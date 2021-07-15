@@ -15,7 +15,7 @@ impl Sky {
     pub fn get_colour(&self, ray: &Ray) -> Colour {
         match self.colour {
             Some(colour) => {
-                let t: f64 = 0.5 * (ray.direction.y + 1.0);
+                let t: f32 = 0.5 * (ray.direction.y + 1.0);
                 (1.0 - t) * Colour::one() + t * colour
             }
             None => Colour::zero(),

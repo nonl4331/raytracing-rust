@@ -38,7 +38,7 @@ impl BVH {
         }
 
         // returns ceil(vec_size / 2) unless size is 1 which then it returns 1
-        let half_size = std::cmp::max((hittables.len() as f64 / 2.0).ceil() as usize, 1);
+        let half_size = std::cmp::max((hittables.len() as f32 / 2.0).ceil() as usize, 1);
 
         // get random axis to sort along
         let axis = Axis::random_axis();
@@ -69,7 +69,7 @@ impl BVH {
 
         if hittable_tuples.len() != 1 {
             // returns ceil(vec_size / 2) since size != 1
-            let half_size = (hittable_tuples.len() as f64 / 2.0).ceil() as usize;
+            let half_size = (hittable_tuples.len() as f32 / 2.0).ceil() as usize;
 
             // random sorting axis
             let axis = Axis::random_axis();

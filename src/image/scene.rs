@@ -1,7 +1,7 @@
 use crate::image::bvh::BVH;
 use crate::image::camera::Camera;
 
-use crate::image::math::random_f64;
+use crate::image::math::random_f32;
 use crate::image::math::random_in_unit_disk;
 use crate::image::ray::Ray;
 use crate::image::tracing::Hittable;
@@ -17,7 +17,7 @@ use rand::Rng;
 
 use std::sync::Arc;
 
-use ultraviolet::vec::DVec3;
+use ultraviolet::vec::Vec3;
 
 use rayon::prelude::*;
 
@@ -36,13 +36,13 @@ pub struct Scene {
 
 impl Scene {
     pub fn new(
-        origin: DVec3,
-        lookat: DVec3,
-        vup: DVec3,
-        fov: f64,
-        aspect_ratio: f64,
-        aperture: f64,
-        focus_dist: f64,
+        origin: Vec3,
+        lookat: Vec3,
+        vup: Vec3,
+        fov: f32,
+        aspect_ratio: f32,
+        aperture: f32,
+        focus_dist: f32,
         sky: Sky,
         hittables: Vec<Hittable>,
     ) -> Self {
@@ -66,7 +66,7 @@ impl Scene {
         height: u32,
         pixel_samples: u32,
         real_pixel_samples: u32,
-    ) -> (Vec<f64>, u64) {
+    ) -> (Vec<f32>, u64) {
         let channels = 3;
         let pixel_num = height * width;
 
@@ -81,15 +81,15 @@ impl Scene {
             let y = (pixel_i - x) / width;
             let mut colour = Colour::new(0.0, 0.0, 0.0);
             for _ in 0..pixel_samples {
-                let u = (rng.gen_range(0.0..1.0) + x as f64) / width as f64;
-                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
+                let u = (rng.gen_range(0.0..1.0) + x as f32) / width as f32;
+                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f32) / height as f32;
 
                 let mut ray = self.get_ray(u, v);
                 let result = Ray::get_colour(&mut ray);
                 colour += result.0;
                 ray_count += result.1;
             }
-            colour /= real_pixel_samples as f64;
+            colour /= real_pixel_samples as f32;
 
             rgb_vec.push(colour.x);
             rgb_vec.push(colour.y);
@@ -108,12 +108,12 @@ impl Scene {
 
         let pixel_num = height * width;
 
-        let image: Arc<Mutex<Vec<f64>>> =
+        let image: Arc<Mutex<Vec<f32>>> =
             Arc::new(Mutex::new(vec![0.0; (pixel_num * channels) as usize]));
 
         let threads = num_cpus::get();
 
-        let sample_chunk_size = (pixel_samples as f64 / threads as f64).floor() as u32;
+        let sample_chunk_size = (pixel_samples as f32 / threads as f32).floor() as u32;
 
         let last_chunk_size = pixel_samples - sample_chunk_size * (threads as u32 - 1);
 
@@ -146,6 +146,7 @@ impl Scene {
             });
 
         let end = Instant::now();
+        let duration = end.checked_duration_since(start).unwrap();
 
         let ray_count = receiver
             .iter()
@@ -162,16 +163,17 @@ impl Scene {
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
+        println!("Render Time: {}", get_readable_duration(duration));
         println!("Rays: {}", ray_count);
         println!(
-            "Render Time: {}",
-            get_readable_duration(end.checked_duration_since(start).unwrap())
+            "Mrays/s: {:.2}",
+            (ray_count as f32 / duration.as_secs_f32()) / 1000000.0
         );
         println!("------------------------------");
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 
-    fn get_ray(&self, u: f64, v: f64) -> Ray {
+    fn get_ray(&self, u: f32, v: f32) -> Ray {
         let rd = self.camera.lens_radius * random_in_unit_disk();
         let offset = rd.x * self.camera.u + rd.y * self.camera.v;
         Ray::new(
@@ -179,7 +181,7 @@ impl Scene {
             self.camera.lower_left + self.camera.horizontal * u + self.camera.vertical * v
                 - self.camera.origin
                 - offset,
-            random_f64(),
+            random_f32(),
             self.sky,
             self.hittables.clone(),
             self.bvh.clone(),

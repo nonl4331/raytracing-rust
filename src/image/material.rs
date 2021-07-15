@@ -1,7 +1,7 @@
 use crate::image::ray::{Colour, Ray};
 use crate::image::texture::{Texture, TextureTrait};
-use ultraviolet::DVec2;
-use ultraviolet::DVec3;
+use ultraviolet::Vec2;
+use ultraviolet::Vec3;
 
 use crate::image::tracing::Hit;
 
@@ -15,7 +15,7 @@ pub enum Material {
 }
 
 impl MaterialTrait for Material {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f64, bool) {
+    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f32, bool) {
         match self {
             Material::Diffuse(diffuse) => diffuse.scatter_ray(ray, hit),
             Material::Reflect(reflect) => reflect.scatter_ray(ray, hit),
@@ -23,7 +23,7 @@ impl MaterialTrait for Material {
             Material::Emit(emit) => emit.scatter_ray(ray, hit),
         }
     }
-    fn colour(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
+    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         match self {
             Material::Diffuse(diffuse) => diffuse.colour(uv, point),
             Material::Reflect(reflect) => reflect.colour,
@@ -42,11 +42,11 @@ impl MaterialTrait for Material {
 }
 
 pub trait MaterialTrait {
-    fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (f64, bool) {
+    fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (f32, bool) {
         (1.0, true)
     }
-    fn colour(&self, _: Option<DVec2>, _: DVec3) -> Colour {
-        DVec3::new(1.0, 1.0, 1.0)
+    fn colour(&self, _: Option<Vec2>, _: Vec3) -> Colour {
+        Vec3::new(1.0, 1.0, 1.0)
     }
     fn requires_uv(&self) -> bool {
         false
@@ -55,11 +55,11 @@ pub trait MaterialTrait {
 
 pub struct Diffuse {
     texture: Texture,
-    absorption: f64,
+    absorption: f32,
 }
 
 impl Diffuse {
-    pub fn new(texture: Texture, absorption: f64) -> Self {
+    pub fn new(texture: Texture, absorption: f32) -> Self {
         Diffuse {
             texture,
             absorption,
@@ -69,39 +69,39 @@ impl Diffuse {
 
 pub struct Reflect {
     pub colour: Colour,
-    pub fuzz: f64,
+    pub fuzz: f32,
 }
 
 impl Reflect {
-    pub fn new(colour: DVec3, fuzz: f64) -> Self {
+    pub fn new(colour: Vec3, fuzz: f32) -> Self {
         Reflect { colour, fuzz }
     }
 }
 
 pub struct Refract {
     pub colour: Colour,
-    pub eta: f64,
+    pub eta: f32,
 }
 
 impl Refract {
-    pub fn new(colour: DVec3, eta: f64) -> Self {
+    pub fn new(colour: Vec3, eta: f32) -> Self {
         Refract { colour, eta }
     }
 }
 
 pub struct Emit {
     pub texture: Texture,
-    pub strength: f64,
+    pub strength: f32,
 }
 
 impl Emit {
-    pub fn new(texture: Texture, strength: f64) -> Self {
+    pub fn new(texture: Texture, strength: f32) -> Self {
         Emit { texture, strength }
     }
 }
 
 impl MaterialTrait for Diffuse {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f64, bool) {
+    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f32, bool) {
         let mut direction = math::random_unit_vector() + hit.normal;
         if math::near_zero(direction) {
             direction = hit.normal;
@@ -116,13 +116,13 @@ impl MaterialTrait for Diffuse {
         );
         (self.absorption, false)
     }
-    fn colour(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
+    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
     }
 }
 
 impl MaterialTrait for Reflect {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f64, bool) {
+    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f32, bool) {
         let mut direction = ray.direction;
         direction.reflect(hit.normal);
         *ray = Ray::new(
@@ -135,13 +135,13 @@ impl MaterialTrait for Reflect {
         );
         (1.0, false)
     }
-    fn colour(&self, _: Option<DVec2>, _: DVec3) -> Colour {
+    fn colour(&self, _: Option<Vec2>, _: Vec3) -> Colour {
         self.colour
     }
 }
 
 impl MaterialTrait for Refract {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f64, bool) {
+    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (f32, bool) {
         let mut eta_fraction = 1.0 / self.eta;
         if !hit.out {
             eta_fraction = self.eta;
@@ -151,7 +151,7 @@ impl MaterialTrait for Refract {
 
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract = eta_fraction * sin_theta > 1.0;
-        if cannot_refract || reflectance(cos_theta, eta_fraction) > math::random_f64() {
+        if cannot_refract || reflectance(cos_theta, eta_fraction) > math::random_f32() {
             let ref_mat = Reflect {
                 colour: self.colour,
                 fuzz: 0.0,
@@ -175,15 +175,15 @@ impl MaterialTrait for Refract {
 }
 
 impl MaterialTrait for Emit {
-    fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (f64, bool) {
+    fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (f32, bool) {
         (self.strength, true)
     }
-    fn colour(&self, uv: Option<DVec2>, point: DVec3) -> Colour {
+    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
     }
 }
 
-fn reflectance(cos: f64, eta_ratio: f64) -> f64 {
+fn reflectance(cos: f32, eta_ratio: f32) -> f32 {
     let mut r0 = (1.0 - eta_ratio) / (1.0 + eta_ratio);
     r0 = r0 * r0;
     r0 + (1.0 - r0) * (1.0 - cos).powf(5.0)

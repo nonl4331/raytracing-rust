@@ -3,15 +3,15 @@ use crate::image::hittables::{AABox, AARect, MovingSphere, Sphere};
 use crate::image::material::{Material, MaterialTrait};
 use crate::image::math::near_zero;
 use crate::image::ray::Ray;
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 use std::sync::Arc;
-use ultraviolet::{DVec2, DVec3};
+use ultraviolet::{Vec2, Vec3};
 
 pub struct Hit {
-    pub t: f64,
-    pub point: DVec3,
-    pub normal: DVec3,
-    pub uv: Option<DVec2>,
+    pub t: f32,
+    pub point: Vec3,
+    pub normal: Vec3,
+    pub uv: Option<Vec2>,
     pub out: bool,
     pub material: Arc<Material>,
 }
@@ -29,7 +29,7 @@ pub trait HittableTrait {
     fn requires_uv(&self) -> bool {
         false
     }
-    fn get_uv(&self, _: DVec3) -> Option<DVec2> {
+    fn get_uv(&self, _: Vec3) -> Option<Vec2> {
         None
     }
 }
@@ -68,7 +68,7 @@ impl HittableTrait for Hittable {
             Hittable::AABox(rect) => Some(rect.aabb),
         }
     }
-    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+    fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         match self {
             Hittable::Sphere(sphere) => sphere.get_uv(point),
             Hittable::MovingSphere(sphere) => sphere.get_uv(point),
@@ -122,7 +122,7 @@ impl HittableTrait for Sphere {
             None
         }
     }
-    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+    fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let x = (self.center.x - point.x) / self.radius;
             let y = (self.center.y - point.y) / self.radius;
@@ -130,7 +130,7 @@ impl HittableTrait for Sphere {
             let phi = (-1.0 * z).atan2(x) + PI;
             let theta = (-1.0 * y).acos();
 
-            return Some(DVec2::new(phi / (2.0 * PI), theta / PI));
+            return Some(Vec2::new(phi / (2.0 * PI), theta / PI));
         }
         None
     }
@@ -172,12 +172,12 @@ impl HittableTrait for MovingSphere {
             None
         }
     }
-    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+    fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let phi = (-1.0 * point.z).atan2(point.x) + PI;
             let theta = (-1.0 * point.y).acos();
 
-            return Some(DVec2::new(phi / (2.0 * PI), theta / PI));
+            return Some(Vec2::new(phi / (2.0 * PI), theta / PI));
         }
         None
     }
@@ -224,10 +224,10 @@ impl HittableTrait for AARect {
             && point_2d.y > self.min.y
             && point_2d.y < self.max.y
     }
-    fn get_uv(&self, point: DVec3) -> Option<DVec2> {
+    fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let pwa = self.axis.point_without_axis(point);
-            return Some(DVec2::new(
+            return Some(Vec2::new(
                 (pwa.x - self.min.x) / self.max.x,
                 (pwa.y - self.min.y) / self.max.y,
             ));

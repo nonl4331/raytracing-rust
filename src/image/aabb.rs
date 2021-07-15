@@ -1,14 +1,14 @@
 use crate::image::ray::Ray;
-use ultraviolet::DVec3;
+use ultraviolet::Vec3;
 
 #[derive(Copy, Clone, Debug)]
 pub struct AABB {
-    pub min: DVec3,
-    pub max: DVec3,
+    pub min: Vec3,
+    pub max: Vec3,
 }
 
 impl AABB {
-    pub fn new(min: DVec3, max: DVec3) -> Self {
+    pub fn new(min: Vec3, max: Vec3) -> Self {
         if min.x >= max.x || min.y >= max.y || min.z >= max.z {
             panic!("Maximum value in AABB must be strictly greater than minimum!");
         }
@@ -18,19 +18,19 @@ impl AABB {
         if boxes.len() == 0 {
             panic!("AABB::new_contains() was called with an empty vector!");
         }
-        let mut min = DVec3::new(std::f64::INFINITY, std::f64::INFINITY, std::f64::INFINITY);
-        let mut max = DVec3::new(
-            std::f64::NEG_INFINITY,
-            std::f64::NEG_INFINITY,
-            std::f64::NEG_INFINITY,
+        let mut min = Vec3::new(std::f32::INFINITY, std::f32::INFINITY, std::f32::INFINITY);
+        let mut max = Vec3::new(
+            std::f32::NEG_INFINITY,
+            std::f32::NEG_INFINITY,
+            std::f32::NEG_INFINITY,
         );
         for bb in boxes {
-            min = DVec3::new(
+            min = Vec3::new(
                 min.x.min(bb.min.x),
                 min.y.min(bb.min.y),
                 min.z.min(bb.min.z),
             );
-            max = DVec3::new(
+            max = Vec3::new(
                 max.x.max(bb.max.x),
                 max.y.max(bb.max.y),
                 max.z.max(bb.max.z),

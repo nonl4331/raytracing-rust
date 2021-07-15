@@ -1,27 +1,27 @@
-use ultraviolet::vec::DVec3;
+use ultraviolet::vec::Vec3;
 
 pub struct Camera {
-    pub viewport_width: f64,
-    pub viewport_height: f64,
-    pub aspect_ratio: f64,
-    pub origin: DVec3,
-    pub vertical: DVec3,
-    pub horizontal: DVec3,
-    pub u: DVec3,
-    pub v: DVec3,
-    pub lower_left: DVec3,
-    pub lens_radius: f64,
+    pub viewport_width: f32,
+    pub viewport_height: f32,
+    pub aspect_ratio: f32,
+    pub origin: Vec3,
+    pub vertical: Vec3,
+    pub horizontal: Vec3,
+    pub u: Vec3,
+    pub v: Vec3,
+    pub lower_left: Vec3,
+    pub lens_radius: f32,
 }
 
 impl Camera {
     pub fn new(
-        origin: DVec3,
-        lookat: DVec3,
-        vup: DVec3,
-        fov: f64,
-        aspect_ratio: f64,
-        aperture: f64,
-        focus_dist: f64,
+        origin: Vec3,
+        lookat: Vec3,
+        vup: Vec3,
+        fov: f32,
+        aspect_ratio: f32,
+        aperture: f32,
+        focus_dist: f32,
     ) -> Self {
         let viewport_width = 2.0 * (fov.to_radians() / 2.0).tan();
         let viewport_height = viewport_width / aspect_ratio;

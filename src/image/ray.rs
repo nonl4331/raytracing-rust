@@ -6,28 +6,28 @@ use std::sync::Arc;
 
 use crate::image::material::MaterialTrait;
 use crate::image::tracing::HittableTrait;
-use ultraviolet::vec::DVec3;
+use ultraviolet::vec::Vec3;
 
-pub type Colour = DVec3;
+pub type Colour = Vec3;
 
 pub struct Ray {
-    pub origin: DVec3,
-    pub direction: DVec3,
-    pub d_inverse: DVec3,
+    pub origin: Vec3,
+    pub direction: Vec3,
+    pub d_inverse: Vec3,
     pub hittables: HittablesType,
     pub bvh: Arc<BVH>,
     pub sky: Sky,
     pub hit: Option<Hit>,
-    pub time: f64,
+    pub time: f32,
 }
 
 const MAX_DEPTH: u32 = 50;
 
 impl Ray {
     pub fn new(
-        origin: DVec3,
-        mut direction: DVec3,
-        time: f64,
+        origin: Vec3,
+        mut direction: Vec3,
+        time: f32,
         sky: Sky,
         hittables: HittablesType,
         bvh: Arc<BVH>,
@@ -37,7 +37,7 @@ impl Ray {
         Ray {
             origin,
             direction,
-            d_inverse: DVec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
+            d_inverse: Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
             hittables,
             bvh,
             time,
@@ -46,7 +46,7 @@ impl Ray {
         }
     }
 
-    pub fn at(&self, t: f64) -> DVec3 {
+    pub fn at(&self, t: f32) -> Vec3 {
         self.origin + self.direction * t
     }
 

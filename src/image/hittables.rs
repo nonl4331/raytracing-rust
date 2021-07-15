@@ -1,4 +1,4 @@
-use ultraviolet::{DVec2, DVec3};
+use ultraviolet::{Vec2, Vec3};
 
 use std::sync::Arc;
 
@@ -18,7 +18,7 @@ pub enum Axis {
 }
 
 impl Axis {
-    pub fn get_axis_value(&self, point: DVec3) -> f64 {
+    pub fn get_axis_value(&self, point: Vec3) -> f32 {
         match self {
             Axis::X => point.x,
             Axis::Y => point.y,
@@ -26,18 +26,18 @@ impl Axis {
         }
     }
 
-    pub fn point_without_axis(&self, point: DVec3) -> DVec2 {
+    pub fn point_without_axis(&self, point: Vec3) -> Vec2 {
         match self {
-            Axis::X => DVec2::new(point.y, point.z),
-            Axis::Y => DVec2::new(point.x, point.z),
-            Axis::Z => DVec2::new(point.x, point.y),
+            Axis::X => Vec2::new(point.y, point.z),
+            Axis::Y => Vec2::new(point.x, point.z),
+            Axis::Z => Vec2::new(point.x, point.y),
         }
     }
-    pub fn return_point_with_axis(&self, dir: DVec3) -> DVec3 {
+    pub fn return_point_with_axis(&self, dir: Vec3) -> Vec3 {
         match self {
-            Axis::X => DVec3::new(dir.x, 0.0, 0.0),
-            Axis::Y => DVec3::new(0.0, dir.y, 0.0),
-            Axis::Z => DVec3::new(0.0, 0.0, dir.z),
+            Axis::X => Vec3::new(dir.x, 0.0, 0.0),
+            Axis::Y => Vec3::new(0.0, dir.y, 0.0),
+            Axis::Z => Vec3::new(0.0, 0.0, dir.z),
         }
     }
 
@@ -52,55 +52,55 @@ impl Axis {
 }
 
 pub struct AARect {
-    pub min: DVec2,
-    pub max: DVec2,
-    pub k: f64,
+    pub min: Vec2,
+    pub max: Vec2,
+    pub k: f32,
     pub axis: Axis,
     pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
 pub struct AABox {
-    pub min: DVec3,
-    pub max: DVec3,
+    pub min: Vec3,
+    pub max: Vec3,
     pub rects: [AARect; 6],
     pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
 impl AARect {
-    pub fn new(min: DVec2, max: DVec2, k: f64, axis: Axis, material: Material) -> Self {
-        let kvec = k * axis.return_point_with_axis(DVec3::one());
+    pub fn new(min: Vec2, max: Vec2, k: f32, axis: Axis, material: Material) -> Self {
+        let kvec = k * axis.return_point_with_axis(Vec3::one());
         AARect {
             min,
             max,
             k,
             axis,
-            aabb: AABB::new(kvec - 0.0001 * DVec3::one(), kvec + 0.0001 * DVec3::one()),
+            aabb: AABB::new(kvec - 0.0001 * Vec3::one(), kvec + 0.0001 * Vec3::one()),
             material: Arc::new(material),
         }
     }
     pub fn new_with_arc(
-        min: DVec2,
-        max: DVec2,
-        k: f64,
+        min: Vec2,
+        max: Vec2,
+        k: f32,
         axis: Axis,
         material: &Arc<Material>,
     ) -> Self {
-        let kvec = k * axis.return_point_with_axis(DVec3::one());
+        let kvec = k * axis.return_point_with_axis(Vec3::one());
         AARect {
             min,
             max,
             k,
             axis,
-            aabb: AABB::new(kvec - 0.0001 * DVec3::one(), kvec + 0.0001 * DVec3::one()),
+            aabb: AABB::new(kvec - 0.0001 * Vec3::one(), kvec + 0.0001 * Vec3::one()),
             material: material.clone(),
         }
     }
 }
 
 impl AABox {
-    pub fn new(min: DVec3, max: DVec3, material: Material) -> Self {
+    pub fn new(min: Vec3, max: Vec3, material: Material) -> Self {
         let arc = Arc::new(material);
         let rects = [
             AARect::new_with_arc(
@@ -157,43 +157,40 @@ impl AABox {
 }
 
 pub struct Sphere {
-    pub center: DVec3,
-    pub radius: f64,
+    pub center: Vec3,
+    pub radius: f32,
     pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
 impl Sphere {
-    pub fn new(center: DVec3, radius: f64, material: Material) -> Self {
+    pub fn new(center: Vec3, radius: f32, material: Material) -> Self {
         Sphere {
             center,
             radius,
-            aabb: AABB::new(
-                center - radius * DVec3::one(),
-                center + radius * DVec3::one(),
-            ),
+            aabb: AABB::new(center - radius * Vec3::one(), center + radius * Vec3::one()),
             material: Arc::new(material),
         }
     }
 }
 
 pub struct MovingSphere {
-    pub start_pos: DVec3,
-    pub end_pos: DVec3,
-    pub radius: f64,
+    pub start_pos: Vec3,
+    pub end_pos: Vec3,
+    pub radius: f32,
     pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
 impl MovingSphere {
-    pub fn new(start_pos: DVec3, end_pos: DVec3, radius: f64, material: Material) -> Self {
+    pub fn new(start_pos: Vec3, end_pos: Vec3, radius: f32, material: Material) -> Self {
         let start_aabb = AABB::new(
-            start_pos - radius * DVec3::one(),
-            start_pos + radius * DVec3::one(),
+            start_pos - radius * Vec3::one(),
+            start_pos + radius * Vec3::one(),
         );
         let end_aabb = AABB::new(
-            end_pos - radius * DVec3::one(),
-            end_pos + radius * DVec3::one(),
+            end_pos - radius * Vec3::one(),
+            end_pos + radius * Vec3::one(),
         );
         MovingSphere {
             start_pos,
