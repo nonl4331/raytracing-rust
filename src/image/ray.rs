@@ -76,9 +76,10 @@ impl Ray {
         }
     }
 
-    pub fn get_colour(ray: &mut Ray) -> Colour {
+    pub fn get_colour(ray: &mut Ray) -> (Colour, u64) {
         let mut colour = Colour::one();
         let mut depth = 0;
+        let mut ray_count = 0;
 
         // stop generating new bounce rays after MAX_DEPTH
         while depth < MAX_DEPTH {
@@ -90,17 +91,18 @@ impl Ray {
 
                 // scatter_ray can only change ray direction, multiply colour by a factor or exit
                 let (multiplier, exit) = hit.material.scatter_ray(ray, &hit);
+                ray_count += 1;
 
                 colour *= hit.material.colour(hit.uv, hit.point) * multiplier;
 
                 if exit {
-                    return colour;
+                    return (colour, ray_count);
                 }
                 depth += 1;
             } else {
-                return colour * ray.sky.get_colour(&ray);
+                return (colour * ray.sky.get_colour(&ray), ray_count);
             }
         }
-        colour
+        (colour, ray_count)
     }
 }

@@ -21,6 +21,8 @@ use ultraviolet::vec::DVec3;
 
 use rayon::prelude::*;
 
+use std::sync::mpsc::channel;
+
 use std::time::{Duration, Instant};
 
 pub type HittablesType = Arc<Vec<Hittable>>;
@@ -64,13 +66,15 @@ impl Scene {
         height: u32,
         pixel_samples: u32,
         real_pixel_samples: u32,
-    ) -> Vec<f64> {
+    ) -> (Vec<f64>, u64) {
         let channels = 3;
         let pixel_num = height * width;
 
         let mut rgb_vec = Vec::with_capacity((pixel_num * channels) as usize);
 
         let mut rng = rand::thread_rng();
+
+        let mut ray_count = 0;
 
         for pixel_i in 0..pixel_num {
             let x = pixel_i % width;
@@ -81,7 +85,9 @@ impl Scene {
                 let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f64) / height as f64;
 
                 let mut ray = self.get_ray(u, v);
-                colour += Ray::get_colour(&mut ray);
+                let result = Ray::get_colour(&mut ray);
+                colour += result.0;
+                ray_count += result.1;
             }
             colour /= real_pixel_samples as f64;
 
@@ -89,7 +95,7 @@ impl Scene {
             rgb_vec.push(colour.y);
             rgb_vec.push(colour.z);
         }
-        rgb_vec
+        (rgb_vec, ray_count)
     }
 
     pub fn generate_image_threaded(&self, options: Parameters) {
@@ -122,19 +128,28 @@ impl Scene {
             chunk_sizes.push(last_chunk_size);
         }
 
+        let (sender, receiver) = channel();
+
         let start = Instant::now();
 
-        chunk_sizes.par_iter().for_each(|&chunk_size| {
-            let image_part = self.get_image_part(width, height, chunk_size, pixel_samples);
+        chunk_sizes
+            .par_iter()
+            .for_each_with(sender, |sender, &chunk_size| {
+                let result = self.get_image_part(width, height, chunk_size, pixel_samples);
+                sender.send(result.1).unwrap();
 
-            let mut main_image = image.lock().unwrap();
+                let mut main_image = image.lock().unwrap();
 
-            for (value, sample) in (*main_image).iter_mut().zip(image_part.iter()) {
-                *value += sample;
-            }
-        });
+                for (value, sample) in (*main_image).iter_mut().zip(result.0.iter()) {
+                    *value += sample;
+                }
+            });
 
         let end = Instant::now();
+
+        let ray_count = receiver
+            .iter()
+            .fold(0, |rays, partial_rays| rays + partial_rays);
 
         let image: Vec<u8> = (*(image.lock().unwrap()))
             .iter()
@@ -147,6 +162,7 @@ impl Scene {
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
+        println!("Rays: {}", ray_count);
         println!(
             "Render Time: {}",
             get_readable_duration(end.checked_duration_since(start).unwrap())
