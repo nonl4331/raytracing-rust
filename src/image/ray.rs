@@ -94,7 +94,7 @@ impl Ray {
                 colour *= hit.material.colour(hit.uv, hit.point) * multiplier;
 
                 if exit {
-                    return colour * ray.sky.get_colour(&ray);
+                    return colour;
                 }
                 depth += 1;
             } else {
