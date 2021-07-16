@@ -1,9 +1,8 @@
-use crate::image::aabb::AABB;
-use crate::image::hittables::Axis;
-use crate::image::ray::Ray;
+use crate::bvh::aabb::AABB;
+
 use crate::image::scene::HittablesType;
 
-use crate::image::tracing::HittableTrait;
+use crate::ray_tracing::{hittables::Axis, ray::Ray, tracing::HittableTrait};
 
 type NodeIndex = u32;
 
@@ -94,8 +93,8 @@ impl BVH {
 
     pub fn get_intersection_candidates(&self, ray: &Ray) -> Vec<NodeIndex> {
         let mut hittable_indices = Vec::new();
-        for root_node in &self.root_nodes {
-            hittable_indices.extend(self.get_indices(*root_node, ray));
+        for &root_node in &self.root_nodes {
+            hittable_indices.extend(self.get_indices(root_node, ray));
         }
         hittable_indices
     }

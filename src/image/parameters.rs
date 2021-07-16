@@ -1,5 +1,5 @@
-use crate::image::generate;
-use crate::image::scene::Scene;
+use crate::image::{generate, scene::Scene};
+
 use std::process;
 
 const SAMPLES_DEFAULT: u32 = 30;

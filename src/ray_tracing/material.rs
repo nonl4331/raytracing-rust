@@ -1,11 +1,12 @@
-use crate::image::ray::{Colour, Ray};
-use crate::image::texture::{Texture, TextureTrait};
-use ultraviolet::Vec2;
-use ultraviolet::Vec3;
+use crate::math;
 
-use crate::image::tracing::Hit;
+use crate::ray_tracing::{
+    ray::{Colour, Ray},
+    texture::{Texture, TextureTrait},
+    tracing::Hit,
+};
 
-use crate::image::math;
+use ultraviolet::{Vec2, Vec3};
 
 pub enum Material {
     Diffuse(Diffuse),

@@ -1,23 +1,17 @@
-use crate::image::hittables::MovingSphere;
-use crate::image::material::Material;
-use crate::image::math::random_f32;
 use crate::image::scene::Scene;
-use crate::image::sky::Sky;
-use crate::image::texture::CheckeredTexture;
-use crate::image::texture::ImageTexture;
-use crate::image::texture::{SolidColour, Texture};
-use ultraviolet::Vec2;
 
-use crate::image::tracing::Hittable;
+use crate::math;
 
-use crate::image::ray::Colour;
+use crate::ray_tracing::{
+    hittables::{AABox, AARect, Axis, MovingSphere, Sphere},
+    material::*,
+    ray::Colour,
+    sky::Sky,
+    texture::{CheckeredTexture, ImageTexture, SolidColour, Texture},
+    tracing::Hittable,
+};
 
-use ultraviolet::Vec3;
-
-use crate::image::hittables::{AABox, AARect, Axis, Sphere};
-use crate::image::material::*;
-
-use crate::image::math;
+use ultraviolet::{Vec2, Vec3};
 
 const GROUND_COLOUR: Texture = Texture::SolidColour(SolidColour {
     colour: Colour {
@@ -95,7 +89,7 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
                     if motion_blur {
                         let sphere = MovingSphere::new(
                             center,
-                            center - Vec3::new(0.0, random_f32() * 0.5, 0.0),
+                            center - Vec3::new(0.0, math::random_f32() * 0.5, 0.0),
                             0.2,
                             Material::Diffuse(Diffuse::new(
                                 Texture::SolidColour(SolidColour::new(colour)),

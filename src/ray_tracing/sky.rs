@@ -1,6 +1,4 @@
-use crate::image::ray::Colour;
-
-use crate::image::ray::Ray;
+use crate::ray_tracing::ray::{Colour, Ray};
 
 #[derive(Copy, Clone)]
 pub struct Sky {

@@ -1,15 +1,12 @@
-use ultraviolet::{Vec2, Vec3};
+use crate::bvh::aabb::AABB;
+
+use crate::ray_tracing::material::Material;
+
+use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 use std::sync::Arc;
 
-use crate::image::aabb::AABB;
-
-use crate::image::material::Material;
-
-use rand::rngs::SmallRng;
-use rand::thread_rng;
-
-use rand::{Rng, SeedableRng};
+use ultraviolet::{Vec2, Vec3};
 
 pub enum Axis {
     X,

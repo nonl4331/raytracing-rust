@@ -1,11 +1,15 @@
-use crate::image::bvh::BVH;
+use crate::bvh::bvh::BVH;
+
 use crate::image::scene::HittablesType;
-use crate::image::sky::Sky;
-use crate::image::tracing::Hit;
+
+use crate::ray_tracing::{
+    material::MaterialTrait,
+    sky::Sky,
+    tracing::{Hit, HittableTrait},
+};
+
 use std::sync::Arc;
 
-use crate::image::material::MaterialTrait;
-use crate::image::tracing::HittableTrait;
 use ultraviolet::vec::Vec3;
 
 pub type Colour = Vec3;

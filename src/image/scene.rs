@@ -1,29 +1,26 @@
-use crate::image::bvh::BVH;
+use crate::bvh::bvh::BVH;
+
 use crate::image::camera::Camera;
 
-use crate::image::math::random_f32;
-use crate::image::math::random_in_unit_disk;
-use crate::image::ray::Ray;
-use crate::image::tracing::Hittable;
+use crate::math::{random_f32, random_in_unit_disk};
+
 use crate::parameters::Parameters;
 
-use crate::image::ray::Colour;
-
-use crate::image::sky::Sky;
-
-use std::sync::Mutex;
+use crate::ray_tracing::{
+    ray::{Colour, Ray},
+    sky::Sky,
+    tracing::Hittable,
+};
 
 use rand::Rng;
 
-use std::sync::Arc;
-
-use ultraviolet::vec::Vec3;
-
 use rayon::prelude::*;
 
-use std::sync::mpsc::channel;
+use std::sync::{mpsc::channel, Arc, Mutex};
 
 use std::time::{Duration, Instant};
+
+use ultraviolet::vec::Vec3;
 
 pub type HittablesType = Arc<Vec<Hittable>>;
 

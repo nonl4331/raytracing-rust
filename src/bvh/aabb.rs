@@ -1,4 +1,5 @@
-use crate::image::ray::Ray;
+use crate::ray_tracing::ray::Ray;
+
 use ultraviolet::Vec3;
 
 #[derive(Copy, Clone, Debug)]

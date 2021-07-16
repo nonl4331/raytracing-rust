@@ -1,10 +1,17 @@
-use crate::image::aabb::AABB;
-use crate::image::hittables::{AABox, AARect, MovingSphere, Sphere};
-use crate::image::material::{Material, MaterialTrait};
-use crate::image::math::near_zero;
-use crate::image::ray::Ray;
+use crate::bvh::aabb::AABB;
+
+use crate::math::near_zero;
+
+use crate::ray_tracing::{
+    hittables::{AABox, AARect, MovingSphere, Sphere},
+    material::{Material, MaterialTrait},
+    ray::Ray,
+};
+
 use std::f32::consts::PI;
+
 use std::sync::Arc;
+
 use ultraviolet::{Vec2, Vec3};
 
 pub struct Hit {

@@ -1,10 +1,8 @@
-use ultraviolet::Vec3;
-
-use ultraviolet::Vec2;
-
-use crate::image::ray::Colour;
+use crate::ray_tracing::ray::Colour;
 
 use image::GenericImageView;
+
+use ultraviolet::{Vec2, Vec3};
 
 pub enum Texture {
     CheckeredTexture(CheckeredTexture),
