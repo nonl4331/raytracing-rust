@@ -9,7 +9,7 @@ use crate::parameters::Parameters;
 use crate::ray_tracing::{
     ray::{Colour, Ray},
     sky::Sky,
-    tracing::Hittable,
+    tracing::{Primitive, PrimitiveTrait},
 };
 
 use rand::Rng;
@@ -22,7 +22,7 @@ use std::time::{Duration, Instant};
 
 use ultraviolet::vec::Vec3;
 
-pub type PrimitivesType = Arc<Vec<Hittable>>;
+pub type PrimitivesType = Arc<Vec<Primitive>>;
 
 pub struct Scene {
     pub primitives: PrimitivesType,
@@ -41,8 +41,13 @@ impl Scene {
         aperture: f32,
         focus_dist: f32,
         sky: Sky,
-        primitives: Vec<Hittable>,
+        mut primitives: Vec<Primitive>,
     ) -> Self {
+        let primitives: Vec<Primitive> = primitives
+            .drain(..)
+            .flat_map(|primitive| primitive.get_internal())
+            .collect();
+
         let primitives: PrimitivesType = Arc::new(primitives);
 
         let bvh = Arc::new(BVH::new(&primitives));

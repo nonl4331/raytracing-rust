@@ -8,6 +8,7 @@ use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
 
+#[derive(Clone)]
 pub enum Axis {
     X,
     Y,
@@ -48,6 +49,7 @@ impl Axis {
     }
 }
 
+#[derive(Clone)]
 pub struct AARect {
     pub min: Vec2,
     pub max: Vec2,

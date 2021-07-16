@@ -2,7 +2,7 @@ use crate::bvh::aabb::AABB;
 
 use crate::image::scene::PrimitivesType;
 
-use crate::ray_tracing::{primitives::Axis, ray::Ray, tracing::HittableTrait};
+use crate::ray_tracing::{primitives::Axis, ray::Ray, tracing::PrimitiveTrait};
 
 type NodeIndex = u32;
 
@@ -24,7 +24,7 @@ impl BVH {
     fn generate_bvh(&mut self, primitives: &PrimitivesType) {
         self.nodes = Vec::new();
 
-        // get hittable indexes
+        // get primitive indexes
         let mut index_vec = Vec::new();
         for i in 0..primitives.len() {
             index_vec.push(i as u32);
@@ -32,8 +32,8 @@ impl BVH {
 
         // pack index and AABB min value into typle
         let mut sorted_tuples = Vec::new();
-        for (hittable, index) in primitives.iter().zip(index_vec) {
-            sorted_tuples.push((hittable.get_aabb().unwrap(), index));
+        for (primitive, index) in primitives.iter().zip(index_vec) {
+            sorted_tuples.push((primitive.get_aabb().unwrap(), index));
         }
 
         // returns ceil(vec_size / 2) unless size is 1 which then it returns 1
@@ -56,25 +56,25 @@ impl BVH {
         }
     }
 
-    fn new_node(&mut self, hittable_tuples: &mut [(AABB, u32)]) -> NodeIndex {
-        // get node AABB that contains all AABB's in hittable_tuples
+    fn new_node(&mut self, primitive_tuples: &mut [(AABB, u32)]) -> NodeIndex {
+        // get node AABB that contains all AABB's in primitive_tuples
         let containing_aabb =
-            AABB::new_contains(&hittable_tuples.iter().map(|(aabb, _)| *aabb).collect());
+            AABB::new_contains(&primitive_tuples.iter().map(|(aabb, _)| *aabb).collect());
 
         let mut new_node = Node::new(
             containing_aabb,
-            hittable_tuples.iter().map(|(_, index)| *index).collect(),
+            primitive_tuples.iter().map(|(_, index)| *index).collect(),
         );
 
-        if hittable_tuples.len() != 1 {
+        if primitive_tuples.len() != 1 {
             // returns ceil(vec_size / 2) since size != 1
-            let half_size = (hittable_tuples.len() as f32 / 2.0).ceil() as usize;
+            let half_size = (primitive_tuples.len() as f32 / 2.0).ceil() as usize;
 
             // random sorting axis
             let axis = Axis::random_axis();
 
             // sort min values in axis
-            hittable_tuples.sort_by(|a, b| {
+            primitive_tuples.sort_by(|a, b| {
                 axis.get_axis_value(a.0.min)
                     .partial_cmp(&axis.get_axis_value(b.0.min))
                     .unwrap()
@@ -82,7 +82,7 @@ impl BVH {
 
             // create and add child nodes
             let mut chunks: Vec<&mut [(AABB, u32)]> =
-                hittable_tuples.chunks_mut(half_size).collect();
+                primitive_tuples.chunks_mut(half_size).collect();
             let left_index = self.new_node(chunks[0]);
             let right_index = self.new_node(chunks[1]);
             new_node.add_child_nodes(left_index, right_index);
@@ -92,11 +92,11 @@ impl BVH {
     }
 
     pub fn get_intersection_candidates(&self, ray: &Ray) -> Vec<NodeIndex> {
-        let mut hittable_indices = Vec::new();
+        let mut primitive_indices = Vec::new();
         for &root_node in &self.root_nodes {
-            hittable_indices.extend(self.get_indices(root_node, ray));
+            primitive_indices.extend(self.get_indices(root_node, ray));
         }
-        hittable_indices
+        primitive_indices
     }
 
     fn get_indices(&self, node: NodeIndex, ray: &Ray) -> Vec<NodeIndex> {

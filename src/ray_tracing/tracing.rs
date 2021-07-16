@@ -23,13 +23,14 @@ pub struct Hit {
     pub material: Arc<Material>,
 }
 
-pub trait HittableTrait {
+pub trait PrimitiveTrait {
     fn get_int(&self, _: &Ray) -> Option<Hit> {
         None
     }
     fn does_int(&self, _: &Ray) -> bool {
         false
     }
+    fn get_internal(self) -> Vec<Primitive>;
     fn get_aabb(&self) -> Option<AABB> {
         None
     }
@@ -41,60 +42,69 @@ pub trait HittableTrait {
     }
 }
 
-pub enum Hittable {
+pub enum Primitive {
     Sphere(Sphere),
     MovingSphere(MovingSphere),
     AARect(AARect),
     AABox(AABox),
 }
 
-impl HittableTrait for Hittable {
+impl PrimitiveTrait for Primitive {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         match self {
-            Hittable::Sphere(sphere) => sphere.get_int(ray),
-            Hittable::MovingSphere(sphere) => sphere.get_int(ray),
-            Hittable::AARect(rect) => rect.get_int(ray),
-            Hittable::AABox(rect) => rect.get_int(ray),
+            Primitive::Sphere(sphere) => sphere.get_int(ray),
+            Primitive::MovingSphere(sphere) => sphere.get_int(ray),
+            Primitive::AARect(rect) => rect.get_int(ray),
+            Primitive::AABox(aab) => aab.get_int(ray),
         }
     }
 
     fn does_int(&self, ray: &Ray) -> bool {
         match self {
-            Hittable::Sphere(sphere) => sphere.does_int(ray),
-            Hittable::MovingSphere(sphere) => sphere.does_int(ray),
-            Hittable::AARect(rect) => rect.does_int(ray),
-            Hittable::AABox(rect) => rect.does_int(ray),
+            Primitive::Sphere(sphere) => sphere.does_int(ray),
+            Primitive::MovingSphere(sphere) => sphere.does_int(ray),
+            Primitive::AARect(rect) => rect.does_int(ray),
+            Primitive::AABox(aab) => aab.does_int(ray),
+        }
+    }
+
+    fn get_internal(self) -> Vec<Primitive> {
+        match self {
+            Primitive::Sphere(sphere) => sphere.get_internal(),
+            Primitive::MovingSphere(sphere) => sphere.get_internal(),
+            Primitive::AARect(rect) => rect.get_internal(),
+            Primitive::AABox(aab) => aab.get_internal(),
         }
     }
 
     fn get_aabb(&self) -> Option<AABB> {
         match self {
-            Hittable::Sphere(sphere) => Some(sphere.aabb),
-            Hittable::MovingSphere(sphere) => Some(sphere.aabb),
-            Hittable::AARect(rect) => Some(rect.aabb),
-            Hittable::AABox(rect) => Some(rect.aabb),
+            Primitive::Sphere(sphere) => Some(sphere.aabb),
+            Primitive::MovingSphere(sphere) => Some(sphere.aabb),
+            Primitive::AARect(rect) => Some(rect.aabb),
+            Primitive::AABox(aab) => Some(aab.aabb),
         }
     }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         match self {
-            Hittable::Sphere(sphere) => sphere.get_uv(point),
-            Hittable::MovingSphere(sphere) => sphere.get_uv(point),
-            Hittable::AARect(rect) => rect.get_uv(point),
-            Hittable::AABox(rect) => rect.get_uv(point),
+            Primitive::Sphere(sphere) => sphere.get_uv(point),
+            Primitive::MovingSphere(sphere) => sphere.get_uv(point),
+            Primitive::AARect(rect) => rect.get_uv(point),
+            Primitive::AABox(aab) => aab.get_uv(point),
         };
         None
     }
     fn requires_uv(&self) -> bool {
         match self {
-            Hittable::Sphere(sphere) => (*sphere.material).requires_uv(),
-            Hittable::MovingSphere(sphere) => sphere.material.requires_uv(),
-            Hittable::AARect(rect) => rect.material.requires_uv(),
-            Hittable::AABox(rect) => rect.material.requires_uv(),
+            Primitive::Sphere(sphere) => (*sphere.material).requires_uv(),
+            Primitive::MovingSphere(sphere) => sphere.material.requires_uv(),
+            Primitive::AARect(rect) => rect.material.requires_uv(),
+            Primitive::AABox(aab) => aab.material.requires_uv(),
         }
     }
 }
 
-impl HittableTrait for Sphere {
+impl PrimitiveTrait for Sphere {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
@@ -129,6 +139,9 @@ impl HittableTrait for Sphere {
             None
         }
     }
+    fn get_internal(self) -> Vec<Primitive> {
+        vec![Primitive::Sphere(self)]
+    }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let x = (self.center.x - point.x) / self.radius;
@@ -143,7 +156,7 @@ impl HittableTrait for Sphere {
     }
 }
 
-impl HittableTrait for MovingSphere {
+impl PrimitiveTrait for MovingSphere {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let time_center = self.start_pos + (self.end_pos - self.start_pos) * ray.time;
         let oc = ray.origin - time_center;
@@ -179,6 +192,9 @@ impl HittableTrait for MovingSphere {
             None
         }
     }
+    fn get_internal(self) -> Vec<Primitive> {
+        vec![Primitive::MovingSphere(self)]
+    }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let phi = (-1.0 * point.z).atan2(point.x) + PI;
@@ -190,7 +206,7 @@ impl HittableTrait for MovingSphere {
     }
 }
 
-impl HittableTrait for AARect {
+impl PrimitiveTrait for AARect {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let t = (self.k - self.axis.get_axis_value(ray.origin))
             / self.axis.get_axis_value(ray.direction);
@@ -231,6 +247,9 @@ impl HittableTrait for AARect {
             && point_2d.y > self.min.y
             && point_2d.y < self.max.y
     }
+    fn get_internal(self) -> Vec<Primitive> {
+        vec![Primitive::AARect(self)]
+    }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let pwa = self.axis.point_without_axis(point);
@@ -243,7 +262,7 @@ impl HittableTrait for AARect {
     }
 }
 
-impl HittableTrait for AABox {
+impl PrimitiveTrait for AABox {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let mut hit: Option<Hit> = None;
         for side in self.rects.iter() {
@@ -265,6 +284,12 @@ impl HittableTrait for AABox {
             }
         }
         hit
+    }
+    fn get_internal(mut self) -> Vec<Primitive> {
+        self.rects
+            .iter_mut()
+            .map(|rect| Primitive::AARect(rect.clone()))
+            .collect()
     }
 
     fn does_int(&self, ray: &Ray) -> bool {

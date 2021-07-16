@@ -5,7 +5,7 @@ use crate::image::scene::PrimitivesType;
 use crate::ray_tracing::{
     material::MaterialTrait,
     sky::Sky,
-    tracing::{Hit, HittableTrait},
+    tracing::{Hit, PrimitiveTrait},
 };
 
 use std::sync::Arc;

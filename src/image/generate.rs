@@ -8,7 +8,7 @@ use crate::ray_tracing::{
     ray::Colour,
     sky::Sky,
     texture::{CheckeredTexture, ImageTexture, SolidColour, Texture},
-    tracing::Hittable,
+    tracing::Primitive,
 };
 
 use ultraviolet::{Vec2, Vec3};
@@ -22,7 +22,7 @@ const GROUND_COLOUR: Texture = Texture::SolidColour(SolidColour {
 });
 
 pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
-    let mut primitives: Vec<Hittable> = Vec::new();
+    let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
         Vec3 {
@@ -66,10 +66,10 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
         Material::Reflect(Reflect::new(three_colour, 0.0)),
     );
 
-    primitives.push(Hittable::Sphere(ground));
-    primitives.push(Hittable::Sphere(sphere_one));
-    primitives.push(Hittable::Sphere(sphere_two));
-    primitives.push(Hittable::Sphere(sphere_three));
+    primitives.push(Primitive::Sphere(ground));
+    primitives.push(Primitive::Sphere(sphere_one));
+    primitives.push(Primitive::Sphere(sphere_two));
+    primitives.push(Primitive::Sphere(sphere_three));
 
     for a in -11..11 {
         for b in -11..11 {
@@ -96,7 +96,7 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
                                 0.5,
                             )),
                         );
-                        primitives.push(Hittable::MovingSphere(sphere));
+                        primitives.push(Primitive::MovingSphere(sphere));
                     } else {
                         let sphere = Sphere::new(
                             center,
@@ -106,7 +106,7 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
                                 0.5,
                             )),
                         );
-                        primitives.push(Hittable::Sphere(sphere));
+                        primitives.push(Primitive::Sphere(sphere));
                     }
                 } else if choose_material < 0.95 {
                     // metal sphere
@@ -115,7 +115,7 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
                         0.2,
                         Material::Reflect(Reflect::new(colour, math::random_f32() / 2.0)),
                     );
-                    primitives.push(Hittable::Sphere(sphere));
+                    primitives.push(Primitive::Sphere(sphere));
                 } else {
                     // glass sphere
                     let sphere = Sphere::new(
@@ -123,7 +123,7 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
                         0.2,
                         Material::Refract(Refract::new(Colour::one(), 1.5)),
                     );
-                    primitives.push(Hittable::Sphere(sphere));
+                    primitives.push(Primitive::Sphere(sphere));
                 }
             }
         }
@@ -145,7 +145,7 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
 }
 
 pub fn scene_two(aspect_ratio: f32) -> Scene {
-    let mut primitives: Vec<Hittable> = Vec::new();
+    let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
         Vec3 {
@@ -204,11 +204,11 @@ pub fn scene_two(aspect_ratio: f32) -> Scene {
         Material::Reflect(Reflect::new(Colour::new(1.0, 0.9, 0.9), 0.001)),
     );
 
-    primitives.push(Hittable::Sphere(ground));
-    primitives.push(Hittable::AARect(rect_one));
-    primitives.push(Hittable::Sphere(sphere_two));
-    primitives.push(Hittable::Sphere(sphere_three));
-    primitives.push(Hittable::Sphere(sphere_four));
+    primitives.push(Primitive::Sphere(ground));
+    primitives.push(Primitive::AARect(rect_one));
+    primitives.push(Primitive::Sphere(sphere_two));
+    primitives.push(Primitive::Sphere(sphere_three));
+    primitives.push(Primitive::Sphere(sphere_four));
 
     let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
@@ -226,7 +226,7 @@ pub fn scene_two(aspect_ratio: f32) -> Scene {
 }
 
 pub fn scene_three(aspect_ratio: f32) -> Scene {
-    let mut primitives: Vec<Hittable> = Vec::new();
+    let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
         Vec3 {
@@ -292,11 +292,11 @@ pub fn scene_three(aspect_ratio: f32) -> Scene {
         )),
     );
 
-    primitives.push(Hittable::Sphere(ground));
-    primitives.push(Hittable::AABox(box_left));
-    primitives.push(Hittable::AABox(box_middle));
-    primitives.push(Hittable::Sphere(sphere_middle));
-    primitives.push(Hittable::AABox(box_right));
+    primitives.push(Primitive::Sphere(ground));
+    primitives.push(Primitive::AABox(box_left));
+    primitives.push(Primitive::AABox(box_middle));
+    primitives.push(Primitive::Sphere(sphere_middle));
+    primitives.push(Primitive::AABox(box_right));
 
     let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
@@ -314,7 +314,7 @@ pub fn scene_three(aspect_ratio: f32) -> Scene {
 }
 
 pub fn scene_four(aspect_ratio: f32) -> Scene {
-    let mut primitives: Vec<Hittable> = Vec::new();
+    let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
         Vec3 {
@@ -338,9 +338,9 @@ pub fn scene_four(aspect_ratio: f32) -> Scene {
         Material::Diffuse(Diffuse::new(GROUND_COLOUR, 0.5)),
     );
 
-    primitives.push(Hittable::Sphere(ground));
-    primitives.push(Hittable::Sphere(glowy));
-    primitives.push(Hittable::AABox(cube));
+    primitives.push(Primitive::Sphere(ground));
+    primitives.push(Primitive::Sphere(glowy));
+    primitives.push(Primitive::AABox(cube));
 
     let sky = Sky::new(None);
 
@@ -359,7 +359,7 @@ pub fn scene_four(aspect_ratio: f32) -> Scene {
 
 // WIP
 pub fn scene_five(aspect_ratio: f32) -> Scene {
-    let mut primitives: Vec<Hittable> = Vec::new();
+    let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground_mat = Texture::CheckeredTexture(CheckeredTexture::new(
         Colour::new(0.0, 0.0, 0.0),
@@ -388,9 +388,9 @@ pub fn scene_five(aspect_ratio: f32) -> Scene {
     ));
     let earth = Sphere::new(Vec3::new(0.0, 1.2, 0.0), 0.5, earth_mat);
 
-    primitives.push(Hittable::Sphere(ground));
-    primitives.push(Hittable::AABox(cube));
-    primitives.push(Hittable::Sphere(earth));
+    primitives.push(Primitive::Sphere(ground));
+    primitives.push(Primitive::AABox(cube));
+    primitives.push(Primitive::Sphere(earth));
 
     let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
 
