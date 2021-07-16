@@ -22,10 +22,10 @@ use std::time::{Duration, Instant};
 
 use ultraviolet::vec::Vec3;
 
-pub type HittablesType = Arc<Vec<Hittable>>;
+pub type PrimitivesType = Arc<Vec<Hittable>>;
 
 pub struct Scene {
-    pub hittables: HittablesType,
+    pub primitives: PrimitivesType,
     pub bvh: Arc<BVH>,
     pub camera: Camera,
     pub sky: Sky,
@@ -41,16 +41,16 @@ impl Scene {
         aperture: f32,
         focus_dist: f32,
         sky: Sky,
-        hittables: Vec<Hittable>,
+        primitives: Vec<Hittable>,
     ) -> Self {
-        let hittables: HittablesType = Arc::new(hittables);
+        let primitives: PrimitivesType = Arc::new(primitives);
 
-        let bvh = Arc::new(BVH::new(&hittables));
+        let bvh = Arc::new(BVH::new(&primitives));
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 
         Scene {
-            hittables,
+            primitives,
             bvh,
             camera,
             sky,
@@ -180,7 +180,7 @@ impl Scene {
                 - offset,
             random_f32(),
             self.sky,
-            self.hittables.clone(),
+            self.primitives.clone(),
             self.bvh.clone(),
         )
     }

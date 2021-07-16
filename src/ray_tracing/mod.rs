@@ -1,6 +1,6 @@
-pub mod hittables;
-
 pub mod material;
+
+pub mod primitives;
 
 pub mod ray;
 

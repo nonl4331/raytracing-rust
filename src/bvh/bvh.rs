@@ -1,8 +1,8 @@
 use crate::bvh::aabb::AABB;
 
-use crate::image::scene::HittablesType;
+use crate::image::scene::PrimitivesType;
 
-use crate::ray_tracing::{hittables::Axis, ray::Ray, tracing::HittableTrait};
+use crate::ray_tracing::{primitives::Axis, ray::Ray, tracing::HittableTrait};
 
 type NodeIndex = u32;
 
@@ -12,32 +12,32 @@ pub struct BVH {
 }
 
 impl BVH {
-    pub fn new(hittables: &HittablesType) -> Self {
+    pub fn new(primitives: &PrimitivesType) -> Self {
         let mut new_bvh = Self {
             root_nodes: Vec::new(),
             nodes: Vec::new(),
         };
-        new_bvh.generate_bvh(hittables);
+        new_bvh.generate_bvh(primitives);
         new_bvh
     }
 
-    fn generate_bvh(&mut self, hittables: &HittablesType) {
+    fn generate_bvh(&mut self, primitives: &PrimitivesType) {
         self.nodes = Vec::new();
 
         // get hittable indexes
         let mut index_vec = Vec::new();
-        for i in 0..hittables.len() {
+        for i in 0..primitives.len() {
             index_vec.push(i as u32);
         }
 
         // pack index and AABB min value into typle
         let mut sorted_tuples = Vec::new();
-        for (hittable, index) in hittables.iter().zip(index_vec) {
+        for (hittable, index) in primitives.iter().zip(index_vec) {
             sorted_tuples.push((hittable.get_aabb().unwrap(), index));
         }
 
         // returns ceil(vec_size / 2) unless size is 1 which then it returns 1
-        let half_size = std::cmp::max((hittables.len() as f32 / 2.0).ceil() as usize, 1);
+        let half_size = std::cmp::max((primitives.len() as f32 / 2.0).ceil() as usize, 1);
 
         // get random axis to sort along
         let axis = Axis::random_axis();

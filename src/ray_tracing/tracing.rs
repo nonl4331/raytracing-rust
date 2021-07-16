@@ -3,8 +3,8 @@ use crate::bvh::aabb::AABB;
 use crate::math::near_zero;
 
 use crate::ray_tracing::{
-    hittables::{AABox, AARect, MovingSphere, Sphere},
     material::{Material, MaterialTrait},
+    primitives::{AABox, AARect, MovingSphere, Sphere},
     ray::Ray,
 };
 

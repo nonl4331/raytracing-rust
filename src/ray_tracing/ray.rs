@@ -1,6 +1,6 @@
 use crate::bvh::bvh::BVH;
 
-use crate::image::scene::HittablesType;
+use crate::image::scene::PrimitivesType;
 
 use crate::ray_tracing::{
     material::MaterialTrait,
@@ -18,7 +18,7 @@ pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
     pub d_inverse: Vec3,
-    pub hittables: HittablesType,
+    pub primitives: PrimitivesType,
     pub bvh: Arc<BVH>,
     pub sky: Sky,
     pub hit: Option<Hit>,
@@ -33,7 +33,7 @@ impl Ray {
         mut direction: Vec3,
         time: f32,
         sky: Sky,
-        hittables: HittablesType,
+        primitives: PrimitivesType,
         bvh: Arc<BVH>,
     ) -> Self {
         direction.normalize();
@@ -42,7 +42,7 @@ impl Ray {
             origin,
             direction,
             d_inverse: Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
-            hittables,
+            primitives,
             bvh,
             time,
             sky,
@@ -58,7 +58,7 @@ impl Ray {
         let candidates = self.bvh.get_intersection_candidates(&self);
 
         for object_index in candidates {
-            let object = &self.hittables[object_index as usize];
+            let object = &self.primitives[object_index as usize];
 
             // check for hit
             if let Some(current_hit) = object.get_int(&self) {

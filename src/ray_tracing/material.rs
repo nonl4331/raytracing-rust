@@ -112,7 +112,7 @@ impl MaterialTrait for Diffuse {
             direction,
             ray.time,
             ray.sky,
-            ray.hittables.clone(),
+            ray.primitives.clone(),
             ray.bvh.clone(),
         );
         (self.absorption, false)
@@ -131,7 +131,7 @@ impl MaterialTrait for Reflect {
             direction + self.fuzz * math::random_unit_vector(),
             ray.time,
             ray.sky,
-            ray.hittables.clone(),
+            ray.primitives.clone(),
             ray.bvh.clone(),
         );
         (1.0, false)
@@ -168,7 +168,7 @@ impl MaterialTrait for Refract {
             direction,
             ray.time,
             ray.sky,
-            ray.hittables.clone(),
+            ray.primitives.clone(),
             ray.bvh.clone(),
         );
         (1.0, false)
