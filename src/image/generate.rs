@@ -7,7 +7,7 @@ use crate::ray_tracing::{
     primitives::{AABox, AARect, Axis, MovingSphere, Sphere},
     ray::Colour,
     sky::Sky,
-    texture::{CheckeredTexture, ImageTexture, SolidColour, Texture},
+    texture::{CheckeredTexture, ImageTexture, Lerp, SolidColour, Texture},
     tracing::Primitive,
 };
 
@@ -129,7 +129,10 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
         }
     }
 
-    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Texture::Lerp(Lerp::new(
+        Colour::new(0.5, 0.7, 1.0),
+        Colour::one(),
+    ))));
 
     Scene::new(
         Vec3::new(13.0, 2.0, -3.0),
@@ -210,7 +213,10 @@ pub fn scene_two(aspect_ratio: f32) -> Scene {
     primitives.push(Primitive::Sphere(sphere_three));
     primitives.push(Primitive::Sphere(sphere_four));
 
-    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Texture::Lerp(Lerp::new(
+        Colour::new(0.5, 0.7, 1.0),
+        Colour::one(),
+    ))));
 
     Scene::new(
         Vec3::new(3.0, 1.0, -15.0),
@@ -298,7 +304,10 @@ pub fn scene_three(aspect_ratio: f32) -> Scene {
     primitives.push(Primitive::Sphere(sphere_middle));
     primitives.push(Primitive::AABox(box_right));
 
-    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Texture::Lerp(Lerp::new(
+        Colour::new(0.5, 0.7, 1.0),
+        Colour::one(),
+    ))));
 
     Scene::new(
         Vec3::new(-5.0, 3.0, -3.0),
@@ -392,7 +401,10 @@ pub fn scene_five(aspect_ratio: f32) -> Scene {
     primitives.push(Primitive::AABox(cube));
     primitives.push(Primitive::Sphere(earth));
 
-    let sky = Sky::new(Some(Colour::new(0.5, 0.7, 1.0)));
+    let sky = Sky::new(Some(Texture::Lerp(Lerp::new(
+        Colour::new(0.5, 0.7, 1.0),
+        Colour::one(),
+    ))));
 
     Scene::new(
         Vec3::new(-5.0, 4.0, -3.0),

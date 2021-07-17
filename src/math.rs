@@ -31,6 +31,6 @@ pub fn random_f32() -> f32 {
 }
 
 pub fn near_zero(vec: Vec3) -> bool {
-    let s = 0.00000001;
+    let s = 0.001;
     vec.x.abs() < s && vec.y.abs() < s && vec.z.abs() < s
 }

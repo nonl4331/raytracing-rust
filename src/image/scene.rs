@@ -28,7 +28,7 @@ pub struct Scene {
     pub primitives: PrimitivesType,
     pub bvh: Arc<BVH>,
     pub camera: Camera,
-    pub sky: Sky,
+    pub sky: Arc<Sky>,
 }
 
 impl Scene {
@@ -58,7 +58,7 @@ impl Scene {
             primitives,
             bvh,
             camera,
-            sky,
+            sky: Arc::new(sky),
         }
     }
 
@@ -87,7 +87,12 @@ impl Scene {
                 let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f32) / height as f32;
 
                 let mut ray = self.get_ray(u, v);
-                let result = Ray::get_colour(&mut ray);
+                let result = Ray::get_colour(
+                    &mut ray,
+                    self.sky.clone(),
+                    self.bvh.clone(),
+                    self.primitives.clone(),
+                );
                 colour += result.0;
                 ray_count += result.1;
             }
@@ -184,9 +189,6 @@ impl Scene {
                 - self.camera.origin
                 - offset,
             random_f32(),
-            self.sky,
-            self.primitives.clone(),
-            self.bvh.clone(),
         )
     }
 }

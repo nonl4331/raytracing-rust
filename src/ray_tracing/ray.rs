@@ -18,9 +18,6 @@ pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
     pub d_inverse: Vec3,
-    pub primitives: PrimitivesType,
-    pub bvh: Arc<BVH>,
-    pub sky: Sky,
     pub hit: Option<Hit>,
     pub time: f32,
 }
@@ -28,24 +25,14 @@ pub struct Ray {
 const MAX_DEPTH: u32 = 50;
 
 impl Ray {
-    pub fn new(
-        origin: Vec3,
-        mut direction: Vec3,
-        time: f32,
-        sky: Sky,
-        primitives: PrimitivesType,
-        bvh: Arc<BVH>,
-    ) -> Self {
+    pub fn new(origin: Vec3, mut direction: Vec3, time: f32) -> Self {
         direction.normalize();
 
         Ray {
             origin,
             direction,
             d_inverse: Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
-            primitives,
-            bvh,
             time,
-            sky,
             hit: None,
         }
     }
@@ -54,11 +41,11 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn check_hit(&mut self) {
-        let candidates = self.bvh.get_intersection_candidates(&self);
+    fn check_hit(&mut self, bvh: &Arc<BVH>, primitives: &PrimitivesType) {
+        let candidates = bvh.get_intersection_candidates(&self);
 
         for object_index in candidates {
-            let object = &self.primitives[object_index as usize];
+            let object = &primitives[object_index as usize];
 
             // check for hit
             if let Some(current_hit) = object.get_int(&self) {
@@ -80,7 +67,12 @@ impl Ray {
         }
     }
 
-    pub fn get_colour(ray: &mut Ray) -> (Colour, u64) {
+    pub fn get_colour(
+        ray: &mut Ray,
+        sky: Arc<Sky>,
+        bvh: Arc<BVH>,
+        primitives: PrimitivesType,
+    ) -> (Colour, u64) {
         let mut colour = Colour::one();
         let mut depth = 0;
         let mut ray_count = 0;
@@ -88,7 +80,7 @@ impl Ray {
         // stop generating new bounce rays after MAX_DEPTH
         while depth < MAX_DEPTH {
             // check for intersection with any of the objects in the scene
-            ray.check_hit();
+            ray.check_hit(&bvh, &primitives);
 
             if ray.hit.is_some() {
                 let hit = ray.hit.take().unwrap();
@@ -104,7 +96,7 @@ impl Ray {
                 }
                 depth += 1;
             } else {
-                return (colour * ray.sky.get_colour(&ray), ray_count);
+                return (colour * sky.get_colour(&ray), ray_count);
             }
         }
         (colour, ray_count)

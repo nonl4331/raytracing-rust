@@ -8,6 +8,7 @@ pub enum Texture {
     CheckeredTexture(CheckeredTexture),
     SolidColour(SolidColour),
     ImageTexture(ImageTexture),
+    Lerp(Lerp),
 }
 
 pub trait TextureTrait {
@@ -25,6 +26,7 @@ impl TextureTrait for Texture {
             Texture::CheckeredTexture(texture) => texture.colour_value(uv, point),
             Texture::SolidColour(texture) => texture.colour_value(uv, point),
             Texture::ImageTexture(texture) => texture.colour_value(uv, point),
+            Texture::Lerp(texture) => texture.colour_value(uv, point),
         }
     }
     fn requires_uv(&self) -> bool {
@@ -32,6 +34,7 @@ impl TextureTrait for Texture {
             Texture::CheckeredTexture(_) => false,
             Texture::SolidColour(_) => false,
             Texture::ImageTexture(_) => true,
+            Texture::Lerp(_) => true,
         }
     }
 }
@@ -129,6 +132,30 @@ impl TextureTrait for ImageTexture {
         // + 1 to get width in pixels
         let index = y_pixel * (self.dim.0 + 1) + x_pixel;
         self.data[index]
+    }
+    fn requires_uv(&self) -> bool {
+        true
+    }
+}
+
+pub struct Lerp {
+    pub colour_one: Colour,
+    pub colour_two: Colour,
+}
+
+impl Lerp {
+    pub fn new(colour_one: Colour, colour_two: Colour) -> Self {
+        Lerp {
+            colour_one,
+            colour_two,
+        }
+    }
+}
+
+impl TextureTrait for Lerp {
+    fn colour_value(&self, uv: Option<Vec2>, _: Vec3) -> Colour {
+        let uv = uv.unwrap();
+        self.colour_one * uv.y + self.colour_two * (1.0 - uv.y)
     }
     fn requires_uv(&self) -> bool {
         true

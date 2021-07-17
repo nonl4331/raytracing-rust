@@ -322,7 +322,7 @@ impl PrimitiveTrait for Triangle {
         let edge2 = self.points[2] - self.points[0];
         let h = ray.direction.cross(edge2);
         let a = edge1.dot(h);
-        if a > -0.00000001 && a < 0.00000001 {
+        if a > -0.001 && a < 0.001 {
             return None;
         }
         let f = 1.0 / a;
@@ -338,7 +338,7 @@ impl PrimitiveTrait for Triangle {
         }
         let t = f * edge2.dot(q);
 
-        if t > 0.00000001 {
+        if t > 0.001 {
             let point = ray.at(t);
             let mut out = true;
             let mut normal = self.normal;
@@ -366,7 +366,7 @@ impl PrimitiveTrait for Triangle {
         let edge2 = self.points[2] - self.points[0];
         let h = ray.direction.cross(edge2);
         let a = edge1.dot(h);
-        if a > -0.00000001 && a < 0.00000001 {
+        if a > -0.001 && a < 0.001 {
             return false;
         }
         let f = 1.0 / a;
@@ -381,7 +381,7 @@ impl PrimitiveTrait for Triangle {
             return false;
         }
         let t = f * edge2.dot(q);
-        if t > 0.00000001 {
+        if t > 0.001 {
             true
         } else {
             false

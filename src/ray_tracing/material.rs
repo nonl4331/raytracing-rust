@@ -107,14 +107,7 @@ impl MaterialTrait for Diffuse {
         if math::near_zero(direction) {
             direction = hit.normal;
         }
-        *ray = Ray::new(
-            hit.point,
-            direction,
-            ray.time,
-            ray.sky,
-            ray.primitives.clone(),
-            ray.bvh.clone(),
-        );
+        *ray = Ray::new(hit.point, direction, ray.time);
         (self.absorption, false)
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
@@ -130,9 +123,6 @@ impl MaterialTrait for Reflect {
             hit.point,
             direction + self.fuzz * math::random_unit_vector(),
             ray.time,
-            ray.sky,
-            ray.primitives.clone(),
-            ray.bvh.clone(),
         );
         (1.0, false)
     }
@@ -163,14 +153,7 @@ impl MaterialTrait for Refract {
         let perp = eta_fraction * (ray.direction + cos_theta * hit.normal);
         let para = -1.0 * (1.0 - perp.mag_sq()).abs().sqrt() * hit.normal;
         let direction = perp + para;
-        *ray = Ray::new(
-            hit.point,
-            direction,
-            ray.time,
-            ray.sky,
-            ray.primitives.clone(),
-            ray.bvh.clone(),
-        );
+        *ray = Ray::new(hit.point, direction, ray.time);
         (1.0, false)
     }
 }
