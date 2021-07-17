@@ -1,3 +1,5 @@
+pub mod load_model;
+
 pub mod material;
 
 pub mod primitives;

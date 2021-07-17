@@ -4,7 +4,7 @@ use crate::math::near_zero;
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
-    primitives::{AABox, AARect, MovingSphere, Sphere},
+    primitives::{AABox, AARect, MovingSphere, Sphere, Triangle, TriangleMesh},
     ray::Ray,
 };
 
@@ -47,6 +47,8 @@ pub enum Primitive {
     MovingSphere(MovingSphere),
     AARect(AARect),
     AABox(AABox),
+    Triangle(Triangle),
+    TriangleMesh(TriangleMesh),
 }
 
 impl PrimitiveTrait for Primitive {
@@ -56,6 +58,8 @@ impl PrimitiveTrait for Primitive {
             Primitive::MovingSphere(sphere) => sphere.get_int(ray),
             Primitive::AARect(rect) => rect.get_int(ray),
             Primitive::AABox(aab) => aab.get_int(ray),
+            Primitive::Triangle(triangle) => triangle.get_int(ray),
+            Primitive::TriangleMesh(mesh) => mesh.get_int(ray),
         }
     }
 
@@ -65,6 +69,8 @@ impl PrimitiveTrait for Primitive {
             Primitive::MovingSphere(sphere) => sphere.does_int(ray),
             Primitive::AARect(rect) => rect.does_int(ray),
             Primitive::AABox(aab) => aab.does_int(ray),
+            Primitive::Triangle(triangle) => triangle.does_int(ray),
+            Primitive::TriangleMesh(mesh) => mesh.does_int(ray),
         }
     }
 
@@ -74,6 +80,8 @@ impl PrimitiveTrait for Primitive {
             Primitive::MovingSphere(sphere) => sphere.get_internal(),
             Primitive::AARect(rect) => rect.get_internal(),
             Primitive::AABox(aab) => aab.get_internal(),
+            Primitive::Triangle(triangle) => triangle.get_internal(),
+            Primitive::TriangleMesh(mesh) => mesh.get_internal(),
         }
     }
 
@@ -83,6 +91,8 @@ impl PrimitiveTrait for Primitive {
             Primitive::MovingSphere(sphere) => Some(sphere.aabb),
             Primitive::AARect(rect) => Some(rect.aabb),
             Primitive::AABox(aab) => Some(aab.aabb),
+            Primitive::Triangle(triangle) => Some(triangle.aabb),
+            Primitive::TriangleMesh(mesh) => Some(mesh.aabb),
         }
     }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
@@ -91,6 +101,8 @@ impl PrimitiveTrait for Primitive {
             Primitive::MovingSphere(sphere) => sphere.get_uv(point),
             Primitive::AARect(rect) => rect.get_uv(point),
             Primitive::AABox(aab) => aab.get_uv(point),
+            Primitive::Triangle(triangle) => triangle.get_uv(point),
+            Primitive::TriangleMesh(mesh) => mesh.get_uv(point),
         };
         None
     }
@@ -100,6 +112,8 @@ impl PrimitiveTrait for Primitive {
             Primitive::MovingSphere(sphere) => sphere.material.requires_uv(),
             Primitive::AARect(rect) => rect.material.requires_uv(),
             Primitive::AABox(aab) => aab.material.requires_uv(),
+            Primitive::Triangle(triangle) => triangle.material.requires_uv(),
+            Primitive::TriangleMesh(mesh) => mesh.material.requires_uv(),
         }
     }
 }
@@ -295,6 +309,119 @@ impl PrimitiveTrait for AABox {
     fn does_int(&self, ray: &Ray) -> bool {
         for side in self.rects.iter() {
             if side.does_int(ray) {
+                return true;
+            }
+        }
+        false
+    }
+}
+
+impl PrimitiveTrait for Triangle {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+        let edge1 = self.points[1] - self.points[0];
+        let edge2 = self.points[2] - self.points[0];
+        let h = ray.direction.cross(edge2);
+        let a = edge1.dot(h);
+        if a > -0.00000001 && a < 0.00000001 {
+            return None;
+        }
+        let f = 1.0 / a;
+        let s = ray.origin - self.points[0];
+        let u = f * s.dot(h);
+        if u < 0.0 || u > 1.0 {
+            return None;
+        }
+        let q = s.cross(edge1);
+        let v = f * ray.direction.dot(q);
+        if v < 0.0 || v > 1.0 {
+            return None;
+        }
+        let t = f * edge2.dot(q);
+
+        if t > 0.00000001 {
+            let point = ray.at(t);
+            let mut out = true;
+            let mut normal = self.normal;
+            if normal.dot(ray.direction) > 0.0 {
+                normal *= -1.0;
+                out = false;
+            }
+            Some(Hit {
+                t,
+                point,
+                normal,
+                uv: self.get_uv(point),
+                out,
+                material: self.material.clone(),
+            })
+        } else {
+            None
+        }
+    }
+    fn get_internal(self) -> Vec<Primitive> {
+        vec![Primitive::Triangle(self)]
+    }
+    fn does_int(&self, ray: &Ray) -> bool {
+        let edge1 = self.points[1] - self.points[0];
+        let edge2 = self.points[2] - self.points[0];
+        let h = ray.direction.cross(edge2);
+        let a = edge1.dot(h);
+        if a > -0.00000001 && a < 0.00000001 {
+            return false;
+        }
+        let f = 1.0 / a;
+        let s = ray.origin - self.points[0];
+        let u = f * s.dot(h);
+        if u < 0.0 || u > 1.0 {
+            return false;
+        }
+        let q = s.cross(edge1);
+        let v = f * ray.direction.dot(q);
+        if v < 0.0 || v > 1.0 {
+            return false;
+        }
+        let t = f * edge2.dot(q);
+        if t > 0.00000001 {
+            true
+        } else {
+            false
+        }
+    }
+}
+
+impl PrimitiveTrait for TriangleMesh {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+        let mut hit: Option<Hit> = None;
+        for side in self.mesh.iter() {
+            if let Some(current_hit) = side.get_int(ray) {
+                // make sure ray is going forwards
+                if current_hit.t > 0.001 {
+                    // check if hit already exists
+                    if hit.is_some() {
+                        // check if t value is close to 0 than previous hit
+                        if current_hit.t < hit.as_ref().unwrap().t {
+                            hit = Some(current_hit);
+                        }
+                        continue;
+                    }
+
+                    // if hit doesn't exist set current hit to hit
+                    hit = Some(current_hit);
+                }
+            }
+        }
+        hit
+    }
+    fn get_internal(mut self) -> Vec<Primitive> {
+        self.mesh
+            .iter_mut()
+            .map(|triangle| Primitive::Triangle(triangle.clone()))
+            .collect()
+    }
+
+    fn does_int(&self, ray: &Ray) -> bool {
+        for triangle in self.mesh.iter() {
+            if triangle.does_int(ray) {
                 return true;
             }
         }

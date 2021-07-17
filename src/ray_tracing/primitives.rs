@@ -59,14 +59,6 @@ pub struct AARect {
     pub material: Arc<Material>,
 }
 
-pub struct AABox {
-    pub min: Vec3,
-    pub max: Vec3,
-    pub rects: [AARect; 6],
-    pub aabb: AABB,
-    pub material: Arc<Material>,
-}
-
 impl AARect {
     pub fn new(min: Vec2, max: Vec2, k: f32, axis: Axis, material: Material) -> Self {
         let kvec = k * axis.return_point_with_axis(Vec3::one());
@@ -96,6 +88,14 @@ impl AARect {
             material: material.clone(),
         }
     }
+}
+
+pub struct AABox {
+    pub min: Vec3,
+    pub max: Vec3,
+    pub rects: [AARect; 6],
+    pub aabb: AABB,
+    pub material: Arc<Material>,
 }
 
 impl AABox {
@@ -197,6 +197,54 @@ impl MovingSphere {
             radius,
             aabb: AABB::new_contains(&vec![start_aabb, end_aabb]),
             material: Arc::new(material),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Triangle {
+    pub points: [Vec3; 3],
+    pub normal: Vec3,
+    pub aabb: AABB,
+    pub material: Arc<Material>,
+}
+
+impl Triangle {
+    pub fn new_from_arc(points: [Vec3; 3], normal: Option<Vec3>, material: Arc<Material>) -> Self {
+        let normal = match normal {
+            Some(normal) => normal,
+            None => {
+                let a = points[1] - points[0];
+                let b = points[2] - points[0];
+                a.cross(b)
+            }
+        };
+        let min = points[0].min_by_component(points[1].min_by_component(points[2]))
+            - Vec3::new(0.0001, 0.0001, 0.0001);
+        let max = points[0].max_by_component(points[1].max_by_component(points[2]))
+            + Vec3::new(0.0001, 0.0001, 0.0001);
+
+        Triangle {
+            points,
+            normal,
+            aabb: AABB::new(min, max),
+            material,
+        }
+    }
+}
+
+pub struct TriangleMesh {
+    pub mesh: Vec<Triangle>,
+    pub aabb: AABB,
+    pub material: Arc<Material>,
+}
+
+impl TriangleMesh {
+    pub fn new(min: Vec3, max: Vec3, mesh: Vec<Triangle>, material: Arc<Material>) -> Self {
+        TriangleMesh {
+            mesh,
+            aabb: AABB::new(min, max),
+            material,
         }
     }
 }

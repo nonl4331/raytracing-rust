@@ -406,3 +406,47 @@ pub fn scene_five(aspect_ratio: f32) -> Scene {
         primitives,
     )
 }
+
+pub fn scene_six(aspect_ratio: f32) -> Scene {
+    let mut primitives: Vec<Primitive> = Vec::new();
+
+    let glowy_mat = Texture::SolidColour(SolidColour::new(Colour::one()));
+    let glowy = Sphere::new(
+        Vec3::new(0.0, 15.0, 0.0),
+        5.0,
+        Material::Emit(Emit::new(glowy_mat, 5.5)),
+    );
+
+    let ground_tex = Texture::CheckeredTexture(CheckeredTexture::new(
+        Colour::new(0.0, 0.0, 0.0),
+        Colour::new(0.5, 0.5, 0.5),
+    ));
+
+    let ground: Sphere = Sphere::new(
+        Vec3 {
+            x: 0.0,
+            y: -1001.0,
+            z: 0.0,
+        },
+        1000.0,
+        Material::Diffuse(Diffuse::new(ground_tex, 0.5)),
+    );
+
+    primitives.push(Primitive::Sphere(ground));
+    primitives.push(Primitive::Sphere(glowy));
+    primitives.push(crate::ray_tracing::load_model::load_model("res/dragon.obj"));
+
+    let sky = Sky::new(None);
+
+    Scene::new(
+        Vec3::new(-20.0, 20.0, -25.0),
+        Vec3::new(0.0, 3.5, 0.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        34.0,
+        aspect_ratio,
+        0.0,
+        10.0,
+        sky,
+        primitives,
+    )
+}
