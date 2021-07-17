@@ -218,7 +218,8 @@ impl Triangle {
                 let b = points[2] - points[0];
                 a.cross(b)
             }
-        };
+        }
+        .normalized();
         let min = points[0].min_by_component(points[1].min_by_component(points[2]))
             - Vec3::new(0.0001, 0.0001, 0.0001);
         let max = points[0].max_by_component(points[1].max_by_component(points[2]))
