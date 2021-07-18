@@ -1,7 +1,5 @@
 use crate::bvh::aabb::AABB;
 
-use crate::math::near_zero;
-
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
     primitives::{AABox, AARect, MovingSphere, Sphere, Triangle, TriangleMesh},
@@ -13,6 +11,8 @@ use std::f32::consts::PI;
 use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
+
+pub const EPSILON: f32 = 0.0001;
 
 pub struct Hit {
     pub t: f32,
@@ -127,10 +127,8 @@ impl PrimitiveTrait for Sphere {
         let disc = h * h - a * c;
         if disc > 0.0 {
             let mut t = (-h - disc.sqrt()) / a;
-            let point = ray.at(t);
 
-            // check intersection with self
-            if near_zero(point - ray.origin) || t < 0.0 {
+            if t < 0.0 {
                 t = (-h + disc.sqrt()) / a;
             }
 
@@ -143,7 +141,7 @@ impl PrimitiveTrait for Sphere {
             }
             Some(Hit {
                 t,
-                point,
+                point: point + EPSILON * normal,
                 normal,
                 uv: self.get_uv(point),
                 out,
@@ -180,10 +178,8 @@ impl PrimitiveTrait for MovingSphere {
         let disc = h * h - a * c;
         if disc > 0.0 {
             let mut t = (-h - disc.sqrt()) / a;
-            let point = ray.at(t);
 
-            // check intersection with self
-            if near_zero(point - ray.origin) || t < 0.0 {
+            if t < 0.0 {
                 t = (-h + disc.sqrt()) / a;
             }
 
@@ -196,7 +192,7 @@ impl PrimitiveTrait for MovingSphere {
             }
             Some(Hit {
                 t,
-                point,
+                point: point + EPSILON * normal,
                 normal,
                 uv: self.get_uv(point),
                 out,
@@ -235,7 +231,7 @@ impl PrimitiveTrait for AARect {
         {
             Some(Hit {
                 t,
-                point,
+                point: point + EPSILON * self.axis.return_point_with_axis(Vec3::one()),
                 normal: self
                     .axis
                     .return_point_with_axis(-1.0 * ray.direction)
@@ -282,7 +278,7 @@ impl PrimitiveTrait for AABox {
         for side in self.rects.iter() {
             if let Some(current_hit) = side.get_int(ray) {
                 // make sure ray is going forwards
-                if current_hit.t > 0.001 {
+                if current_hit.t > 0.0 {
                     // check if hit already exists
                     if hit.is_some() {
                         // check if t value is close to 0 than previous hit
@@ -322,7 +318,7 @@ impl PrimitiveTrait for Triangle {
         let edge2 = self.points[2] - self.points[0];
         let h = ray.direction.cross(edge2);
         let a = edge1.dot(h);
-        if a > -0.001 && a < 0.001 {
+        if a > -EPSILON && a < EPSILON {
             return None;
         }
         let f = 1.0 / a;
@@ -338,7 +334,7 @@ impl PrimitiveTrait for Triangle {
         }
         let t = f * edge2.dot(q);
 
-        if t > 0.001 {
+        if t > EPSILON {
             let point = ray.at(t);
             let mut out = true;
             let mut normal = self.normal;
@@ -348,7 +344,7 @@ impl PrimitiveTrait for Triangle {
             }
             Some(Hit {
                 t,
-                point,
+                point: point + EPSILON * normal,
                 normal,
                 uv: self.get_uv(point),
                 out,
@@ -366,7 +362,7 @@ impl PrimitiveTrait for Triangle {
         let edge2 = self.points[2] - self.points[0];
         let h = ray.direction.cross(edge2);
         let a = edge1.dot(h);
-        if a > -0.001 && a < 0.001 {
+        if a > -EPSILON && a < EPSILON {
             return false;
         }
         let f = 1.0 / a;
@@ -380,12 +376,7 @@ impl PrimitiveTrait for Triangle {
         if v < 0.0 || v > 1.0 {
             return false;
         }
-        let t = f * edge2.dot(q);
-        if t > 0.001 {
-            true
-        } else {
-            false
-        }
+        true
     }
 }
 
@@ -395,7 +386,7 @@ impl PrimitiveTrait for TriangleMesh {
         for side in self.mesh.iter() {
             if let Some(current_hit) = side.get_int(ray) {
                 // make sure ray is going forwards
-                if current_hit.t > 0.001 {
+                if current_hit.t > EPSILON {
                     // check if hit already exists
                     if hit.is_some() {
                         // check if t value is close to 0 than previous hit

@@ -50,7 +50,7 @@ impl Ray {
             // check for hit
             if let Some(current_hit) = object.get_int(&self) {
                 // make sure ray is going forwards
-                if current_hit.t > 0.001 {
+                if current_hit.t > 0.0 {
                     // check if hit already exists
                     if let Some(last_hit) = &self.hit {
                         // check if t value is close to 0 than previous hit

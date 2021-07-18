@@ -11,3 +11,6 @@ Cargo.lock
 
 # Don't include any generated images from root dir
 /*.png
+
+# files in res can be downloaded with a script
+/res/
