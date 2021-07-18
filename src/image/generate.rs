@@ -446,7 +446,7 @@ pub fn scene_six(aspect_ratio: f32) -> Scene {
 
     primitives.push(Primitive::Sphere(ground));
     primitives.push(Primitive::Sphere(glowy));
-    primitives.push(crate::ray_tracing::load_model::load_model("res/dragon.obj"));
+    primitives.extend(crate::ray_tracing::load_model::load_model("res/dragon.obj"));
 
     let sky = Sky::new(None);
 

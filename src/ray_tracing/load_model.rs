@@ -8,41 +8,14 @@ use crate::ray_tracing::{
 
 use std::sync::Arc;
 
-use tobj;
-
 use ultraviolet::Vec3;
 
-pub fn load_model(filepath: &str) -> Primitive {
-    let model = tobj::load_obj(
-        filepath,
-        &tobj::LoadOptions {
-            ignore_points: true,
-            ignore_lines: true,
-            triangulate: true,
-            single_index: true,
-            ..Default::default()
-        },
-    );
+use wavefront_obj;
 
-    assert!(model.is_ok());
+pub fn load_model(filepath: &str) -> Vec<Primitive> {
+    let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());
 
-    let (mut models, _) = model.unwrap();
-
-    let mesh = &mut models[0].mesh;
-
-    assert!(mesh.indices.len() % 3 == 0);
-
-    let num_triangles = mesh.indices.len() / 3;
-
-    let indices: Vec<u32> = mesh.indices.drain(..).collect();
-
-    let points: Vec<Vec3> = mesh
-        .positions
-        .chunks(3)
-        .map(|point| Vec3::new(point[0], point[1], point[2]))
-        .collect();
-
-    let mut mesh = Vec::new();
+    let model = model.unwrap();
 
     let tex = Texture::SolidColour(SolidColour {
         colour: Colour {
@@ -54,36 +27,53 @@ pub fn load_model(filepath: &str) -> Primitive {
 
     let material = Arc::new(Material::Diffuse(Diffuse::new(tex, 0.5)));
 
-    let mut min = Vec3::zero();
-    let mut max = Vec3::one();
+    let mut primitives = Vec::new();
 
-    for i in 0..num_triangles {
-        let triangle_points = [
-            points[indices[i * 3] as usize],
-            points[indices[i * 3 + 1] as usize],
-            points[indices[i * 3 + 2] as usize],
-        ];
-        if i != 0 {
-            min = min.min_by_component(
-                triangle_points[0]
-                    .min_by_component(triangle_points[1].min_by_component(triangle_points[2])),
-            );
-            max = max.max_by_component(
-                triangle_points[0]
-                    .max_by_component(triangle_points[1].max_by_component(triangle_points[2])),
-            );
-        } else {
-            min = triangle_points[0]
-                .min_by_component(triangle_points[1].min_by_component(triangle_points[2]));
-            max = triangle_points[0]
-                .max_by_component(triangle_points[1].max_by_component(triangle_points[2]));
+    for object in model.objects {
+        let mut mesh = Vec::new();
+        let mut min = None;
+        let mut max = None;
+        let vertices = &object.vertices;
+
+        for geometric_object in object.geometry {
+            for shape in geometric_object.shapes {
+                match shape.primitive {
+                    wavefront_obj::obj::Primitive::Triangle(i1, i2, i3) => {
+                        let points = [
+                            vertex_to_vec3(vertices[i1.0 as usize]),
+                            vertex_to_vec3(vertices[i2.0 as usize]),
+                            vertex_to_vec3(vertices[i3.0 as usize]),
+                        ];
+                        let triangle = Triangle::new_from_arc(points, None, material.clone());
+                        match (min, max) {
+                            (None, None) => {
+                                min = Some(triangle.aabb.min);
+                                max = Some(triangle.aabb.max);
+                            }
+                            (_, _) => {
+                                min = Some(min.unwrap().min_by_component(triangle.aabb.min));
+                                max = Some(max.unwrap().max_by_component(triangle.aabb.max))
+                            }
+                        }
+                        mesh.push(triangle)
+                    }
+                    _ => {}
+                }
+            }
         }
-        mesh.push(Triangle::new_from_arc(
-            triangle_points,
-            None,
-            material.clone(),
-        ))
-    }
 
-    Primitive::TriangleMesh(TriangleMesh::new(min, max, mesh, material))
+        if mesh.len() != 0 {
+            primitives.push(Primitive::TriangleMesh(TriangleMesh::new(
+                min.unwrap(),
+                max.unwrap(),
+                mesh,
+                material.clone(),
+            )));
+        }
+    }
+    primitives
+}
+
+fn vertex_to_vec3(vertex: wavefront_obj::obj::Vertex) -> Vec3 {
+    Vec3::new(vertex.x as f32, vertex.y as f32, vertex.z as f32)
 }
