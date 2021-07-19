@@ -1,8 +1,6 @@
 use crate::ray_tracing::{
-    material::{Diffuse, Material},
+    material::Material,
     primitives::{Triangle, TriangleMesh},
-    ray::Colour,
-    texture::{SolidColour, Texture},
     tracing::Primitive,
 };
 
@@ -12,20 +10,12 @@ use ultraviolet::Vec3;
 
 use wavefront_obj;
 
-pub fn load_model(filepath: &str) -> Vec<Primitive> {
+pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());
 
     let model = model.unwrap();
 
-    let tex = Texture::SolidColour(SolidColour {
-        colour: Colour {
-            x: 0.5,
-            y: 0.5,
-            z: 0.5,
-        },
-    });
-
-    let material = Arc::new(Material::Diffuse(Diffuse::new(tex, 0.5)));
+    let material = Arc::new(material);
 
     let mut primitives = Vec::new();
 
@@ -34,6 +24,7 @@ pub fn load_model(filepath: &str) -> Vec<Primitive> {
         let mut min = None;
         let mut max = None;
         let vertices = &object.vertices;
+        let normals = &object.normals;
 
         for geometric_object in object.geometry {
             for shape in geometric_object.shapes {
@@ -44,7 +35,16 @@ pub fn load_model(filepath: &str) -> Vec<Primitive> {
                             vertex_to_vec3(vertices[i2.0 as usize]),
                             vertex_to_vec3(vertices[i3.0 as usize]),
                         ];
-                        let triangle = Triangle::new_from_arc(points, None, material.clone());
+
+                        let vertex_normal = match i1.2 {
+                            Some(normal_index) => vertex_to_vec3(normals[normal_index as usize]),
+                            None => {
+                                panic!("Please export obj file with vertex normals!")
+                            }
+                        };
+
+                        let triangle =
+                            Triangle::new_from_arc(points, vertex_normal, material.clone());
                         match (min, max) {
                             (None, None) => {
                                 min = Some(triangle.aabb.min);

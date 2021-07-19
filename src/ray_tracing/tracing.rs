@@ -10,7 +10,7 @@ use std::f32::consts::PI;
 
 use std::sync::Arc;
 
-use ultraviolet::{Vec2, Vec3};
+use ultraviolet::{Mat2, Vec2, Vec3};
 
 pub const EPSILON: f32 = 0.0001;
 
@@ -316,25 +316,21 @@ impl PrimitiveTrait for Triangle {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let edge1 = self.points[1] - self.points[0];
         let edge2 = self.points[2] - self.points[0];
-        let h = ray.direction.cross(edge2);
-        let a = edge1.dot(h);
-        if a > -EPSILON && a < EPSILON {
-            return None;
-        }
-        let f = 1.0 / a;
-        let s = ray.origin - self.points[0];
-        let u = f * s.dot(h);
-        if u < 0.0 || u > 1.0 {
-            return None;
-        }
-        let q = s.cross(edge1);
-        let v = f * ray.direction.dot(q);
-        if v < 0.0 || v > 1.0 {
-            return None;
-        }
-        let t = f * edge2.dot(q);
 
-        if t > EPSILON {
+        let n = edge1.cross(edge2);
+        let t = (self.points[0] - ray.origin).dot(n) / ray.direction.dot(n);
+
+        let p = ray.at(t);
+        let p0 = p - self.points[0];
+        let b = Vec2::new(p0.dot(edge1), p0.dot(edge2));
+        let a = Mat2::new(
+            Vec2::new(edge2.dot(edge2), -1.0 * edge1.dot(edge2)),
+            Vec2::new(-1.0 * edge1.dot(edge2), edge1.dot(edge1)),
+        );
+        let id = 1.0 / (a[0][0] * a[1][1] - a[0][1] * a[1][0]);
+        let uv = id * (a * b);
+
+        if t > EPSILON && uv.x > 0.0 && uv.y > 0.0 && uv.x + uv.y < 1.0 {
             let point = ray.at(t);
             let mut out = true;
             let mut normal = self.normal;
@@ -346,7 +342,7 @@ impl PrimitiveTrait for Triangle {
                 t,
                 point: point + EPSILON * normal,
                 normal,
-                uv: self.get_uv(point),
+                uv: Some(uv),
                 out,
                 material: self.material.clone(),
             })
@@ -360,23 +356,25 @@ impl PrimitiveTrait for Triangle {
     fn does_int(&self, ray: &Ray) -> bool {
         let edge1 = self.points[1] - self.points[0];
         let edge2 = self.points[2] - self.points[0];
-        let h = ray.direction.cross(edge2);
-        let a = edge1.dot(h);
-        if a > -EPSILON && a < EPSILON {
-            return false;
+
+        let n = edge1.cross(edge2);
+        let t = (self.points[0] - ray.origin).dot(n) / ray.direction.dot(n);
+
+        let p = ray.at(t);
+        let p0 = p - self.points[0];
+        let b = Vec2::new(p0.dot(edge1), p0.dot(edge2));
+        let a = Mat2::new(
+            Vec2::new(edge2.dot(edge2), -1.0 * edge1.dot(edge2)),
+            Vec2::new(-1.0 * edge1.dot(edge2), edge1.dot(edge1)),
+        );
+        let id = 1.0 / (a[0][0] * a[1][1] - a[0][1] * a[1][0]);
+        let uv = id * (a * b);
+
+        if t > EPSILON && uv.x > 0.0 && uv.y > 0.0 && uv.x + uv.y < 1.0 {
+            true
+        } else {
+            false
         }
-        let f = 1.0 / a;
-        let s = ray.origin - self.points[0];
-        let u = f * s.dot(h);
-        if u < 0.0 || u > 1.0 {
-            return false;
-        }
-        let q = s.cross(edge1);
-        let v = f * ray.direction.dot(q);
-        if v < 0.0 || v > 1.0 {
-            return false;
-        }
-        true
     }
 }
 

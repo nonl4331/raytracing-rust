@@ -210,16 +210,18 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn new_from_arc(points: [Vec3; 3], normal: Option<Vec3>, material: Arc<Material>) -> Self {
-        let normal = match normal {
-            Some(normal) => normal,
-            None => {
-                let a = points[1] - points[0];
-                let b = points[2] - points[0];
-                a.cross(b)
-            }
+    pub fn new_from_arc(points: [Vec3; 3], vertex_normal: Vec3, material: Arc<Material>) -> Self {
+        let mut normal = {
+            let a = points[1] - points[0];
+            let b = points[2] - points[0];
+            a.cross(b)
         }
         .normalized();
+
+        if normal.dot(vertex_normal) < 0.0 {
+            normal = -1.0 * normal;
+        }
+
         let min = points[0].min_by_component(points[1].min_by_component(points[2]))
             - Vec3::new(0.0001, 0.0001, 0.0001);
         let max = points[0].max_by_component(points[1].max_by_component(points[2]))
