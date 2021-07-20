@@ -1,5 +1,3 @@
-use crate::bvh::aabb::AABB;
-
 use crate::ray_tracing::material::Material;
 
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
@@ -47,6 +45,15 @@ impl Axis {
             _ => Axis::Z,
         }
     }
+    pub fn get_max_axis(vec: &Vec3) -> Self {
+        if vec.x > vec.y && vec.x > vec.z {
+            Axis::X
+        } else if vec.y > vec.z {
+            Axis::Y
+        } else {
+            Axis::Z
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -55,7 +62,6 @@ pub struct AARect {
     pub max: Vec2,
     pub k: f32,
     pub axis: Axis,
-    pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
@@ -67,7 +73,6 @@ impl AARect {
             max,
             k,
             axis,
-            aabb: AABB::new(kvec - 0.0001 * Vec3::one(), kvec + 0.0001 * Vec3::one()),
             material: Arc::new(material),
         }
     }
@@ -84,7 +89,6 @@ impl AARect {
             max,
             k,
             axis,
-            aabb: AABB::new(kvec - 0.0001 * Vec3::one(), kvec + 0.0001 * Vec3::one()),
             material: material.clone(),
         }
     }
@@ -94,7 +98,6 @@ pub struct AABox {
     pub min: Vec3,
     pub max: Vec3,
     pub rects: [AARect; 6],
-    pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
@@ -149,7 +152,6 @@ impl AABox {
             min,
             max,
             rects,
-            aabb: AABB::new(min, max),
             material: arc.clone(),
         }
     }
@@ -158,7 +160,6 @@ impl AABox {
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
-    pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
@@ -167,7 +168,6 @@ impl Sphere {
         Sphere {
             center,
             radius,
-            aabb: AABB::new(center - radius * Vec3::one(), center + radius * Vec3::one()),
             material: Arc::new(material),
         }
     }
@@ -177,25 +177,15 @@ pub struct MovingSphere {
     pub start_pos: Vec3,
     pub end_pos: Vec3,
     pub radius: f32,
-    pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
 impl MovingSphere {
     pub fn new(start_pos: Vec3, end_pos: Vec3, radius: f32, material: Material) -> Self {
-        let start_aabb = AABB::new(
-            start_pos - radius * Vec3::one(),
-            start_pos + radius * Vec3::one(),
-        );
-        let end_aabb = AABB::new(
-            end_pos - radius * Vec3::one(),
-            end_pos + radius * Vec3::one(),
-        );
         MovingSphere {
             start_pos,
             end_pos,
             radius,
-            aabb: AABB::new_contains(&vec![start_aabb, end_aabb]),
             material: Arc::new(material),
         }
     }
@@ -205,7 +195,6 @@ impl MovingSphere {
 pub struct Triangle {
     pub points: [Vec3; 3],
     pub normal: Vec3,
-    pub aabb: AABB,
     pub material: Arc<Material>,
 }
 
@@ -230,7 +219,6 @@ impl Triangle {
         Triangle {
             points,
             normal,
-            aabb: AABB::new(min, max),
             material,
         }
     }
@@ -238,7 +226,8 @@ impl Triangle {
 
 pub struct TriangleMesh {
     pub mesh: Vec<Triangle>,
-    pub aabb: AABB,
+    pub min: Vec3,
+    pub max: Vec3,
     pub material: Arc<Material>,
 }
 
@@ -246,7 +235,8 @@ impl TriangleMesh {
     pub fn new(min: Vec3, max: Vec3, mesh: Vec<Triangle>, material: Arc<Material>) -> Self {
         TriangleMesh {
             mesh,
-            aabb: AABB::new(min, max),
+            min,
+            max,
             material,
         }
     }

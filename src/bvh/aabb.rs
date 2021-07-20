@@ -11,7 +11,7 @@ pub struct AABB {
 impl AABB {
     pub fn new(min: Vec3, max: Vec3) -> Self {
         if min.x >= max.x || min.y >= max.y || min.z >= max.z {
-            panic!("Maximum value in AABB must be strictly greater than minimum!");
+            panic!("Maximum value in AABB must be greater or equal to minimum!");
         }
         AABB { min, max }
     }
@@ -60,5 +60,29 @@ impl AABB {
         let tmax = tmax.min(t1.max(t2));
 
         return tmax > tmin.max(0.0);
+    }
+
+    pub fn merge(aabb: &mut Option<Self>, second: Self) {
+        match aabb {
+            Some(inner) => {
+                inner.min = inner.min.min_by_component(second.min);
+                inner.max = inner.max.max_by_component(second.max);
+            }
+            None => *aabb = Some(second),
+        }
+    }
+
+    pub fn extend_contains(aabb: &mut Option<Self>, point: Vec3) {
+        match aabb {
+            Some(inner) => {
+                inner.min = inner.min.min_by_component(point);
+                inner.max = inner.max.max_by_component(point);
+            }
+            None => *aabb = Some(AABB::new(point, point)),
+        }
+    }
+
+    pub fn get_extent(&self) -> Vec3 {
+        self.max - self.min
     }
 }

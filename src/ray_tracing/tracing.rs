@@ -87,12 +87,12 @@ impl PrimitiveTrait for Primitive {
 
     fn get_aabb(&self) -> Option<AABB> {
         match self {
-            Primitive::Sphere(sphere) => Some(sphere.aabb),
-            Primitive::MovingSphere(sphere) => Some(sphere.aabb),
-            Primitive::AARect(rect) => Some(rect.aabb),
-            Primitive::AABox(aab) => Some(aab.aabb),
-            Primitive::Triangle(triangle) => Some(triangle.aabb),
-            Primitive::TriangleMesh(mesh) => Some(mesh.aabb),
+            Primitive::Sphere(sphere) => sphere.get_aabb(),
+            Primitive::MovingSphere(sphere) => sphere.get_aabb(),
+            Primitive::AARect(rect) => rect.get_aabb(),
+            Primitive::AABox(aab) => aab.get_aabb(),
+            Primitive::Triangle(triangle) => triangle.get_aabb(),
+            Primitive::TriangleMesh(mesh) => mesh.get_aabb(),
         }
     }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
@@ -166,6 +166,12 @@ impl PrimitiveTrait for Sphere {
         }
         None
     }
+    fn get_aabb(&self) -> Option<AABB> {
+        Some(AABB::new(
+            self.center - self.radius * Vec3::one(),
+            self.center + self.radius * Vec3::one(),
+        ))
+    }
 }
 
 impl PrimitiveTrait for MovingSphere {
@@ -213,6 +219,14 @@ impl PrimitiveTrait for MovingSphere {
             return Some(Vec2::new(phi / (2.0 * PI), theta / PI));
         }
         None
+    }
+    fn get_aabb(&self) -> Option<AABB> {
+        let min_pos = self.start_pos.min_by_component(self.end_pos);
+        let max_pos = self.start_pos.max_by_component(self.end_pos);
+        Some(AABB::new(
+            min_pos - self.radius * Vec3::one(),
+            max_pos + self.radius * Vec3::one(),
+        ))
     }
 }
 
@@ -270,6 +284,9 @@ impl PrimitiveTrait for AARect {
         }
         None
     }
+    fn get_aabb(&self) -> Option<AABB> {
+        None //TODO
+    }
 }
 
 impl PrimitiveTrait for AABox {
@@ -309,6 +326,9 @@ impl PrimitiveTrait for AABox {
             }
         }
         false
+    }
+    fn get_aabb(&self) -> Option<AABB> {
+        None
     }
 }
 
@@ -376,6 +396,12 @@ impl PrimitiveTrait for Triangle {
             false
         }
     }
+    fn get_aabb(&self) -> Option<AABB> {
+        Some(AABB::new(
+            self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
+            self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
+        ))
+    }
 }
 
 impl PrimitiveTrait for TriangleMesh {
@@ -415,5 +441,8 @@ impl PrimitiveTrait for TriangleMesh {
             }
         }
         false
+    }
+    fn get_aabb(&self) -> Option<AABB> {
+        Some(AABB::new(self.min, self.max))
     }
 }

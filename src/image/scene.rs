@@ -1,4 +1,4 @@
-use crate::bvh::bvh::BVH;
+use crate::bvh::bvh::{SplitType, BVH};
 
 use crate::image::camera::Camera;
 
@@ -50,7 +50,7 @@ impl Scene {
 
         let primitives: PrimitivesType = Arc::new(primitives);
 
-        let bvh = Arc::new(BVH::new(&primitives));
+        let bvh = Arc::new(BVH::new(&primitives, SplitType::SAH));
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 

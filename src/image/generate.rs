@@ -434,7 +434,7 @@ pub fn scene_six(aspect_ratio: f32) -> Scene {
 
     primitives.push(Primitive::Sphere(ground));
     primitives.extend(crate::ray_tracing::load_model::load_model(
-        "res/dragon_fixed.obj",
+        "res/dragon.obj",
         Material::Diffuse(Diffuse::new(
             Texture::SolidColour(SolidColour::new(Colour::new(0.5, 0.5, 0.5))),
             0.5,
