@@ -42,11 +42,9 @@ impl Ray {
     }
 
     fn check_hit(&mut self, bvh: &Arc<BVH>, primitives: &PrimitivesType) {
-        let candidates = bvh.get_intersection_candidates(&self);
+        let (offset, len) = bvh.get_intersection_candidates(&self);
 
-        for object_index in candidates {
-            let object = &primitives[object_index as usize];
-
+        for object in &primitives[offset..offset + len] {
             // check for hit
             if let Some(current_hit) = object.get_int(&self) {
                 // make sure ray is going forwards

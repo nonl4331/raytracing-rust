@@ -1,30 +1,20 @@
 use crate::bvh::aabb::AABB;
+use crate::bvh::split::{Split, SplitType};
+use crate::ray_tracing::ray::Ray;
 use crate::ray_tracing::tracing::Primitive;
-use std::sync::Arc;
+
 use ultraviolet::Vec3;
 
-use crate::image::scene::PrimitivesType;
-
-use crate::ray_tracing::{primitives::Axis, ray::Ray, tracing::PrimitiveTrait};
+use crate::ray_tracing::{primitives::Axis, tracing::PrimitiveTrait};
 
 use std::collections::VecDeque;
 
-const MAX_IN_NODE: u32 = 128;
-
-type NodeIndex = u32;
-
-pub enum SplitType {
-    SAH,
-    HLBVH,
-    Middle,
-    EqualCounts,
-}
-
-struct PrimitiveInfo {
+#[derive(Debug)]
+pub struct PrimitiveInfo {
     index: usize,
     min: Vec3,
     max: Vec3,
-    center: Vec3,
+    pub center: Vec3,
 }
 
 impl PrimitiveInfo {
@@ -43,30 +33,33 @@ impl PrimitiveInfo {
 
 pub struct BVH {
     split_type: SplitType,
-    root_nodes: Vec<NodeIndex>,
     nodes: Vec<NewNode>,
 }
 
 impl BVH {
-    pub fn new(primitives: &PrimitivesType, split_type: SplitType) -> Self {
+    pub fn new(primitives: &mut Vec<Primitive>, split_type: SplitType) -> Self {
         let mut new_bvh = Self {
             split_type,
-            root_nodes: Vec::new(),
             nodes: Vec::new(),
         };
-        let primitives_info: Vec<PrimitiveInfo> = primitives
+        let mut primitives_info: Vec<PrimitiveInfo> = primitives
             .iter()
             .enumerate()
             .map(|(index, primitive)| PrimitiveInfo::new(index, primitive))
             .collect();
 
-        new_bvh.build_bvh(&primitives_info);
+        let primitives_info = new_bvh.build_bvh(&mut primitives_info);
+
+        *primitives = primitives_info
+            .iter()
+            .map(|&index| std::mem::replace(&mut primitives[index], Primitive::None))
+            .collect();
         new_bvh
     }
 
-    fn build_bvh(&mut self, primitives_info: &Vec<PrimitiveInfo>) -> Vec<usize> {
+    fn build_bvh(&mut self, primitives_info: &mut Vec<PrimitiveInfo>) -> Vec<usize> {
         self.nodes = Vec::new();
-        let mut end = primitives_info.len();
+        let end = primitives_info.len();
         if end == 0 {
             return Vec::new();
         }
@@ -76,63 +69,68 @@ impl BVH {
         let mut parent_queue: VecDeque<usize> = VecDeque::new();
         let mut ordered_primitives = Vec::new();
 
-        let mut start: usize = 0;
-        let mut total_nodes = 0;
+        let start: usize = 0;
         left_queue.push_back((start, end));
-        let mut is_left: bool = true;
-        let mut axis = Axis::X;
-
         while left_queue.len() > 0 || right_queue.len() > 0 {
+            let mut axis = Axis::X;
+            let is_left;
+
             let (start, end) = if left_queue.len() > 0 {
                 is_left = true;
                 left_queue.pop_front().unwrap()
             } else {
                 is_left = false;
-
                 right_queue.pop_front().unwrap()
             };
 
+            if parent_queue.len() != 0 {
+                let parent_index = parent_queue[0];
+                let node_len = self.nodes.len();
+                match is_left {
+                    true => {
+                        self.nodes[parent_index].set_child(node_len, 0);
+                    }
+                    false => {
+                        self.nodes[parent_index].set_child(node_len, 1);
+                        parent_queue.pop_front().unwrap();
+                    }
+                }
+            }
+
             let mut bounds = None;
-            for info in primitives_info {
+            for info in primitives_info[start..end].iter() {
                 AABB::merge(&mut bounds, AABB::new(info.min, info.max));
             }
 
-            let number_primitives = start - end;
+            let number_primitives = end - start;
 
-            // can't split a single primitive
             if number_primitives == 1 {
-                let first_primitive_offset = ordered_primitives.len();
                 for i in start..end {
                     let primitive_number = primitives_info[i].index;
                     ordered_primitives.push(primitive_number);
                 }
             } else {
-                // calculate bounds choose split
                 let mut center_bounds = None;
-
-                for info in primitives_info {
+                for info in primitives_info[start..end].iter() {
                     AABB::extend_contains(&mut center_bounds, info.center);
                 }
+
                 let center_bounds = center_bounds.unwrap();
-                let axis = Axis::get_max_axis(&center_bounds.get_extent());
-                // partition into two sets and build children
 
-                let mid = (start + end) / 2;
+                axis = Axis::get_max_axis(&center_bounds.get_extent());
 
-                // don't split primitives when center of AABB overlaps
                 if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max)
                 {
-                    let first_primitive_offset = ordered_primitives.len();
                     for i in start..end {
                         let primitive_number = primitives_info[i].index;
                         ordered_primitives.push(primitive_number);
                     }
-
-                // regular spliting
                 } else {
-                    parent_queue.push_back(self.nodes.len());
+                    parent_queue.push_front(self.nodes.len());
 
-                    // let (left_node, right_node) = split_node();
+                    let mid =
+                        self.split_type
+                            .split(start, end, &center_bounds, &axis, primitives_info);
                     left_queue.push_back((start, mid));
                     right_queue.push_back((mid, end));
                 }
@@ -142,49 +140,43 @@ impl BVH {
                 axis,
                 bounds.unwrap(),
                 ordered_primitives.len(),
-                start - end,
+                end - start,
             ));
-
-            if parent_queue.len() != 0 {
-                let parent_index = parent_queue[0];
-                match is_left {
-                    true => {
-                        self.nodes[parent_index].set_child(self.nodes.len(), 0);
-                    }
-                    false => {
-                        self.nodes[parent_index].set_child(self.nodes.len(), 1);
-                    }
-                }
-            }
-
-            if is_left {
-                left_queue.pop_front().unwrap();
-            } else {
-                parent_queue.pop_front().unwrap();
-                right_queue.pop_front().unwrap();
-            }
-            if left_queue.len() == 0 {
-                // add data to ordered data
-                for i in start..end {
-                    ordered_primitives.push(primitives_info[i].index);
-                }
-            }
-            total_nodes += 1;
         }
         ordered_primitives
     }
+    pub fn get_intersection_candidates(&self, ray: &Ray) -> (usize, usize) {
+        let mut offset = 0;
+        let mut len = 0;
+
+        let mut node_stack = VecDeque::new();
+        node_stack.push_back(0);
+        while node_stack.len() > 0 {
+            let index = node_stack.pop_front().unwrap();
+
+            let node = &self.nodes[index];
+
+            if !node.bounds.does_int(ray) {
+                continue;
+            }
+
+            match node.children {
+                Some(children) => {
+                    if children[0] == 100000000 || children[1] == 100000000 {}
+                    node_stack.push_back(children[0]);
+                    node_stack.push_back(children[1]);
+                }
+                None => {
+                    offset = offset.min(node.primitive_offset);
+                    len += node.number_primitives;
+                }
+            }
+        }
+        (offset, len)
+    }
 }
 
-pub struct Node {
-    left_child: Option<NodeIndex>,
-    right_child: Option<NodeIndex>,
-
-    //axis: Axis,
-    aabb: AABB,
-
-    data: Vec<u32>,
-}
-
+#[derive(Debug)]
 pub struct NewNode {
     bounds: AABB,
     children: Option<[usize; 2]>,
@@ -210,44 +202,16 @@ impl NewNode {
     }
     fn set_child(&mut self, child_index: usize, index: usize) {
         match self.children {
-            Some(children) => {
-                children[index] = child_index;
+            Some(_) => {
+                let mut val = self.children.unwrap();
+                val[index] = child_index;
+                self.children = Some(val);
             }
             None => {
-                let mut children = [0, 0];
+                let mut children = [100000000, 100000000];
                 children[index] = child_index;
                 self.children = Some(children);
             }
         }
-    }
-    fn new_from_children(split_axis: Axis, children: ([usize; 2], &[NewNode; 2])) -> Self {
-        let bounds = AABB::new_contains(&children.1.iter().map(|child| child.bounds).collect());
-        let primitive_offset = children.1[0].primitive_offset;
-        let number_primitives = children.1.iter().map(|child| child.number_primitives).sum();
-        let children = Some(children.0);
-
-        NewNode {
-            bounds,
-            children,
-            split_axis,
-            primitive_offset,
-            number_primitives,
-        }
-    }
-}
-
-impl Node {
-    pub fn new(aabb: AABB, data: Vec<u32>) -> Self {
-        Node {
-            left_child: None,
-            right_child: None,
-            aabb,
-            data,
-        }
-    }
-
-    pub fn add_child_nodes(&mut self, left_index: NodeIndex, right_index: NodeIndex) {
-        self.left_child = Some(left_index);
-        self.right_child = Some(right_index);
     }
 }

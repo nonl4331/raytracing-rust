@@ -1,4 +1,5 @@
-use crate::bvh::bvh::{SplitType, BVH};
+use crate::bvh::bvh::BVH;
+use crate::bvh::split::SplitType;
 
 use crate::image::camera::Camera;
 
@@ -48,14 +49,14 @@ impl Scene {
             .flat_map(|primitive| primitive.get_internal())
             .collect();
 
-        let primitives: PrimitivesType = Arc::new(primitives);
+        let mut primitives: Vec<Primitive> = primitives;
 
-        let bvh = Arc::new(BVH::new(&primitives, SplitType::SAH));
+        let bvh = Arc::new(BVH::new(&mut primitives, SplitType::EqualCounts));
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 
         Scene {
-            primitives,
+            primitives: Arc::new(primitives),
             bvh,
             camera,
             sky: Arc::new(sky),

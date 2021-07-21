@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Axis {
     X,
     Y,
