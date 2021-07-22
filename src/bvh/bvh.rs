@@ -54,10 +54,6 @@ impl BVH {
 
         let primitives_info = new_bvh.build_bvh(&mut primitives_info);
 
-        for (index, node) in new_bvh.nodes.iter().enumerate() {
-            println!("{}: {:?}", index, node);
-        }
-
         *primitives = primitives_info
             .iter()
             .map(|&index| std::mem::replace(&mut primitives[index], Primitive::None))
