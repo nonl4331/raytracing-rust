@@ -5,7 +5,7 @@ use crate::image::scene::PrimitivesType;
 use crate::ray_tracing::{
     material::MaterialTrait,
     sky::Sky,
-    tracing::{Hit, Primitive, PrimitiveTrait},
+    tracing::{Hit, PrimitiveTrait},
 };
 
 use std::sync::Arc;
@@ -42,24 +42,28 @@ impl Ray {
     }
 
     fn check_hit(&mut self, bvh: &Arc<BVH>, primitives: &PrimitivesType) {
-        let (offset, len) = bvh.get_intersection_candidates(&self);
+        let offset_lens = bvh.get_intersection_candidates(&self);
 
-        for object in &primitives[offset..offset + len] {
-            // check for hit
-            if let Some(current_hit) = object.get_int(&self) {
-                // make sure ray is going forwards
-                if current_hit.t > 0.0 {
-                    // check if hit already exists
-                    if let Some(last_hit) = &self.hit {
-                        // check if t value is close to 0 than previous hit
-                        if current_hit.t < last_hit.t {
-                            self.hit = Some(current_hit);
+        for offset_len in offset_lens {
+            let offset = offset_len.0;
+            let len = offset_len.1;
+            for object in &primitives[offset..offset + len] {
+                // check for hit
+                if let Some(current_hit) = object.get_int(&self) {
+                    // make sure ray is going forwards
+                    if current_hit.t > 0.0 {
+                        // check if hit already exists
+                        if let Some(last_hit) = &self.hit {
+                            // check if t value is close to 0 than previous hit
+                            if current_hit.t < last_hit.t {
+                                self.hit = Some(current_hit);
+                            }
+                            continue;
                         }
-                        continue;
-                    }
 
-                    // if hit doesn't exist set current hit to hit
-                    self.hit = Some(current_hit);
+                        // if hit doesn't exist set current hit to hit
+                        self.hit = Some(current_hit);
+                    }
                 }
             }
         }
@@ -80,12 +84,13 @@ impl Ray {
             // check for intersection with any of the objects in the scene
             ray.check_hit(&bvh, &primitives);
 
+            ray_count += 1;
+
             if ray.hit.is_some() {
                 let hit = ray.hit.take().unwrap();
 
                 // scatter_ray can only change ray direction, multiply colour by a factor or exit
                 let (multiplier, exit) = hit.material.scatter_ray(ray, &hit);
-                ray_count += 1;
 
                 colour *= hit.material.colour(hit.uv, hit.point) * multiplier;
 

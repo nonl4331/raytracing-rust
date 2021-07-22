@@ -37,12 +37,12 @@ impl PrimitiveInfo {
 
 pub struct BVH {
     split_type: SplitType,
-    nodes: Vec<NewNode>,
+    nodes: Vec<Node>,
 }
 
 impl BVH {
     pub fn new(primitives: &mut Vec<Primitive>, split_type: SplitType) -> Self {
-        let mut new_bvh = Self {
+        let mut bvh = Self {
             split_type,
             nodes: Vec::new(),
         };
@@ -52,14 +52,14 @@ impl BVH {
             .map(|(index, primitive)| PrimitiveInfo::new(index, primitive))
             .collect();
 
-        let primitives_info = new_bvh.build_bvh(&mut primitives_info);
+        let primitives_info = bvh.build_bvh(&mut primitives_info);
 
         *primitives = primitives_info
             .iter()
             .map(|&index| std::mem::replace(&mut primitives[index], Primitive::None))
             .collect();
 
-        new_bvh
+        bvh
     }
 
     fn build_bvh(&mut self, primitives_info: &mut Vec<PrimitiveInfo>) -> Vec<usize> {
@@ -163,19 +163,18 @@ impl BVH {
                     right_queue.push_front((mid, end));
                 }
             }
+            let mut len = ordered_primitives.len();
+            if number_primitives == 1 {
+                len -= 1;
+            }
 
-            self.nodes.push(NewNode::new(
-                axis,
-                bounds.unwrap(),
-                ordered_primitives.len(),
-                end - start,
-            ));
+            self.nodes
+                .push(Node::new(axis, bounds.unwrap(), len, end - start));
         }
         ordered_primitives
     }
-    pub fn get_intersection_candidates(&self, ray: &Ray) -> (usize, usize) {
-        let mut offset = 0;
-        let mut len = 0;
+    pub fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)> {
+        let mut offset_len = Vec::new();
 
         let mut node_stack = VecDeque::new();
         node_stack.push_back(0);
@@ -194,17 +193,16 @@ impl BVH {
                     node_stack.push_back(children[1]);
                 }
                 None => {
-                    offset = node.primitive_offset;
-                    len = node.number_primitives;
+                    offset_len.push((node.primitive_offset, node.number_primitives));
                 }
             }
         }
-        (offset, len)
+        offset_len
     }
 }
 
 #[derive(Debug)]
-pub struct NewNode {
+pub struct Node {
     bounds: AABB,
     children: Option<[usize; 2]>,
     split_axis: Axis,
@@ -212,14 +210,14 @@ pub struct NewNode {
     number_primitives: usize,
 }
 
-impl NewNode {
+impl Node {
     fn new(
         split_axis: Axis,
         bounds: AABB,
         primitive_offset: usize,
         number_primitives: usize,
     ) -> Self {
-        NewNode {
+        Node {
             bounds,
             children: None,
             split_axis,
@@ -235,7 +233,7 @@ impl NewNode {
                 self.children = Some(val);
             }
             None => {
-                let mut children = [100000000, 100000000];
+                let mut children = [0, 0];
                 children[index] = child_index;
                 self.children = Some(children);
             }
@@ -276,8 +274,8 @@ mod tests {
             for i in node.primitive_offset..(node.primitive_offset + node.number_primitives) {
                 let aabb = scene.primitives[i].get_aabb().unwrap();
                 assert!(
-                    (aabb.max - node.bounds.max).component_min() >= 0.0
-                        && (aabb.min - node.bounds.min).component_min() <= 0.0
+                    (node.bounds.max - aabb.max).component_min() >= 0.0
+                        && (aabb.min - node.bounds.min).component_min() >= 0.0
                 );
             }
         }
