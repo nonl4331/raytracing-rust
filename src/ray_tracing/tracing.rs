@@ -2,7 +2,7 @@ use crate::bvh::aabb::AABB;
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
-    primitives::{AABox, AARect, MovingSphere, Sphere, Triangle, TriangleMesh},
+    primitives::{AABox, AARect, MovingSphere, Primitive, Sphere, Triangle, TriangleMesh},
     ray::Ray,
 };
 
@@ -40,16 +40,6 @@ pub trait PrimitiveTrait {
     fn get_uv(&self, _: Vec3) -> Option<Vec2> {
         None
     }
-}
-
-pub enum Primitive {
-    Sphere(Sphere),
-    MovingSphere(MovingSphere),
-    AARect(AARect),
-    AABox(AABox),
-    Triangle(Triangle),
-    TriangleMesh(TriangleMesh),
-    None,
 }
 
 impl PrimitiveTrait for Primitive {

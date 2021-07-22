@@ -1,6 +1,4 @@
-use crate::bvh::bvh::PrimitiveInfo;
-
-use crate::bvh::aabb::AABB;
+use crate::bvh::{aabb::AABB, bvh::PrimitiveInfo};
 
 use crate::ray_tracing::primitives::Axis;
 

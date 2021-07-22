@@ -1,7 +1,7 @@
 use crate::ray_tracing::{
     material::Material,
-    primitives::{Triangle, TriangleMesh},
-    tracing::{Primitive, PrimitiveTrait},
+    primitives::{Primitive, Triangle, TriangleMesh},
+    tracing::PrimitiveTrait,
 };
 
 use std::sync::Arc;

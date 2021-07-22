@@ -4,9 +4,9 @@ use crate::bvh::{
 };
 
 use crate::ray_tracing::{
-    primitives::Axis,
+    primitives::{Axis, Primitive},
     ray::Ray,
-    tracing::{Primitive, PrimitiveTrait},
+    tracing::PrimitiveTrait,
 };
 
 use std::collections::VecDeque;

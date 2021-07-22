@@ -1,5 +1,4 @@
-use crate::bvh::bvh::BVH;
-use crate::bvh::split::SplitType;
+use crate::bvh::{bvh::BVH, split::SplitType};
 
 use crate::image::camera::Camera;
 
@@ -8,9 +7,10 @@ use crate::math::{random_f32, random_in_unit_disk};
 use crate::parameters::Parameters;
 
 use crate::ray_tracing::{
+    primitives::Primitive,
     ray::{Colour, Ray},
     sky::Sky,
-    tracing::{Primitive, PrimitiveTrait},
+    tracing::PrimitiveTrait,
 };
 
 use rand::Rng;

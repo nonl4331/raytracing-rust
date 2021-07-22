@@ -4,11 +4,10 @@ use crate::math;
 
 use crate::ray_tracing::{
     material::*,
-    primitives::{AABox, AARect, Axis, MovingSphere, Sphere},
+    primitives::{AABox, AARect, Axis, MovingSphere, Primitive, Sphere},
     ray::Colour,
     sky::Sky,
     texture::{CheckeredTexture, ImageTexture, Lerp, SolidColour, Texture},
-    tracing::Primitive,
 };
 
 use ultraviolet::{Vec2, Vec3};

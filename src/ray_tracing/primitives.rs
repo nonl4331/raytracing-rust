@@ -6,6 +6,16 @@ use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
 
+pub enum Primitive {
+    Sphere(Sphere),
+    MovingSphere(MovingSphere),
+    AARect(AARect),
+    AABox(AABox),
+    Triangle(Triangle),
+    TriangleMesh(TriangleMesh),
+    None,
+}
+
 #[derive(Clone, Debug)]
 pub enum Axis {
     X,
