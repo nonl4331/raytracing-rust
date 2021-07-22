@@ -43,7 +43,7 @@ impl Split for SplitType {
                 let mid_index = primitives_info.len();
                 primitives_info.extend(right);
                 if mid_index == start || mid_index == end {
-                    primitives_info.sort_by(|a, b| {
+                    primitives_info[start..end].sort_by(|a, b| {
                         axis.get_axis_value(a.center)
                             .partial_cmp(&axis.get_axis_value(b.center))
                             .unwrap()
@@ -53,7 +53,7 @@ impl Split for SplitType {
             }
             SplitType::EqualCounts => {
                 let point_mid = (start + end) / 2;
-                primitives_info.sort_by(|a, b| {
+                primitives_info[start..end].sort_by(|a, b| {
                     axis.get_axis_value(a.center)
                         .partial_cmp(&axis.get_axis_value(b.center))
                         .unwrap()

@@ -15,30 +15,6 @@ impl AABB {
         }
         AABB { min, max }
     }
-    pub fn new_contains(boxes: &Vec<AABB>) -> Self {
-        if boxes.len() == 0 {
-            panic!("AABB::new_contains() was called with an empty vector!");
-        }
-        let mut min = Vec3::new(std::f32::INFINITY, std::f32::INFINITY, std::f32::INFINITY);
-        let mut max = Vec3::new(
-            std::f32::NEG_INFINITY,
-            std::f32::NEG_INFINITY,
-            std::f32::NEG_INFINITY,
-        );
-        for bb in boxes {
-            min = Vec3::new(
-                min.x.min(bb.min.x),
-                min.y.min(bb.min.y),
-                min.z.min(bb.min.z),
-            );
-            max = Vec3::new(
-                max.x.max(bb.max.x),
-                max.y.max(bb.max.y),
-                max.z.max(bb.max.z),
-            );
-        }
-        AABB::new(min, max)
-    }
 
     pub fn does_int(&self, ray: &Ray) -> bool {
         let t1 = (self.min.x - ray.origin.x) * ray.d_inverse.x;
@@ -84,5 +60,56 @@ impl AABB {
 
     pub fn get_extent(&self) -> Vec3 {
         self.max - self.min
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn new() {
+        let min = -0.5 * Vec3::one();
+        let max = 1.5 * Vec3::one();
+        AABB::new(max, min);
+    }
+
+    #[test]
+    fn merge() {
+        let first = AABB::new(-1.0 * Vec3::one(), Vec3::one());
+        let mut second = None;
+        AABB::merge(&mut second, first);
+        assert!(first.min == second.unwrap().min && first.max == second.unwrap().max);
+    }
+
+    #[test]
+    fn extend_contains() {
+        let mut first = Some(AABB::new(-1.0 * Vec3::one(), Vec3::one()));
+        AABB::extend_contains(&mut first, Vec3::new(-1.5, 3.0, 0.1));
+
+        assert!(
+            first.unwrap().min == Vec3::new(-1.5, -1.0, -1.0)
+                && first.unwrap().max == Vec3::new(1.0, 3.0, 1.0)
+        );
+    }
+
+    #[test]
+    fn ray_intersection() {
+        let ray = Ray::new(
+            0.5 * Vec3::one(),
+            Vec3::new(1.5, 2.5, 1.7).normalized(),
+            0.0,
+        );
+
+        let aabb = AABB::new(Vec3::new(1.0, 1.0, 1.0), Vec3::new(1.1, 2.0, 2.0));
+
+        assert!(aabb.does_int(&ray));
+    }
+
+    #[test]
+    fn get_extent() {
+        let aabb = AABB::new(Vec3::new(-1.0, 1.5, 1.0), Vec3::new(1.1, 2.0, 2.0));
+        assert_eq!(aabb.get_extent(), Vec3::new(2.1, 0.5, 1.0));
     }
 }

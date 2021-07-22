@@ -1,15 +1,19 @@
-use crate::bvh::aabb::AABB;
-use crate::bvh::split::{Split, SplitType};
-use crate::ray_tracing::ray::Ray;
-use crate::ray_tracing::tracing::Primitive;
+use crate::bvh::{
+    aabb::AABB,
+    split::{Split, SplitType},
+};
 
-use ultraviolet::Vec3;
-
-use crate::ray_tracing::{primitives::Axis, tracing::PrimitiveTrait};
+use crate::ray_tracing::{
+    primitives::Axis,
+    ray::Ray,
+    tracing::{Primitive, PrimitiveTrait},
+};
 
 use std::collections::VecDeque;
 
-#[derive(Debug)]
+use ultraviolet::Vec3;
+
+#[derive(Debug, Clone, Copy)]
 pub struct PrimitiveInfo {
     index: usize,
     min: Vec3,
@@ -50,10 +54,15 @@ impl BVH {
 
         let primitives_info = new_bvh.build_bvh(&mut primitives_info);
 
+        for (index, node) in new_bvh.nodes.iter().enumerate() {
+            println!("{}: {:?}", index, node);
+        }
+
         *primitives = primitives_info
             .iter()
             .map(|&index| std::mem::replace(&mut primitives[index], Primitive::None))
             .collect();
+
         new_bvh
     }
 
@@ -66,12 +75,14 @@ impl BVH {
 
         let mut left_queue: VecDeque<(usize, usize)> = VecDeque::new();
         let mut right_queue: VecDeque<(usize, usize)> = VecDeque::new();
-        let mut parent_queue: VecDeque<usize> = VecDeque::new();
+        let mut parent_queue: VecDeque<(usize, Vec<PrimitiveInfo>)> = VecDeque::new();
         let mut ordered_primitives = Vec::new();
 
         let start: usize = 0;
         left_queue.push_back((start, end));
+        let mut pop_parent = false;
         while left_queue.len() > 0 || right_queue.len() > 0 {
+            let mut current_primitives_info;
             let mut axis = Axis::X;
             let is_left;
 
@@ -84,7 +95,8 @@ impl BVH {
             };
 
             if parent_queue.len() != 0 {
-                let parent_index = parent_queue[0];
+                let parent_index = parent_queue[0].0;
+                current_primitives_info = parent_queue[0].1.clone();
                 let node_len = self.nodes.len();
                 match is_left {
                     true => {
@@ -92,13 +104,15 @@ impl BVH {
                     }
                     false => {
                         self.nodes[parent_index].set_child(node_len, 1);
-                        parent_queue.pop_front().unwrap();
+                        pop_parent = true;
                     }
                 }
+            } else {
+                current_primitives_info = primitives_info.to_vec();
             }
 
             let mut bounds = None;
-            for info in primitives_info[start..end].iter() {
+            for info in current_primitives_info[start..end].iter() {
                 AABB::merge(&mut bounds, AABB::new(info.min, info.max));
             }
 
@@ -106,12 +120,16 @@ impl BVH {
 
             if number_primitives == 1 {
                 for i in start..end {
-                    let primitive_number = primitives_info[i].index;
-                    ordered_primitives.push(primitive_number);
+                    ordered_primitives.push(current_primitives_info[i].index);
+                }
+
+                if pop_parent == true {
+                    parent_queue.pop_front().unwrap();
+                    pop_parent = false;
                 }
             } else {
                 let mut center_bounds = None;
-                for info in primitives_info[start..end].iter() {
+                for info in current_primitives_info[start..end].iter() {
                     AABB::extend_contains(&mut center_bounds, info.center);
                 }
 
@@ -122,17 +140,31 @@ impl BVH {
                 if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max)
                 {
                     for i in start..end {
-                        let primitive_number = primitives_info[i].index;
-                        ordered_primitives.push(primitive_number);
+                        ordered_primitives.push(current_primitives_info[i].index);
+                    }
+
+                    if pop_parent == true {
+                        parent_queue.pop_front().unwrap();
+                        pop_parent = false;
                     }
                 } else {
-                    parent_queue.push_front(self.nodes.len());
+                    let mid = self.split_type.split(
+                        start,
+                        end,
+                        &center_bounds,
+                        &axis,
+                        &mut current_primitives_info,
+                    );
 
-                    let mid =
-                        self.split_type
-                            .split(start, end, &center_bounds, &axis, primitives_info);
-                    left_queue.push_back((start, mid));
-                    right_queue.push_back((mid, end));
+                    parent_queue.push_front((self.nodes.len(), current_primitives_info.to_vec()));
+
+                    if pop_parent == true {
+                        parent_queue.remove(1);
+                        pop_parent = false;
+                    }
+
+                    left_queue.push_front((start, mid));
+                    right_queue.push_front((mid, end));
                 }
             }
 
@@ -162,13 +194,12 @@ impl BVH {
 
             match node.children {
                 Some(children) => {
-                    if children[0] == 100000000 || children[1] == 100000000 {}
                     node_stack.push_back(children[0]);
                     node_stack.push_back(children[1]);
                 }
                 None => {
-                    offset = offset.min(node.primitive_offset);
-                    len += node.number_primitives;
+                    offset = node.primitive_offset;
+                    len = node.number_primitives;
                 }
             }
         }
@@ -211,6 +242,47 @@ impl NewNode {
                 let mut children = [100000000, 100000000];
                 children[index] = child_index;
                 self.children = Some(children);
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ray_tracing::material::Material;
+    use crate::ray_tracing::material::Refract;
+    use crate::ray_tracing::primitives::Sphere;
+    use crate::ray_tracing::ray::Colour;
+
+    #[test]
+    fn primitive_info_new() {
+        let sphere = Primitive::Sphere(Sphere::new(
+            Vec3::one(),
+            0.2,
+            Material::Refract(Refract::new(Colour::one(), 1.5)),
+        ));
+        let info = PrimitiveInfo::new(3, &sphere);
+        assert!(
+            info.max == 1.2 * Vec3::one()
+                && info.min == 0.8 * Vec3::one()
+                && info.center == Vec3::one()
+                && info.index == 3
+        );
+    }
+
+    #[test]
+    fn node_containment() {
+        let scene = crate::image::generate::scene_one(16.0 / 9.0, false);
+        let bvh = scene.bvh;
+
+        for node in &bvh.nodes {
+            for i in node.primitive_offset..(node.primitive_offset + node.number_primitives) {
+                let aabb = scene.primitives[i].get_aabb().unwrap();
+                assert!(
+                    (aabb.max - node.bounds.max).component_min() >= 0.0
+                        && (aabb.min - node.bounds.min).component_min() <= 0.0
+                );
             }
         }
     }
