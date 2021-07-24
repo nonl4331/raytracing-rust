@@ -51,7 +51,7 @@ impl Scene {
 
         let mut primitives: Vec<Primitive> = primitives;
 
-        let bvh = Arc::new(BVH::new(&mut primitives, SplitType::EqualCounts));
+        let bvh = Arc::new(BVH::new(&mut primitives, SplitType::Middle));
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 

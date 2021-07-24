@@ -34,12 +34,23 @@ impl Split for SplitType {
                 let point_mid = 0.5
                     * (axis.get_axis_value(center_bounds.min)
                         + axis.get_axis_value(center_bounds.max));
-                let (left, right): (Vec<PrimitiveInfo>, Vec<PrimitiveInfo>) = primitives_info
-                    .drain(..)
-                    .partition(|part| axis.get_axis_value(part.center) < point_mid);
-                *primitives_info = left;
-                let mid_index = primitives_info.len();
-                primitives_info.extend(right);
+
+                let (mut left, mut right): (Vec<PrimitiveInfo>, Vec<PrimitiveInfo>) =
+                    primitives_info
+                        .drain(start..end)
+                        .partition(|part| axis.get_axis_value(part.center) < point_mid);
+
+                let mid_index = left.len() + start;
+
+                let left_len = left.len();
+                for (index, element) in left.drain(..).enumerate() {
+                    primitives_info.insert(start + index, element);
+                }
+
+                for (index, element) in right.drain(..).enumerate() {
+                    primitives_info.insert(start + index + left_len, element);
+                }
+
                 if mid_index == start || mid_index == end {
                     primitives_info[start..end].sort_by(|a, b| {
                         axis.get_axis_value(a.center)
