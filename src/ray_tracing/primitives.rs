@@ -1,14 +1,11 @@
 use crate::ray_tracing::material::Material;
 
-use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
-
 use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
 
 pub enum Primitive {
     Sphere(Sphere),
-    MovingSphere(MovingSphere),
     AARect(AARect),
     AABox(AABox),
     Triangle(Triangle),
@@ -47,14 +44,6 @@ impl Axis {
         }
     }
 
-    pub fn random_axis() -> Self {
-        let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-        match rng.gen_range(0..3) {
-            0 => Axis::X,
-            1 => Axis::Y,
-            _ => Axis::Z,
-        }
-    }
     pub fn get_max_axis(vec: &Vec3) -> Self {
         if vec.x > vec.y && vec.x > vec.z {
             Axis::X
@@ -177,24 +166,6 @@ impl Sphere {
     pub fn new(center: Vec3, radius: f32, material: Material) -> Self {
         Sphere {
             center,
-            radius,
-            material: Arc::new(material),
-        }
-    }
-}
-
-pub struct MovingSphere {
-    pub start_pos: Vec3,
-    pub end_pos: Vec3,
-    pub radius: f32,
-    pub material: Arc<Material>,
-}
-
-impl MovingSphere {
-    pub fn new(start_pos: Vec3, end_pos: Vec3, radius: f32, material: Material) -> Self {
-        MovingSphere {
-            start_pos,
-            end_pos,
             radius,
             material: Arc::new(material),
         }

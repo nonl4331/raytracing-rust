@@ -2,7 +2,7 @@ use crate::bvh::aabb::AABB;
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
-    primitives::{AABox, AARect, MovingSphere, Primitive, Sphere, Triangle, TriangleMesh},
+    primitives::{AABox, AARect, Primitive, Sphere, Triangle, TriangleMesh},
     ray::Ray,
 };
 
@@ -46,7 +46,6 @@ impl PrimitiveTrait for Primitive {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_int(ray),
-            Primitive::MovingSphere(sphere) => sphere.get_int(ray),
             Primitive::AARect(rect) => rect.get_int(ray),
             Primitive::AABox(aab) => aab.get_int(ray),
             Primitive::Triangle(triangle) => triangle.get_int(ray),
@@ -58,7 +57,6 @@ impl PrimitiveTrait for Primitive {
     fn does_int(&self, ray: &Ray) -> bool {
         match self {
             Primitive::Sphere(sphere) => sphere.does_int(ray),
-            Primitive::MovingSphere(sphere) => sphere.does_int(ray),
             Primitive::AARect(rect) => rect.does_int(ray),
             Primitive::AABox(aab) => aab.does_int(ray),
             Primitive::Triangle(triangle) => triangle.does_int(ray),
@@ -70,7 +68,6 @@ impl PrimitiveTrait for Primitive {
     fn get_internal(self) -> Vec<Primitive> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_internal(),
-            Primitive::MovingSphere(sphere) => sphere.get_internal(),
             Primitive::AARect(rect) => rect.get_internal(),
             Primitive::AABox(aab) => aab.get_internal(),
             Primitive::Triangle(triangle) => triangle.get_internal(),
@@ -82,7 +79,6 @@ impl PrimitiveTrait for Primitive {
     fn get_aabb(&self) -> Option<AABB> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_aabb(),
-            Primitive::MovingSphere(sphere) => sphere.get_aabb(),
             Primitive::AARect(rect) => rect.get_aabb(),
             Primitive::AABox(aab) => aab.get_aabb(),
             Primitive::Triangle(triangle) => triangle.get_aabb(),
@@ -93,7 +89,6 @@ impl PrimitiveTrait for Primitive {
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_uv(point),
-            Primitive::MovingSphere(sphere) => sphere.get_uv(point),
             Primitive::AARect(rect) => rect.get_uv(point),
             Primitive::AABox(aab) => aab.get_uv(point),
             Primitive::Triangle(triangle) => triangle.get_uv(point),
@@ -105,7 +100,6 @@ impl PrimitiveTrait for Primitive {
     fn requires_uv(&self) -> bool {
         match self {
             Primitive::Sphere(sphere) => (*sphere.material).requires_uv(),
-            Primitive::MovingSphere(sphere) => sphere.material.requires_uv(),
             Primitive::AARect(rect) => rect.material.requires_uv(),
             Primitive::AABox(aab) => aab.material.requires_uv(),
             Primitive::Triangle(triangle) => triangle.material.requires_uv(),
@@ -167,62 +161,6 @@ impl PrimitiveTrait for Sphere {
         Some(AABB::new(
             self.center - self.radius * Vec3::one(),
             self.center + self.radius * Vec3::one(),
-        ))
-    }
-}
-
-impl PrimitiveTrait for MovingSphere {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        let time_center = self.start_pos + (self.end_pos - self.start_pos) * ray.time;
-        let oc = ray.origin - time_center;
-        let a = ray.direction.dot(ray.direction);
-        let h = ray.direction.dot(oc); // b/2
-        let c = oc.dot(oc) - self.radius * self.radius;
-        let disc = h * h - a * c;
-        if disc > 0.0 {
-            let mut t = (-h - disc.sqrt()) / a;
-
-            if t < 0.0 {
-                t = (-h + disc.sqrt()) / a;
-            }
-
-            let point = ray.at(t);
-            let mut normal = (point - time_center) / self.radius;
-            let mut out = true;
-            if normal.dot(ray.direction) > 0.0 {
-                normal *= -1.0;
-                out = false;
-            }
-            Some(Hit {
-                t,
-                point: point + EPSILON * normal,
-                normal,
-                uv: self.get_uv(point),
-                out,
-                material: self.material.clone(),
-            })
-        } else {
-            None
-        }
-    }
-    fn get_internal(self) -> Vec<Primitive> {
-        vec![Primitive::MovingSphere(self)]
-    }
-    fn get_uv(&self, point: Vec3) -> Option<Vec2> {
-        if self.material.requires_uv() {
-            let phi = (-1.0 * point.z).atan2(point.x) + PI;
-            let theta = (-1.0 * point.y).acos();
-
-            return Some(Vec2::new(phi / (2.0 * PI), theta / PI));
-        }
-        None
-    }
-    fn get_aabb(&self) -> Option<AABB> {
-        let min_pos = self.start_pos.min_by_component(self.end_pos);
-        let max_pos = self.start_pos.max_by_component(self.end_pos);
-        Some(AABB::new(
-            min_pos - self.radius * Vec3::one(),
-            max_pos + self.radius * Vec3::one(),
         ))
     }
 }

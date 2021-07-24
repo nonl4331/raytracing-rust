@@ -4,7 +4,7 @@ use crate::math;
 
 use crate::ray_tracing::{
     material::*,
-    primitives::{AABox, AARect, Axis, MovingSphere, Primitive, Sphere},
+    primitives::{AABox, AARect, Axis, Primitive, Sphere},
     ray::Colour,
     sky::Sky,
     texture::{CheckeredTexture, ImageTexture, Lerp, SolidColour, Texture},
@@ -20,7 +20,7 @@ const GROUND_COLOUR: Texture = Texture::SolidColour(SolidColour {
     },
 });
 
-pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
+pub fn scene_one(aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
@@ -85,28 +85,16 @@ pub fn scene_one(aspect_ratio: f32, motion_blur: bool) -> Scene {
 
                 if choose_material < 0.8 {
                     // diffuse sphere
-                    if motion_blur {
-                        let sphere = MovingSphere::new(
-                            center,
-                            center - Vec3::new(0.0, math::random_f32() * 0.5, 0.0),
-                            0.2,
-                            Material::Diffuse(Diffuse::new(
-                                Texture::SolidColour(SolidColour::new(colour)),
-                                0.5,
-                            )),
-                        );
-                        primitives.push(Primitive::MovingSphere(sphere));
-                    } else {
-                        let sphere = Sphere::new(
-                            center,
-                            0.2,
-                            Material::Diffuse(Diffuse::new(
-                                Texture::SolidColour(SolidColour::new(colour)),
-                                0.5,
-                            )),
-                        );
-                        primitives.push(Primitive::Sphere(sphere));
-                    }
+
+                    let sphere = Sphere::new(
+                        center,
+                        0.2,
+                        Material::Diffuse(Diffuse::new(
+                            Texture::SolidColour(SolidColour::new(colour)),
+                            0.5,
+                        )),
+                    );
+                    primitives.push(Primitive::Sphere(sphere));
                 } else if choose_material < 0.95 {
                     // metal sphere
                     let sphere = Sphere::new(

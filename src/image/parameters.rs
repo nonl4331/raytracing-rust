@@ -117,8 +117,8 @@ fn display_help() {
     println!("\t Lists all valid scenes.");
     println!("-I [index], --info [index]");
     println!("\t Prints info for scene");
-    println!("-S [index](m), --scene [index](m)");
-    println!("\t Renders scene. Adding a \"m\" will enable motion (only works on scenes with motion blur)");
+    println!("-S [index], --scene [index](m)");
+    println!("\t Renders scene");
     println!("-N [samples], --samples [samples]");
     println!("\t Set samples per pixel");
     println!("-X [pixels], --width [pixels]");
@@ -132,7 +132,7 @@ fn display_help() {
 
 fn get_list() {
     println!("-------------------");
-    println!("1(m): Marbles");
+    println!("1: Marbles");
     println!("-------------------");
     println!("Objects: 4-125");
     println!("Sky: Yes");
@@ -239,8 +239,7 @@ fn get_scene(args: &Vec<String>, index: usize, aspect_ratio: f32) -> Scene {
             process::exit(0);
         }
         Some(string) => match &string[..] {
-            "1" => return generate::scene_one(aspect_ratio, false),
-            "1m" => return generate::scene_one(aspect_ratio, true),
+            "1" => return generate::scene_one(aspect_ratio),
             "2" => return generate::scene_two(aspect_ratio),
             "3" => return generate::scene_three(aspect_ratio),
             "4" => return generate::scene_four(aspect_ratio),

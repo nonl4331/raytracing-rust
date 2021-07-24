@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn node_containment() {
-        let scene = crate::image::generate::scene_one(16.0 / 9.0, false);
+        let scene = crate::image::generate::scene_one(16.0 / 9.0);
         let bvh = scene.bvh;
 
         for node in &bvh.nodes {
