@@ -1,3 +1,5 @@
+use crate::bvh::split::SplitType;
+
 use crate::image::scene::Scene;
 
 use crate::math;
@@ -20,7 +22,7 @@ const GROUND_COLOUR: Texture = Texture::SolidColour(SolidColour {
     },
 });
 
-pub fn scene_one(aspect_ratio: f32) -> Scene {
+pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
@@ -130,11 +132,12 @@ pub fn scene_one(aspect_ratio: f32) -> Scene {
         0.1,
         10.0,
         sky,
+        bvh_type,
         primitives,
     )
 }
 
-pub fn scene_two(aspect_ratio: f32) -> Scene {
+pub fn scene_two(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
@@ -214,11 +217,12 @@ pub fn scene_two(aspect_ratio: f32) -> Scene {
         0.0,
         10.0,
         sky,
+        bvh_type,
         primitives,
     )
 }
 
-pub fn scene_three(aspect_ratio: f32) -> Scene {
+pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
@@ -305,11 +309,12 @@ pub fn scene_three(aspect_ratio: f32) -> Scene {
         0.0,
         10.0,
         sky,
+        bvh_type,
         primitives,
     )
 }
 
-pub fn scene_four(aspect_ratio: f32) -> Scene {
+pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
@@ -349,12 +354,13 @@ pub fn scene_four(aspect_ratio: f32) -> Scene {
         0.0,
         10.0,
         sky,
+        bvh_type,
         primitives,
     )
 }
 
 // WIP
-pub fn scene_five(aspect_ratio: f32) -> Scene {
+pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground_mat = Texture::CheckeredTexture(CheckeredTexture::new(
@@ -402,11 +408,12 @@ pub fn scene_five(aspect_ratio: f32) -> Scene {
         0.0,
         10.0,
         sky,
+        bvh_type,
         primitives,
     )
 }
 
-pub fn scene_six(aspect_ratio: f32) -> Scene {
+pub fn scene_six(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground: Sphere = Sphere::new(
@@ -442,6 +449,7 @@ pub fn scene_six(aspect_ratio: f32) -> Scene {
         0.0,
         10.0,
         sky,
+        bvh_type,
         primitives,
     )
 }

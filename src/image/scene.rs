@@ -42,6 +42,7 @@ impl Scene {
         aperture: f32,
         focus_dist: f32,
         sky: Sky,
+        split_type: SplitType,
         mut primitives: Vec<Primitive>,
     ) -> Self {
         let primitives: Vec<Primitive> = primitives
@@ -51,7 +52,7 @@ impl Scene {
 
         let mut primitives: Vec<Primitive> = primitives;
 
-        let bvh = Arc::new(BVH::new(&mut primitives, SplitType::Middle));
+        let bvh = Arc::new(BVH::new(&mut primitives, split_type));
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 

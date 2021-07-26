@@ -1,3 +1,5 @@
+use crate::bvh::split::SplitType;
+
 use crate::image::{generate, scene::Scene};
 
 use std::process;
@@ -5,6 +7,7 @@ use std::process;
 const SAMPLES_DEFAULT: u32 = 30;
 const WIDTH_DEFAULT: u32 = 800;
 const HEIGHT_DEFAULT: u32 = 600;
+const BVH_DEFAULT: SplitType = SplitType::Middle;
 const FILENAME_DEFAULT: &str = "out.png";
 
 pub struct Parameters {
@@ -36,6 +39,14 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
     let mut width = None;
     let mut height = None;
     let mut filename = None;
+    let mut bvh_type = None;
+
+    if args.len() == 1 {
+        println!("No arguments specified defaulting to help.");
+        display_help();
+        process::exit(0);
+    }
+
     for arg_i in (0..(args.len() / 2)).map(|i| i * 2 + 1) {
         match args.get(arg_i) {
             Some(arg) => match &arg[..] {
@@ -83,6 +94,12 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
                 "--height" => {
                     height = Some(get_dimension(&args, arg_i + 1));
                 }
+                "-B" => {
+                    bvh_type = Some(get_bvh_type(&args, arg_i + 1));
+                }
+                "--bvh" => {
+                    bvh_type = Some(get_bvh_type(&args, arg_i + 1));
+                }
                 "-O" => {
                     filename = Some(get_filename(&args, arg_i + 1));
                 }
@@ -98,7 +115,8 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
         Some(scene_index) => {
             let aspect_ratio =
                 width.unwrap_or(WIDTH_DEFAULT) as f32 / height.unwrap_or(HEIGHT_DEFAULT) as f32;
-            let scene = get_scene(&args, scene_index, aspect_ratio);
+            let bvh_type = bvh_type.unwrap_or(BVH_DEFAULT);
+            let scene = get_scene(&args, scene_index, bvh_type, aspect_ratio);
 
             let parameters = Parameters::new(samples, width, height, filename);
             Some((scene, parameters))
@@ -117,7 +135,7 @@ fn display_help() {
     println!("\t Lists all valid scenes.");
     println!("-I [index], --info [index]");
     println!("\t Prints info for scene");
-    println!("-S [index], --scene [index](m)");
+    println!("-S [index], --scene [index]");
     println!("\t Renders scene");
     println!("-N [samples], --samples [samples]");
     println!("\t Set samples per pixel");
@@ -125,9 +143,12 @@ fn display_help() {
     println!("\t Sets width of image");
     println!("-Y [pixels], --height [pixels]");
     println!("\t Sets height of image");
+    println!("-B [split_type], --bvh [split_type]");
+    println!("\t Sets split type for bvh.");
+    println!("\t supported split types: \"equal\", \"middle\"");
     println!("-O [filename], --output [filename]");
     println!("\t filename of output with supported file extension.");
-    println!("\t supported file extensions: png, jpeg");
+    println!("\t supported file extensions: \"png\", \"jpeg\"");
 }
 
 fn get_list() {
@@ -231,7 +252,7 @@ fn get_info(args: &Vec<String>, index: usize) {
     }
 }
 
-fn get_scene(args: &Vec<String>, index: usize, aspect_ratio: f32) -> Scene {
+fn get_scene(args: &Vec<String>, index: usize, bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");
@@ -239,12 +260,12 @@ fn get_scene(args: &Vec<String>, index: usize, aspect_ratio: f32) -> Scene {
             process::exit(0);
         }
         Some(string) => match &string[..] {
-            "1" => return generate::scene_one(aspect_ratio),
-            "2" => return generate::scene_two(aspect_ratio),
-            "3" => return generate::scene_three(aspect_ratio),
-            "4" => return generate::scene_four(aspect_ratio),
-            "5" => return generate::scene_five(aspect_ratio),
-            "6" => return generate::scene_six(aspect_ratio),
+            "1" => return generate::scene_one(bvh_type, aspect_ratio),
+            "2" => return generate::scene_two(bvh_type, aspect_ratio),
+            "3" => return generate::scene_three(bvh_type, aspect_ratio),
+            "4" => return generate::scene_four(bvh_type, aspect_ratio),
+            "5" => return generate::scene_five(bvh_type, aspect_ratio),
+            "6" => return generate::scene_six(bvh_type, aspect_ratio),
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");
@@ -280,6 +301,26 @@ fn get_filename(args: &Vec<String>, index: usize) -> String {
         }
         None => {
             println!("Please specify a valid filename!");
+            println!("Do -H or --help for more information.");
+            process::exit(0);
+        }
+    }
+}
+
+fn get_bvh_type(args: &Vec<String>, index: usize) -> SplitType {
+    match args.get(index) {
+        Some(string) => match &string.to_lowercase()[..] {
+            "equal" => SplitType::EqualCounts,
+            "middle" => SplitType::Middle,
+            _ => {
+                println!("{} is not a valid value for bvh type!", string);
+                println!("Please specify a valid value for bvh type!");
+                println!("Do -H or --help for more information.");
+                process::exit(0);
+            }
+        },
+        None => {
+            println!("Please specify a value for bvh type!");
             println!("Do -H or --help for more information.");
             process::exit(0);
         }

@@ -66,7 +66,6 @@ pub struct AARect {
 
 impl AARect {
     pub fn new(min: Vec2, max: Vec2, k: f32, axis: Axis, material: Material) -> Self {
-        let kvec = k * axis.return_point_with_axis(Vec3::one());
         AARect {
             min,
             max,
@@ -82,7 +81,6 @@ impl AARect {
         axis: Axis,
         material: &Arc<Material>,
     ) -> Self {
-        let kvec = k * axis.return_point_with_axis(Vec3::one());
         AARect {
             min,
             max,
@@ -191,11 +189,6 @@ impl Triangle {
         if normal.dot(vertex_normal) < 0.0 {
             normal = -1.0 * normal;
         }
-
-        let min = points[0].min_by_component(points[1].min_by_component(points[2]))
-            - Vec3::new(0.0001, 0.0001, 0.0001);
-        let max = points[0].max_by_component(points[1].max_by_component(points[2]))
-            + Vec3::new(0.0001, 0.0001, 0.0001);
 
         Triangle {
             points,
