@@ -52,7 +52,18 @@ impl Scene {
 
         let mut primitives: Vec<Primitive> = primitives;
 
+        line_break();
+
+        println!("BVH construction started.");
+
+        let start = Instant::now();
         let bvh = Arc::new(BVH::new(&mut primitives, split_type));
+        let end = Instant::now();
+        let duration = end.checked_duration_since(start).unwrap();
+
+        line_break();
+
+        println!("BVH construction finished in: {}ms", duration.as_millis());
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 
@@ -166,9 +177,9 @@ impl Scene {
             .map(|value| (value.sqrt() * 255.0) as u8)
             .collect();
 
-        println!("------------------------------");
+        line_break();
         println!("Finised rendering image!");
-        println!("------------------------------");
+        line_break();
         println!("Width: {}", width);
         println!("Height: {}", height);
         println!("Samples per pixel: {}", pixel_samples);
@@ -178,7 +189,7 @@ impl Scene {
             "Mrays/s: {:.2}",
             (ray_count as f32 / duration.as_secs_f32()) / 1000000.0
         );
-        println!("------------------------------");
+        line_break();
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 
@@ -193,6 +204,10 @@ impl Scene {
             random_f32(),
         )
     }
+}
+
+fn line_break() {
+    println!("------------------------------");
 }
 
 fn get_readable_duration(duration: Duration) -> String {
