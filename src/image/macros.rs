@@ -39,6 +39,19 @@ macro_rules! image {
 }
 
 #[macro_export]
+macro_rules! checkered {
+    ($colour_one:expr, $colour_two:expr) => {
+        Texture::CheckeredTexture(CheckeredTexture::new($colour_one, $colour_two))
+    };
+    ($r1:expr, $g1:expr, $b1:expr, $r2:expr, $g2:expr, $b2:expr) => {
+        Texture::CheckeredTexture(CheckeredTexture::new(
+            colour!($r1, $g1, $b1),
+            colour!($r2, $g2, $b2),
+        ))
+    };
+}
+
+#[macro_export]
 macro_rules! lerp {
     ($colour_one:expr, $colour_two:expr) => {
         Texture::Lerp(Lerp::new($colour_one, $colour_two))
@@ -117,6 +130,13 @@ macro_rules! sphere {
     };
     ($position:expr, $radius:expr, $material:expr) => {
         Primitive::Sphere(Sphere::new($position, $radius as f32, $material))
+    };
+}
+
+#[macro_export]
+macro_rules! model {
+    ($filepath:expr, $material:expr) => {
+        load_model($filepath, $material)
     };
 }
 
