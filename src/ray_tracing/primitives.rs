@@ -53,6 +53,14 @@ impl Axis {
             Axis::Z
         }
     }
+
+    pub fn point_from_2d(vec: &Vec2, axis: &Axis, axis_value: f32) -> Vec3 {
+        match axis {
+            Axis::X => Vec3::new(axis_value, vec.x, vec.y),
+            Axis::Y => Vec3::new(vec.x, axis_value, vec.y),
+            Axis::Z => Vec3::new(vec.x, vec.y, axis_value),
+        }
+    }
 }
 
 #[derive(Clone)]

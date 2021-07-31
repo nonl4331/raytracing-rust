@@ -2,7 +2,7 @@ use crate::bvh::aabb::AABB;
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
-    primitives::{AABox, AARect, Primitive, Sphere, Triangle, TriangleMesh},
+    primitives::{AABox, AARect, Axis, Primitive, Sphere, Triangle, TriangleMesh},
     ray::Ray,
 };
 
@@ -220,7 +220,10 @@ impl PrimitiveTrait for AARect {
         None
     }
     fn get_aabb(&self) -> Option<AABB> {
-        None //TODO
+        Some(AABB::new(
+            Axis::point_from_2d(&self.min, &self.axis, self.k - 0.0001),
+            Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
+        ))
     }
 }
 
