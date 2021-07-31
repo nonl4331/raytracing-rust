@@ -1,6 +1,6 @@
 use crate::{
-    checkered, colour, diffuse, emit, image, lerp, model, position, reflect, refract, scene, sky,
-    solid_colour, sphere,
+    checkered, colour, diffuse, emit, image, model, position, reflect, refract, scene, sky,
+    solid_colour, sphere, texture_lerp,
 };
 
 use crate::bvh::split::SplitType;
@@ -64,7 +64,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
         }
     }
 
-    let sky = sky!(lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(13, 2, -3),
@@ -105,7 +105,7 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     primitives.push(sphere_three);
     primitives.push(sphere_four);
 
-    let sky = sky!(lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(3, 1, -15),
@@ -152,7 +152,7 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     primitives.push(sphere_middle);
     primitives.push(Primitive::AABox(box_right));
 
-    let sky = sky!(lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(-5, 3, -3),
@@ -223,7 +223,7 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     primitives.push(Primitive::AABox(cube));
     primitives.push(earth);
 
-    let sky = sky!(lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(-5, 4, -3),
@@ -247,7 +247,7 @@ pub fn scene_six(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     primitives.push(ground);
     primitives.extend(model!("res/dragon.obj", diffuse!(0.5, 0.5, 0.5, 0.5)));
 
-    let sky = sky!(lerp!(colour!(0.5, 0.7, 1.0), colour!(1)));
+    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1.0), colour!(1)));
 
     scene!(
         position!(-20, 20, -25),

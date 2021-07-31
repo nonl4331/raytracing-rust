@@ -52,7 +52,7 @@ macro_rules! checkered {
 }
 
 #[macro_export]
-macro_rules! lerp {
+macro_rules! texture_lerp {
     ($colour_one:expr, $colour_two:expr) => {
         Texture::Lerp(Lerp::new($colour_one, $colour_two))
     };
