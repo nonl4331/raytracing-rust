@@ -1,6 +1,6 @@
 use crate::{
-    checkered, colour, diffuse, emit, image, model, position, reflect, refract, scene, sky,
-    solid_colour, sphere, texture_lerp,
+    aacuboid, aarect, axis, checkered, colour, diffuse, emit, image, model, position, reflect,
+    refract, scene, sky, solid_colour, sphere, texture_lerp,
 };
 
 use crate::bvh::split::SplitType;
@@ -91,16 +91,16 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let sphere_four = sphere!(-1, 1.5, 0, 0.5, diffuse!(0, 1, 1, 0.5));
 
-    let rect_one = AARect::new(
-        Vec2::new(-2.5, 0.5),
-        Vec2::new(2.5, 2.5),
-        2.0,
-        Axis::Z,
-        reflect!(colour!(1, 0.9, 0.9), 0.001),
+    let rect_one = aarect!(
+        position!(-2.5, 0.5),
+        position!(2.5, 2.5),
+        2,
+        axis!(Z),
+        reflect!(colour!(1, 0.9, 0.9), 0.001)
     );
 
     primitives.push(ground);
-    primitives.push(Primitive::AARect(rect_one));
+    primitives.push(rect_one);
     primitives.push(sphere_two);
     primitives.push(sphere_three);
     primitives.push(sphere_four);
@@ -126,31 +126,19 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    let box_left = AACuboid::new(
-        position!(-1.6, 1, -0.5),
-        position!(-0.6, 2.0, 0.5),
-        diffuse!(1, 0, 0, 0.5),
-    );
+    let box_left = aacuboid!(-1.6, 1, -0.5, -0.6, 2, 0.5, diffuse!(1, 0, 0, 0.5));
 
-    let box_middle = AACuboid::new(
-        position!(-0.5, 1, -0.5),
-        position!(0.5, 2, 0.5),
-        reflect!(colour!(1), 0),
-    );
+    let box_middle = aacuboid!(-0.5, 1, -0.5, 0.5, 2, 0.5, reflect!(colour!(1), 0));
 
     let sphere_middle = sphere!(0, 2.5, 0, 0.3, reflect!(colour!(1), 0));
 
-    let box_right = AACuboid::new(
-        position!(0.6, 1, -0.5),
-        position!(1.6, 2, 0.5),
-        diffuse!(0, 0, 1, 0.5),
-    );
+    let box_right = aacuboid!(0.6, 1, -0.5, 1.6, 2, 0.5, diffuse!(0, 0, 1, 0.5));
 
     primitives.push(ground);
-    primitives.push(Primitive::AACuboid(box_left));
-    primitives.push(Primitive::AACuboid(box_middle));
+    primitives.push(box_left);
+    primitives.push(box_middle);
     primitives.push(sphere_middle);
-    primitives.push(Primitive::AACuboid(box_right));
+    primitives.push(box_right);
 
     let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
@@ -175,15 +163,19 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let glowy = sphere!(0, 0.5, 0, 0.5, emit!(solid_colour!(colour!(1)), 1.5));
 
-    let cube = AACuboid::new(
-        position!(-0.5, 0.1, -0.5),
-        position!(-0.4, 0.2, -0.4),
-        diffuse!(0.5, 0.5, 0.5, 0.5),
+    let cube = aacuboid!(
+        -0.5,
+        0.1,
+        -0.5,
+        -0.4,
+        0.2,
+        -0.4,
+        diffuse!(0.5, 0.5, 0.5, 0.5)
     );
 
     primitives.push(ground);
     primitives.push(glowy);
-    primitives.push(Primitive::AACuboid(cube));
+    primitives.push(cube);
 
     scene!(
         position!(-5, 3, -3),
@@ -199,7 +191,6 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     )
 }
 
-// WIP
 pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
@@ -211,16 +202,12 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
         diffuse!(checkered!(colour!(0), colour!(0.5)), 0.5)
     );
 
-    let cube = AACuboid::new(
-        position!(-0.5, 0.1, -0.5),
-        position!(1, 0.6, 1.0),
-        diffuse!(0.5, 0.5, 0.5, 0.5),
-    );
+    let cube = aacuboid!(-0.5, 0.1, -0.5, 1, 0.6, 1, diffuse!(0.5, 0.5, 0.5, 0.5));
 
     let earth = sphere!(0, 1.2, 0, 0.5, diffuse!(image!("res/earth.png"), 0.5));
 
     primitives.push(ground);
-    primitives.push(Primitive::AACuboid(cube));
+    primitives.push(cube);
     primitives.push(earth);
 
     let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));

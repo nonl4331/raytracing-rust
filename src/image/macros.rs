@@ -151,16 +151,16 @@ macro_rules! sphere {
 
 #[macro_export]
 macro_rules! aarect {
-    ($point_one:expr, $point_two:expr, $axis:expr, $axis_value:expr, $material:expr) => {
+    ($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr,  $material:expr) => {
         Primitive::AARect(AARect::new(
             $point_one,
             $point_two,
-            $axis_value,
+            $axis_value as f32,
             $axis,
             $material,
         ))
     };
-    ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis:expr, $axis_value:expr, $material:expr) => {
+    ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr) => {
         Primitive::AARect(AARect::new(
             position!($x1, $y1),
             position!($x2, $y2),
