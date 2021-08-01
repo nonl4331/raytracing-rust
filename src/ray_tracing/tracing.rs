@@ -2,7 +2,7 @@ use crate::bvh::aabb::AABB;
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
-    primitives::{AABox, AARect, Axis, Primitive, Sphere, Triangle, TriangleMesh},
+    primitives::{AACuboid, AARect, Axis, Primitive, Sphere, Triangle, TriangleMesh},
     ray::Ray,
 };
 
@@ -47,7 +47,7 @@ impl PrimitiveTrait for Primitive {
         match self {
             Primitive::Sphere(sphere) => sphere.get_int(ray),
             Primitive::AARect(rect) => rect.get_int(ray),
-            Primitive::AABox(aab) => aab.get_int(ray),
+            Primitive::AACuboid(aab) => aab.get_int(ray),
             Primitive::Triangle(triangle) => triangle.get_int(ray),
             Primitive::TriangleMesh(mesh) => mesh.get_int(ray),
             Primitive::None => panic!("get_int called on PrimitiveNone"),
@@ -58,7 +58,7 @@ impl PrimitiveTrait for Primitive {
         match self {
             Primitive::Sphere(sphere) => sphere.does_int(ray),
             Primitive::AARect(rect) => rect.does_int(ray),
-            Primitive::AABox(aab) => aab.does_int(ray),
+            Primitive::AACuboid(aab) => aab.does_int(ray),
             Primitive::Triangle(triangle) => triangle.does_int(ray),
             Primitive::TriangleMesh(mesh) => mesh.does_int(ray),
             Primitive::None => panic!("does_int called on PrimitiveNone"),
@@ -69,7 +69,7 @@ impl PrimitiveTrait for Primitive {
         match self {
             Primitive::Sphere(sphere) => sphere.get_internal(),
             Primitive::AARect(rect) => rect.get_internal(),
-            Primitive::AABox(aab) => aab.get_internal(),
+            Primitive::AACuboid(aab) => aab.get_internal(),
             Primitive::Triangle(triangle) => triangle.get_internal(),
             Primitive::TriangleMesh(mesh) => mesh.get_internal(),
             Primitive::None => panic!("get_internal called on PrimitiveNone"),
@@ -80,7 +80,7 @@ impl PrimitiveTrait for Primitive {
         match self {
             Primitive::Sphere(sphere) => sphere.get_aabb(),
             Primitive::AARect(rect) => rect.get_aabb(),
-            Primitive::AABox(aab) => aab.get_aabb(),
+            Primitive::AACuboid(aab) => aab.get_aabb(),
             Primitive::Triangle(triangle) => triangle.get_aabb(),
             Primitive::TriangleMesh(mesh) => mesh.get_aabb(),
             Primitive::None => panic!("get_aabb called on PrimitiveNone"),
@@ -90,7 +90,7 @@ impl PrimitiveTrait for Primitive {
         match self {
             Primitive::Sphere(sphere) => sphere.get_uv(point),
             Primitive::AARect(rect) => rect.get_uv(point),
-            Primitive::AABox(aab) => aab.get_uv(point),
+            Primitive::AACuboid(aab) => aab.get_uv(point),
             Primitive::Triangle(triangle) => triangle.get_uv(point),
             Primitive::TriangleMesh(mesh) => mesh.get_uv(point),
             Primitive::None => panic!("get_uv called on PrimitiveNone"),
@@ -101,7 +101,7 @@ impl PrimitiveTrait for Primitive {
         match self {
             Primitive::Sphere(sphere) => (*sphere.material).requires_uv(),
             Primitive::AARect(rect) => rect.material.requires_uv(),
-            Primitive::AABox(aab) => aab.material.requires_uv(),
+            Primitive::AACuboid(aab) => aab.material.requires_uv(),
             Primitive::Triangle(triangle) => triangle.material.requires_uv(),
             Primitive::TriangleMesh(mesh) => mesh.material.requires_uv(),
             Primitive::None => panic!("requires_uv called on PrimitiveNone"),
@@ -227,7 +227,7 @@ impl PrimitiveTrait for AARect {
     }
 }
 
-impl PrimitiveTrait for AABox {
+impl PrimitiveTrait for AACuboid {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let mut hit: Option<Hit> = None;
         for side in self.rects.iter() {

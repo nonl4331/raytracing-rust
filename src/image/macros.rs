@@ -6,6 +6,9 @@ macro_rules! position {
     ($x:expr, $y:expr, $z:expr) => {
         Vec3::new($x as f32, $y as f32, $z as f32)
     };
+    ($x:expr, $y:expr) => {
+        Vec2::new($x as f32, $y as f32)
+    };
 }
 
 #[macro_export]
@@ -15,6 +18,19 @@ macro_rules! colour {
     };
     ($value:expr) => {
         Colour::new($value as f32, $value as f32, $value as f32)
+    };
+}
+
+#[macro_export]
+macro_rules! axis {
+    (X) => {
+        Axis::X
+    };
+    (Y) => {
+        Axis::Y
+    };
+    (Z) => {
+        Axis::Z
     };
 }
 
@@ -130,6 +146,42 @@ macro_rules! sphere {
     };
     ($position:expr, $radius:expr, $material:expr) => {
         Primitive::Sphere(Sphere::new($position, $radius as f32, $material))
+    };
+}
+
+#[macro_export]
+macro_rules! aarect {
+    ($point_one:expr, $point_two:expr, $axis:expr, $axis_value:expr, $material:expr) => {
+        Primitive::AARect(AARect::new(
+            $point_one,
+            $point_two,
+            $axis_value,
+            $axis,
+            $material,
+        ))
+    };
+    ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis:expr, $axis_value:expr, $material:expr) => {
+        Primitive::AARect(AARect::new(
+            position!($x1, $y1),
+            position!($x2, $y2),
+            $axis_value,
+            $axis,
+            $material,
+        ))
+    };
+}
+
+#[macro_export]
+macro_rules! aacuboid {
+    ($point_one:expr, $point_two:expr, $material:expr) => {
+        Primitive::AACubiod(AACuboid::new($point_one, $point_two, $material))
+    };
+    ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $material:expr) => {
+        Primitive::AACuboid(AACuboid::new(
+            position!($x1, $y1, $z1),
+            position!($x2, $y2, $z2),
+            $material,
+        ))
     };
 }
 

@@ -7,7 +7,7 @@ use ultraviolet::{Vec2, Vec3};
 pub enum Primitive {
     Sphere(Sphere),
     AARect(AARect),
-    AABox(AABox),
+    AACuboid(AACuboid),
     Triangle(Triangle),
     TriangleMesh(TriangleMesh),
     None,
@@ -73,7 +73,12 @@ pub struct AARect {
 }
 
 impl AARect {
-    pub fn new(min: Vec2, max: Vec2, k: f32, axis: Axis, material: Material) -> Self {
+    pub fn new(point_one: Vec2, point_two: Vec2, k: f32, axis: Axis, material: Material) -> Self {
+        if point_one == point_two {
+            panic!("AARect called with two of the same point!");
+        }
+        let min = point_one.min_by_component(point_two);
+        let max = point_one.max_by_component(point_two);
         AARect {
             min,
             max,
@@ -99,15 +104,21 @@ impl AARect {
     }
 }
 
-pub struct AABox {
+pub struct AACuboid {
     pub min: Vec3,
     pub max: Vec3,
     pub rects: [AARect; 6],
     pub material: Arc<Material>,
 }
 
-impl AABox {
-    pub fn new(min: Vec3, max: Vec3, material: Material) -> Self {
+impl AACuboid {
+    pub fn new(point_one: Vec3, point_two: Vec3, material: Material) -> Self {
+        if point_one == point_two {
+            panic!("AACuboid called with two of the same point!");
+        }
+        let min = point_one.min_by_component(point_two);
+        let max = point_one.max_by_component(point_two);
+
         let arc = Arc::new(material);
         let rects = [
             AARect::new_with_arc(
@@ -153,7 +164,7 @@ impl AABox {
                 &arc,
             ),
         ];
-        AABox {
+        AACuboid {
             min,
             max,
             rects,

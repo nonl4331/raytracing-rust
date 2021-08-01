@@ -12,7 +12,7 @@ use crate::math;
 use crate::ray_tracing::{
     load_model::load_model,
     material::*,
-    primitives::{AABox, AARect, Axis, Primitive, Sphere},
+    primitives::{AACuboid, AARect, Axis, Primitive, Sphere},
     ray::Colour,
     sky::Sky,
     texture::{CheckeredTexture, ImageTexture, Lerp, SolidColour, Texture},
@@ -126,13 +126,13 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    let box_left = AABox::new(
+    let box_left = AACuboid::new(
         position!(-1.6, 1, -0.5),
         position!(-0.6, 2.0, 0.5),
         diffuse!(1, 0, 0, 0.5),
     );
 
-    let box_middle = AABox::new(
+    let box_middle = AACuboid::new(
         position!(-0.5, 1, -0.5),
         position!(0.5, 2, 0.5),
         reflect!(colour!(1), 0),
@@ -140,17 +140,17 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let sphere_middle = sphere!(0, 2.5, 0, 0.3, reflect!(colour!(1), 0));
 
-    let box_right = AABox::new(
+    let box_right = AACuboid::new(
         position!(0.6, 1, -0.5),
         position!(1.6, 2, 0.5),
         diffuse!(0, 0, 1, 0.5),
     );
 
     primitives.push(ground);
-    primitives.push(Primitive::AABox(box_left));
-    primitives.push(Primitive::AABox(box_middle));
+    primitives.push(Primitive::AACuboid(box_left));
+    primitives.push(Primitive::AACuboid(box_middle));
     primitives.push(sphere_middle);
-    primitives.push(Primitive::AABox(box_right));
+    primitives.push(Primitive::AACuboid(box_right));
 
     let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
@@ -175,7 +175,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let glowy = sphere!(0, 0.5, 0, 0.5, emit!(solid_colour!(colour!(1)), 1.5));
 
-    let cube = AABox::new(
+    let cube = AACuboid::new(
         position!(-0.5, 0.1, -0.5),
         position!(-0.4, 0.2, -0.4),
         diffuse!(0.5, 0.5, 0.5, 0.5),
@@ -183,7 +183,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     primitives.push(ground);
     primitives.push(glowy);
-    primitives.push(Primitive::AABox(cube));
+    primitives.push(Primitive::AACuboid(cube));
 
     scene!(
         position!(-5, 3, -3),
@@ -211,7 +211,7 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
         diffuse!(checkered!(colour!(0), colour!(0.5)), 0.5)
     );
 
-    let cube = AABox::new(
+    let cube = AACuboid::new(
         position!(-0.5, 0.1, -0.5),
         position!(1, 0.6, 1.0),
         diffuse!(0.5, 0.5, 0.5, 0.5),
@@ -220,7 +220,7 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let earth = sphere!(0, 1.2, 0, 0.5, diffuse!(image!("res/earth.png"), 0.5));
 
     primitives.push(ground);
-    primitives.push(Primitive::AABox(cube));
+    primitives.push(Primitive::AACuboid(cube));
     primitives.push(earth);
 
     let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
