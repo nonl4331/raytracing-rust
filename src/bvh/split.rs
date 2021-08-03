@@ -69,7 +69,10 @@ impl Split for SplitType {
                 });
                 point_mid
             }
-            _ => {
+            SplitType::SAH => {
+                unimplemented!()
+            }
+            SplitType::HLBVH => {
                 unimplemented!()
             }
         }

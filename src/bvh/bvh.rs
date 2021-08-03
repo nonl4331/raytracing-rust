@@ -53,12 +53,18 @@ impl BVH {
             .collect();
 
         let primitives_info = bvh.build_bvh(&mut primitives_info);
-
         *primitives = primitives_info
             .iter()
             .map(|&index| std::mem::replace(&mut primitives[index], Primitive::None))
             .collect();
 
+        /*bvh.build_bvh_recursive(&mut Vec::new(), 0, &mut primitives_info);
+
+        *primitives = primitives_info
+            .iter()
+            .map(|&info| std::mem::replace(&mut primitives[info.index], Primitive::None))
+            .collect();*/
+        println!("nodes: {}", bvh.nodes.len());
         bvh
     }
 
@@ -79,7 +85,6 @@ impl BVH {
         let mut pop_parent = false;
         while left_queue.len() > 0 || right_queue.len() > 0 {
             let mut current_primitives_info;
-            let mut axis = Axis::X;
             let is_left;
 
             let (start, end) = if left_queue.len() > 0 {
@@ -131,7 +136,7 @@ impl BVH {
 
                 let center_bounds = center_bounds.unwrap();
 
-                axis = Axis::get_max_axis(&center_bounds.get_extent());
+                let axis = Axis::get_max_axis(&center_bounds.get_extent());
 
                 if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max)
                 {
@@ -169,10 +174,78 @@ impl BVH {
             }
 
             self.nodes
-                .push(Node::new(axis, bounds.unwrap(), len, end - start));
+                .push(Node::new(bounds.unwrap(), len, end - start));
         }
         ordered_primitives
     }
+
+    fn build_bvh_recursive(
+        &mut self,
+        ordered_primitives: &mut Vec<usize>,
+        offset: usize,
+        primitives_info: &mut Vec<PrimitiveInfo>,
+    ) -> usize {
+        let number_primitives = primitives_info.len();
+
+        let mut bounds = None;
+        for info in primitives_info.iter() {
+            AABB::merge(&mut bounds, AABB::new(info.min, info.max));
+        }
+
+        let mut children = None;
+
+        self.nodes
+            .push(Node::new(bounds.unwrap(), offset, number_primitives));
+
+        if number_primitives == 1 {
+            for i in 0..number_primitives {
+                ordered_primitives.push(primitives_info[i].index);
+            }
+        } else {
+            let mut center_bounds = None;
+            for info in primitives_info[0..number_primitives].iter() {
+                AABB::extend_contains(&mut center_bounds, info.center);
+            }
+
+            let center_bounds = center_bounds.unwrap();
+
+            let axis = Axis::get_max_axis(&center_bounds.get_extent());
+
+            if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max) {
+                for i in 0..number_primitives {
+                    ordered_primitives.push(primitives_info[i].index);
+                }
+            } else {
+                let mid = self.split_type.split(
+                    0,
+                    number_primitives,
+                    &center_bounds,
+                    &axis,
+                    primitives_info,
+                );
+
+                let (left, right) = primitives_info.split_at_mut(mid);
+
+                children = Some((
+                    self.build_bvh_recursive(ordered_primitives, offset, &mut left.to_vec()),
+                    self.build_bvh_recursive(
+                        ordered_primitives,
+                        offset + left.len(),
+                        &mut right.to_vec(),
+                    ),
+                ));
+            }
+        }
+        let node_index = self.nodes.len() - 1;
+
+        if children.is_some() {
+            self.nodes[node_index].set_child(children.unwrap().0, 0);
+            self.nodes[node_index].set_child(children.unwrap().1, 1);
+        }
+
+        node_index
+    }
+
     pub fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)> {
         let mut offset_len = Vec::new();
 
@@ -205,22 +278,15 @@ impl BVH {
 pub struct Node {
     bounds: AABB,
     children: Option<[usize; 2]>,
-    split_axis: Axis,
     primitive_offset: usize,
     number_primitives: usize,
 }
 
 impl Node {
-    fn new(
-        split_axis: Axis,
-        bounds: AABB,
-        primitive_offset: usize,
-        number_primitives: usize,
-    ) -> Self {
+    fn new(bounds: AABB, primitive_offset: usize, number_primitives: usize) -> Self {
         Node {
             bounds,
             children: None,
-            split_axis,
             primitive_offset,
             number_primitives,
         }
