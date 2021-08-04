@@ -6,6 +6,8 @@ use crate::ray_tracing::{
     tracing::Hit,
 };
 
+use std::sync::Arc;
+
 use ultraviolet::{Vec2, Vec3};
 
 pub enum Material {
@@ -27,8 +29,8 @@ impl MaterialTrait for Material {
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         match self {
             Material::Diffuse(diffuse) => diffuse.colour(uv, point),
-            Material::Reflect(reflect) => reflect.colour,
-            Material::Refract(refract) => refract.colour,
+            Material::Reflect(reflect) => reflect.colour(uv, point),
+            Material::Refract(refract) => refract.colour(uv, point),
             Material::Emit(emit) => emit.colour(uv, point),
         }
     }
@@ -55,49 +57,58 @@ pub trait MaterialTrait {
 }
 
 pub struct Diffuse {
-    texture: Texture,
+    texture: Arc<Texture>,
     absorption: f32,
 }
 
 impl Diffuse {
-    pub fn new(texture: Texture, absorption: f32) -> Self {
+    pub fn new(texture: &Arc<Texture>, absorption: f32) -> Self {
         Diffuse {
-            texture,
+            texture: texture.clone(),
             absorption,
         }
     }
 }
 
 pub struct Reflect {
-    pub colour: Colour,
+    pub texture: Arc<Texture>,
     pub fuzz: f32,
 }
 
 impl Reflect {
-    pub fn new(colour: Vec3, fuzz: f32) -> Self {
-        Reflect { colour, fuzz }
+    pub fn new(texture: &Arc<Texture>, fuzz: f32) -> Self {
+        Reflect {
+            texture: texture.clone(),
+            fuzz,
+        }
     }
 }
 
 pub struct Refract {
-    pub colour: Colour,
+    pub texture: Arc<Texture>,
     pub eta: f32,
 }
 
 impl Refract {
-    pub fn new(colour: Vec3, eta: f32) -> Self {
-        Refract { colour, eta }
+    pub fn new(texture: &Arc<Texture>, eta: f32) -> Self {
+        Refract {
+            texture: texture.clone(),
+            eta,
+        }
     }
 }
 
 pub struct Emit {
-    pub texture: Texture,
+    pub texture: Arc<Texture>,
     pub strength: f32,
 }
 
 impl Emit {
-    pub fn new(texture: Texture, strength: f32) -> Self {
-        Emit { texture, strength }
+    pub fn new(texture: &Arc<Texture>, strength: f32) -> Self {
+        Emit {
+            texture: texture.clone(),
+            strength,
+        }
     }
 }
 
@@ -126,8 +137,8 @@ impl MaterialTrait for Reflect {
         );
         (1.0, false)
     }
-    fn colour(&self, _: Option<Vec2>, _: Vec3) -> Colour {
-        self.colour
+    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
+        self.texture.colour_value(uv, point)
     }
 }
 
@@ -143,10 +154,7 @@ impl MaterialTrait for Refract {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract = eta_fraction * sin_theta > 1.0;
         if cannot_refract || reflectance(cos_theta, eta_fraction) > math::random_f32() {
-            let ref_mat = Reflect {
-                colour: self.colour,
-                fuzz: 0.0,
-            };
+            let ref_mat = Reflect::new(&self.texture.clone(), 0.0);
             return ref_mat.scatter_ray(ray, hit);
         }
 
@@ -155,6 +163,9 @@ impl MaterialTrait for Refract {
         let direction = perp + para;
         *ray = Ray::new(hit.point, direction, ray.time);
         (1.0, false)
+    }
+    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
+        self.texture.colour_value(uv, point)
     }
 }
 

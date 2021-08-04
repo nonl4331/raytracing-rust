@@ -194,13 +194,19 @@ mod tests {
     use crate::ray_tracing::material::Refract;
     use crate::ray_tracing::primitives::Sphere;
     use crate::ray_tracing::ray::Colour;
+    use crate::ray_tracing::texture::SolidColour;
+    use crate::ray_tracing::texture::Texture;
+    use std::sync::Arc;
 
     #[test]
     fn primitive_info_new() {
         let sphere = Primitive::Sphere(Sphere::new(
             Vec3::one(),
             0.2,
-            Material::Refract(Refract::new(Colour::one(), 1.5)),
+            Material::Refract(Refract::new(
+                &Arc::new(Texture::SolidColour(SolidColour::new(Colour::one()))),
+                1.5,
+            )),
         ));
         let info = PrimitiveInfo::new(3, &sphere);
         assert!(

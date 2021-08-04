@@ -18,6 +18,8 @@ use crate::ray_tracing::{
     texture::{CheckeredTexture, ImageTexture, Lerp, SolidColour, Texture},
 };
 
+use std::sync::Arc;
+
 use ultraviolet::{Vec2, Vec3};
 
 pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
@@ -25,11 +27,11 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    let sphere_one = sphere!(0, 1, 0, 1, refract!(colour!(1), 1.5));
+    let sphere_one = sphere!(0, 1, 0, 1, refract!(&solid_colour!(colour!(1)), 1.5));
 
     let sphere_two = sphere!(-4, 1, 0, 1, diffuse!(0.4, 0.2, 0.1, 0.5));
 
-    let sphere_three = sphere!(4, 1, 0, 1, reflect!(colour!(0.7, 0.6, 0.5), 0));
+    let sphere_three = sphere!(4, 1, 0, 1, reflect!(&solid_colour!(0.7, 0.6, 0.5), 0));
 
     primitives.push(ground);
     primitives.push(sphere_one);
@@ -53,11 +55,15 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
                 let sphere;
 
                 if choose_material < 0.8 {
-                    sphere = sphere!(center, 0.2, diffuse!(solid_colour!(colour), 0.5));
+                    sphere = sphere!(center, 0.2, diffuse!(&solid_colour!(colour), 0.5));
                 } else if choose_material < 0.95 {
-                    sphere = sphere!(center, 0.2, reflect!(colour, random_f32() / 2.0));
+                    sphere = sphere!(
+                        center,
+                        0.2,
+                        reflect!(&solid_colour!(colour), random_f32() / 2.0)
+                    );
                 } else {
-                    sphere = sphere!(center, 0.2, refract!(colour!(1), 1.5));
+                    sphere = sphere!(center, 0.2, refract!(&solid_colour!(colour!(1)), 1.5));
                 }
                 primitives.push(sphere);
             }
@@ -96,7 +102,7 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
         position!(2.5, 2.5),
         2,
         axis!(Z),
-        reflect!(colour!(1, 0.9, 0.9), 0.001)
+        reflect!(&solid_colour!(1, 0.9, 0.9), 0.001)
     );
 
     primitives.push(ground);
@@ -128,9 +134,17 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let box_left = aacuboid!(-1.6, 1, -0.5, -0.6, 2, 0.5, diffuse!(1, 0, 0, 0.5));
 
-    let box_middle = aacuboid!(-0.5, 1, -0.5, 0.5, 2, 0.5, reflect!(colour!(1), 0));
+    let box_middle = aacuboid!(
+        -0.5,
+        1,
+        -0.5,
+        0.5,
+        2,
+        0.5,
+        reflect!(&solid_colour!(1, 1, 1), 0)
+    );
 
-    let sphere_middle = sphere!(0, 2.5, 0, 0.3, reflect!(colour!(1), 0));
+    let sphere_middle = sphere!(0, 2.5, 0, 0.3, reflect!(&solid_colour!(1, 1, 1), 0));
 
     let box_right = aacuboid!(0.6, 1, -0.5, 1.6, 2, 0.5, diffuse!(0, 0, 1, 0.5));
 
@@ -161,7 +175,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    let glowy = sphere!(0, 0.5, 0, 0.5, emit!(solid_colour!(colour!(1)), 1.5));
+    let glowy = sphere!(0, 0.5, 0, 0.5, emit!(&solid_colour!(colour!(1)), 1.5));
 
     let cube = aacuboid!(
         -0.5,
@@ -199,12 +213,12 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
         -1000,
         0,
         1000,
-        diffuse!(checkered!(colour!(0), colour!(0.5)), 0.5)
+        diffuse!(&checkered!(colour!(0), colour!(0.5)), 0.5)
     );
 
     let cube = aacuboid!(-0.5, 0.1, -0.5, 1, 0.6, 1, diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    let earth = sphere!(0, 1.2, 0, 0.5, diffuse!(image!("res/earth.png"), 0.5));
+    let earth = sphere!(0, 1.2, 0, 0.5, diffuse!(&image!("res/earth.png"), 0.5));
 
     primitives.push(ground);
     primitives.push(cube);

@@ -40,30 +40,33 @@ macro_rules! axis {
 #[macro_export]
 macro_rules! solid_colour {
     ($r:expr, $g:expr, $b:expr) => {
-        Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))
+        Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b))))
     };
     ($colour:expr) => {
-        Texture::SolidColour(SolidColour::new($colour))
+        Arc::new(Texture::SolidColour(SolidColour::new($colour)))
     };
 }
 
 #[macro_export]
 macro_rules! image {
     ($filepath:expr) => {
-        Texture::ImageTexture(ImageTexture::new($filepath))
+        Arc::new(Texture::ImageTexture(ImageTexture::new($filepath)))
     };
 }
 
 #[macro_export]
 macro_rules! checkered {
     ($colour_one:expr, $colour_two:expr) => {
-        Texture::CheckeredTexture(CheckeredTexture::new($colour_one, $colour_two))
+        Arc::new(Texture::CheckeredTexture(CheckeredTexture::new(
+            $colour_one,
+            $colour_two,
+        )))
     };
     ($r1:expr, $g1:expr, $b1:expr, $r2:expr, $g2:expr, $b2:expr) => {
-        Texture::CheckeredTexture(CheckeredTexture::new(
+        Arc::new(Texture::CheckeredTexture(CheckeredTexture::new(
             colour!($r1, $g1, $b1),
             colour!($r2, $g2, $b2),
-        ))
+        )))
     };
 }
 
@@ -84,7 +87,7 @@ macro_rules! texture_lerp {
 macro_rules! diffuse {
     ($r:expr,$g:expr,$b:expr, $absorption:expr) => {
         Material::Diffuse(Diffuse::new(
-            Texture::SolidColour(SolidColour::new(colour!($r, $g, $b))),
+            &Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
             $absorption as f32,
         ));
     };
