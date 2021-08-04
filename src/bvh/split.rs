@@ -16,7 +16,7 @@ pub trait Split {
         end: usize,
         center_bounds: &AABB,
         axis: &Axis,
-        primitives_info: &mut Vec<PrimitiveInfo>,
+        primitives_info: &mut [PrimitiveInfo],
     ) -> usize;
 }
 
@@ -27,7 +27,7 @@ impl Split for SplitType {
         end: usize,
         center_bounds: &AABB,
         axis: &Axis,
-        primitives_info: &mut Vec<PrimitiveInfo>,
+        primitives_info: &mut [PrimitiveInfo],
     ) -> usize {
         match self {
             SplitType::Middle => {
@@ -35,21 +35,29 @@ impl Split for SplitType {
                     * (axis.get_axis_value(center_bounds.min)
                         + axis.get_axis_value(center_bounds.max));
 
-                let (mut left, mut right): (Vec<PrimitiveInfo>, Vec<PrimitiveInfo>) =
-                    primitives_info
-                        .drain(start..end)
-                        .partition(|part| axis.get_axis_value(part.center) < point_mid);
+                let len = primitives_info.len();
+                let (mut left, mut right) = (0, len - 1);
+                let mid_index: usize;
 
-                let mid_index = left.len() + start;
-
-                let left_len = left.len();
-                for (index, element) in left.drain(..).enumerate() {
-                    primitives_info.insert(start + index, element);
+                loop {
+                    while left < len
+                        && axis.get_axis_value(primitives_info[left].center) < point_mid
+                    {
+                        left += 1;
+                    }
+                    while right > 0
+                        && axis.get_axis_value(primitives_info[right].center) >= point_mid
+                    {
+                        right -= 1;
+                    }
+                    if left >= right {
+                        mid_index = left;
+                        break;
+                    }
+                    primitives_info.swap(left, right);
                 }
 
-                for (index, element) in right.drain(..).enumerate() {
-                    primitives_info.insert(start + index + left_len, element);
-                }
+                let mid_index = mid_index + start;
 
                 if mid_index == start || mid_index == end {
                     primitives_info[start..end].sort_by(|a, b| {

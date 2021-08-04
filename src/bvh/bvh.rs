@@ -52,138 +52,21 @@ impl BVH {
             .map(|(index, primitive)| PrimitiveInfo::new(index, primitive))
             .collect();
 
-        let primitives_info = bvh.build_bvh(&mut primitives_info);
-        *primitives = primitives_info
-            .iter()
-            .map(|&index| std::mem::replace(&mut primitives[index], Primitive::None))
-            .collect();
-
-        /*bvh.build_bvh_recursive(&mut Vec::new(), 0, &mut primitives_info);
+        bvh.build_bvh(&mut Vec::new(), 0, &mut primitives_info);
 
         *primitives = primitives_info
             .iter()
             .map(|&info| std::mem::replace(&mut primitives[info.index], Primitive::None))
-            .collect();*/
-        println!("nodes: {}", bvh.nodes.len());
+            .collect();
+
         bvh
     }
 
-    fn build_bvh(&mut self, primitives_info: &mut Vec<PrimitiveInfo>) -> Vec<usize> {
-        self.nodes = Vec::new();
-        let end = primitives_info.len();
-        if end == 0 {
-            return Vec::new();
-        }
-
-        let mut left_queue: VecDeque<(usize, usize)> = VecDeque::new();
-        let mut right_queue: VecDeque<(usize, usize)> = VecDeque::new();
-        let mut parent_queue: VecDeque<(usize, Vec<PrimitiveInfo>)> = VecDeque::new();
-        let mut ordered_primitives = Vec::new();
-
-        let start: usize = 0;
-        left_queue.push_back((start, end));
-        let mut pop_parent = false;
-        while left_queue.len() > 0 || right_queue.len() > 0 {
-            let mut current_primitives_info;
-            let is_left;
-
-            let (start, end) = if left_queue.len() > 0 {
-                is_left = true;
-                left_queue.pop_front().unwrap()
-            } else {
-                is_left = false;
-                right_queue.pop_front().unwrap()
-            };
-
-            if parent_queue.len() != 0 {
-                let parent_index = parent_queue[0].0;
-                current_primitives_info = parent_queue[0].1.clone();
-                let node_len = self.nodes.len();
-                match is_left {
-                    true => {
-                        self.nodes[parent_index].set_child(node_len, 0);
-                    }
-                    false => {
-                        self.nodes[parent_index].set_child(node_len, 1);
-                        pop_parent = true;
-                    }
-                }
-            } else {
-                current_primitives_info = primitives_info.to_vec();
-            }
-
-            let mut bounds = None;
-            for info in current_primitives_info[start..end].iter() {
-                AABB::merge(&mut bounds, AABB::new(info.min, info.max));
-            }
-
-            let number_primitives = end - start;
-
-            if number_primitives == 1 {
-                for i in start..end {
-                    ordered_primitives.push(current_primitives_info[i].index);
-                }
-
-                if pop_parent == true {
-                    parent_queue.pop_front().unwrap();
-                    pop_parent = false;
-                }
-            } else {
-                let mut center_bounds = None;
-                for info in current_primitives_info[start..end].iter() {
-                    AABB::extend_contains(&mut center_bounds, info.center);
-                }
-
-                let center_bounds = center_bounds.unwrap();
-
-                let axis = Axis::get_max_axis(&center_bounds.get_extent());
-
-                if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max)
-                {
-                    for i in start..end {
-                        ordered_primitives.push(current_primitives_info[i].index);
-                    }
-
-                    if pop_parent == true {
-                        parent_queue.pop_front().unwrap();
-                        pop_parent = false;
-                    }
-                } else {
-                    let mid = self.split_type.split(
-                        start,
-                        end,
-                        &center_bounds,
-                        &axis,
-                        &mut current_primitives_info,
-                    );
-
-                    parent_queue.push_front((self.nodes.len(), current_primitives_info.to_vec()));
-
-                    if pop_parent == true {
-                        parent_queue.remove(1);
-                        pop_parent = false;
-                    }
-
-                    left_queue.push_front((start, mid));
-                    right_queue.push_front((mid, end));
-                }
-            }
-            let mut len = ordered_primitives.len();
-            if number_primitives == 1 {
-                len -= 1;
-            }
-
-            self.nodes
-                .push(Node::new(bounds.unwrap(), len, end - start));
-        }
-        ordered_primitives
-    }
-
-    fn build_bvh_recursive(
+    fn build_bvh(
         &mut self,
         ordered_primitives: &mut Vec<usize>,
         offset: usize,
-        primitives_info: &mut Vec<PrimitiveInfo>,
+        primitives_info: &mut [PrimitiveInfo],
     ) -> usize {
         let number_primitives = primitives_info.len();
 
@@ -193,6 +76,8 @@ impl BVH {
         }
 
         let mut children = None;
+
+        let node_index = self.nodes.len();
 
         self.nodes
             .push(Node::new(bounds.unwrap(), offset, number_primitives));
@@ -227,16 +112,11 @@ impl BVH {
                 let (left, right) = primitives_info.split_at_mut(mid);
 
                 children = Some((
-                    self.build_bvh_recursive(ordered_primitives, offset, &mut left.to_vec()),
-                    self.build_bvh_recursive(
-                        ordered_primitives,
-                        offset + left.len(),
-                        &mut right.to_vec(),
-                    ),
+                    self.build_bvh(ordered_primitives, offset, left),
+                    self.build_bvh(ordered_primitives, offset + left.len(), right),
                 ));
             }
         }
-        let node_index = self.nodes.len() - 1;
 
         if children.is_some() {
             self.nodes[node_index].set_child(children.unwrap().0, 0);
