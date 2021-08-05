@@ -1,7 +1,6 @@
 use crate::ray_tracing::{
     material::Material,
     primitives::{Primitive, Triangle, TriangleMesh},
-    tracing::PrimitiveTrait,
 };
 
 use std::sync::Arc;
@@ -21,8 +20,6 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
 
     for object in model.objects {
         let mut mesh = Vec::new();
-        let mut min = None;
-        let mut max = None;
         let vertices = &object.vertices;
         let normals = &object.normals;
 
@@ -45,17 +42,7 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
 
                         let triangle =
                             Triangle::new_from_arc(points, vertex_normal, material.clone());
-                        let aabb = triangle.get_aabb().unwrap();
-                        match (min, max) {
-                            (None, None) => {
-                                min = Some(aabb.min);
-                                max = Some(aabb.max);
-                            }
-                            (_, _) => {
-                                min = Some(min.unwrap().min_by_component(aabb.min));
-                                max = Some(max.unwrap().max_by_component(aabb.max))
-                            }
-                        }
+
                         mesh.push(triangle)
                     }
                     _ => {}
@@ -65,8 +52,6 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
 
         if mesh.len() != 0 {
             primitives.push(Primitive::TriangleMesh(TriangleMesh::new(
-                min.unwrap(),
-                max.unwrap(),
                 mesh,
                 material.clone(),
             )));

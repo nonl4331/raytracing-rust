@@ -1,4 +1,4 @@
-use crate::ray_tracing::material::Material;
+use crate::ray_tracing::{material::Material, tracing::PrimitiveTrait};
 
 use std::sync::Arc;
 
@@ -225,11 +225,28 @@ pub struct TriangleMesh {
 }
 
 impl TriangleMesh {
-    pub fn new(min: Vec3, max: Vec3, mesh: Vec<Triangle>, material: Arc<Material>) -> Self {
+    pub fn new(mesh: Vec<Triangle>, material: Arc<Material>) -> Self {
+        let mut min = None;
+        let mut max = None;
+
+        for triangle in &mesh {
+            let aabb = triangle.get_aabb().unwrap();
+            match (min, max) {
+                            (None, None) => {
+                                min = Some(aabb.min);
+                                max = Some(aabb.max);
+                            }
+                            (_, _) => {
+                                min = Some(min.unwrap().min_by_component(aabb.min));
+                                max = Some(max.unwrap().max_by_component(aabb.max))
+                            }
+                        }
+        }
+
         TriangleMesh {
             mesh,
-            min,
-            max,
+            min: min.unwrap(),
+            max: max.unwrap(),
             material,
         }
     }
