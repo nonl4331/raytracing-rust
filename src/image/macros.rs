@@ -100,7 +100,7 @@ macro_rules! diffuse {
 macro_rules! reflect {
     ($r:expr,$g:expr,$b:expr, $fuzz:expr) => {
         Material::Reflect(Reflect::new(
-            Texture::SolidColour(SolidColour::new(colour!($r, $g, $b))),
+            &Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
             $fuzz as f32,
         ));
     };
@@ -113,7 +113,7 @@ macro_rules! reflect {
 macro_rules! refract {
     ($r:expr,$g:expr,$b:expr, $eta:expr) => {
         Material::Refract(Refract::new(
-            Texture::SolidColour(SolidColour::new(colour!($r, $g, $b))),
+            &Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
             $eta as f32,
         ));
     };
@@ -126,7 +126,7 @@ macro_rules! refract {
 macro_rules! emit {
     ($r:expr,$g:expr,$b:expr, $strength:expr) => {
         Material::Emit(Emit::new(
-            Texture::SolidColour(SolidColour::new(colour!($r, $g, $b))),
+            &Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
             $strength as f32,
         ));
     };

@@ -189,25 +189,22 @@ impl Node {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::ray_tracing::material::Material;
-    use crate::ray_tracing::material::Refract;
-    use crate::ray_tracing::primitives::Sphere;
-    use crate::ray_tracing::ray::Colour;
-    use crate::ray_tracing::texture::SolidColour;
-    use crate::ray_tracing::texture::Texture;
+
+    use crate::ray_tracing::{
+        material::{Material, Refract},
+        primitives::Sphere,
+        ray::Colour,
+        texture::{SolidColour, Texture},
+    };
+    use crate::*;
+
     use std::sync::Arc;
+
+    use super::*;
 
     #[test]
     fn primitive_info_new() {
-        let sphere = Primitive::Sphere(Sphere::new(
-            Vec3::one(),
-            0.2,
-            Material::Refract(Refract::new(
-                &Arc::new(Texture::SolidColour(SolidColour::new(Colour::one()))),
-                1.5,
-            )),
-        ));
+        let sphere = sphere!(colour!(1), 0.2, refract!(1, 1, 1, 1.5));
         let info = PrimitiveInfo::new(3, &sphere);
         assert!(
             info.max == 1.2 * Vec3::one()
