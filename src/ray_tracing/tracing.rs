@@ -42,6 +42,51 @@ pub trait PrimitiveTrait {
     }
 }
 
+fn offset_ray(origin: Vec3, normal: Vec3) -> Vec3 {
+    let offset_int = 256.0 * normal;
+
+    let mut int_point = Vec3::one();
+    use std::mem::transmute;
+
+    unsafe {
+        int_point.x = transmute::<u32, f32>(
+            transmute::<f32, u32>(origin.x)
+                + if origin.x < 0.0 {
+                    (-1.0 * offset_int.x) as u32
+                } else {
+                    offset_int.x as u32
+                },
+        );
+        int_point.y = transmute::<u32, f32>(
+            transmute::<f32, u32>(origin.y)
+                + if origin.y < 0.0 {
+                    (-1.0 * offset_int.y) as u32
+                } else {
+                    offset_int.y as u32
+                },
+        );
+        int_point.z = transmute::<u32, f32>(
+            transmute::<f32, u32>(origin.z)
+                + if origin.z < 0.0 {
+                    (-1.0 * offset_int.z) as u32
+                } else {
+                    offset_int.z as u32
+                },
+        );
+    }
+
+    if origin.x.abs() < 1.0 / 32.0 {
+        int_point.x = origin.x + normal.x * (1.0 / 65536.0);
+    }
+    if origin.x.abs() < 1.0 / 32.0 {
+        int_point.y = origin.x + normal.y * (1.0 / 65536.0);
+    }
+    if origin.x.abs() < 1.0 / 32.0 {
+        int_point.z = origin.x + normal.z * (1.0 / 65536.0);
+    }
+    int_point
+}
+
 impl PrimitiveTrait for Primitive {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         match self {
@@ -132,7 +177,7 @@ impl PrimitiveTrait for Sphere {
             }
             Some(Hit {
                 t,
-                point: point + EPSILON * normal,
+                point: offset_ray(point, normal), //point + EPSILON * normal,
                 normal,
                 uv: self.get_uv(point),
                 out,
