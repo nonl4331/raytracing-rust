@@ -9,18 +9,7 @@ use crate::image::scene::Scene;
 
 use crate::math;
 
-use crate::ray_tracing::{
-    load_model::load_model,
-    material::*,
-    primitives::{AACuboid, AARect, Axis, Primitive, Sphere},
-    ray::Colour,
-    sky::Sky,
-    texture::{CheckeredTexture, ImageTexture, Lerp, SolidColour, Texture},
-};
-
-use std::sync::Arc;
-
-use ultraviolet::{Vec2, Vec3};
+use crate::ray_tracing::primitives::Primitive;
 
 pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
