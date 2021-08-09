@@ -33,15 +33,18 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
                             vertex_to_vec3(vertices[i3.0 as usize]),
                         ];
 
-                        let vertex_normal = match i1.2 {
-                            Some(normal_index) => vertex_to_vec3(normals[normal_index as usize]),
-                            None => {
-                                panic!("Please export obj file with vertex normals!")
-                            }
-                        };
+                        if i1.2.is_none() {
+                            panic!("Please export obj file with vertex normals!");
+                        }
+
+                        let tri_normals = [
+                            vertex_to_vec3(normals[i1.2.unwrap()]),
+                            vertex_to_vec3(normals[i2.2.unwrap()]),
+                            vertex_to_vec3(normals[i3.2.unwrap()]),
+                        ];
 
                         let triangle =
-                            Triangle::new_from_arc(points, vertex_normal, material.clone());
+                            Triangle::new_from_arc(points, tri_normals, material.clone());
 
                         mesh.push(triangle)
                     }

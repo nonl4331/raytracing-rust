@@ -190,15 +190,7 @@ impl Node {
 #[cfg(test)]
 mod tests {
 
-    use crate::ray_tracing::{
-        material::{Material, Refract},
-        primitives::Sphere,
-        ray::Colour,
-        texture::{SolidColour, Texture},
-    };
     use crate::*;
-
-    use std::sync::Arc;
 
     use super::*;
 

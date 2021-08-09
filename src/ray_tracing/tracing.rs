@@ -329,15 +329,28 @@ impl PrimitiveTrait for Triangle {
 
         if t > EPSILON && uv.x > 0.0 && uv.y > 0.0 && uv.x + uv.y < 1.0 {
             let point = ray.at(t);
+            let w1 = ((self.points[1].y - self.points[2].y) * (point.x - self.points[2].x)
+                + (self.points[2].x - self.points[1].x) * (point.y - self.points[2].y))
+                / ((self.points[1].y - self.points[2].y) * (self.points[0].x - self.points[2].x)
+                    + (self.points[2].x - self.points[1].x)
+                        * (self.points[0].y - self.points[2].y));
+
+            let w2 = ((self.points[2].y - self.points[0].y) * (point.x - self.points[2].x)
+                + (self.points[0].x - self.points[2].x) * (point.y - self.points[2].y))
+                / ((self.points[1].y - self.points[2].y) * (self.points[0].x - self.points[2].x)
+                    + (self.points[2].x - self.points[1].x)
+                        * (self.points[0].y - self.points[2].y));
+
+            let w3 = 1.0 - w1 - w2;
             let mut out = true;
-            let mut normal = self.normal;
+            let mut normal = w1 * self.normals[0] + w2 * self.normals[1] + w3 * self.normals[2];
             if normal.dot(ray.direction) > 0.0 {
                 normal *= -1.0;
                 out = false;
             }
             Some(Hit {
                 t,
-                point: point + EPSILON * normal,
+                point: point + 0.000001 * normal,
                 normal,
                 uv: Some(uv),
                 out,

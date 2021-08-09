@@ -192,26 +192,15 @@ impl Sphere {
 #[derive(Clone)]
 pub struct Triangle {
     pub points: [Vec3; 3],
-    pub normal: Vec3,
+    pub normals: [Vec3; 3],
     pub material: Arc<Material>,
 }
 
 impl Triangle {
-    pub fn new_from_arc(points: [Vec3; 3], vertex_normal: Vec3, material: Arc<Material>) -> Self {
-        let mut normal = {
-            let a = points[1] - points[0];
-            let b = points[2] - points[0];
-            a.cross(b)
-        }
-        .normalized();
-
-        if normal.dot(vertex_normal) < 0.0 {
-            normal = -1.0 * normal;
-        }
-
+    pub fn new_from_arc(points: [Vec3; 3], normals: [Vec3; 3], material: Arc<Material>) -> Self {
         Triangle {
             points,
-            normal,
+            normals,
             material,
         }
     }
@@ -232,15 +221,15 @@ impl TriangleMesh {
         for triangle in &mesh {
             let aabb = triangle.get_aabb().unwrap();
             match (min, max) {
-                            (None, None) => {
-                                min = Some(aabb.min);
-                                max = Some(aabb.max);
-                            }
-                            (_, _) => {
-                                min = Some(min.unwrap().min_by_component(aabb.min));
-                                max = Some(max.unwrap().max_by_component(aabb.max))
-                            }
-                        }
+                (None, None) => {
+                    min = Some(aabb.min);
+                    max = Some(aabb.max);
+                }
+                (_, _) => {
+                    min = Some(min.unwrap().min_by_component(aabb.min));
+                    max = Some(max.unwrap().max_by_component(aabb.max))
+                }
+            }
         }
 
         TriangleMesh {

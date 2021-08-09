@@ -234,10 +234,16 @@ pub fn scene_six(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    primitives.push(ground);
-    primitives.extend(model!("res/dragon.obj", diffuse!(0.5, 0.5, 0.5, 0.5)));
+    let glowy = sphere!(5, 3.5, 5, 1.5, emit!(&solid_colour!(colour!(1)), 5));
 
-    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1.0), colour!(1)));
+    primitives.push(ground);
+    primitives.push(glowy);
+    primitives.extend(model!(
+        "res/dragon.obj",
+        refract!(&solid_colour!(1, 1, 1), 1.52)
+    ));
+
+    let sky = sky!();
 
     scene!(
         position!(-20, 20, -25),
