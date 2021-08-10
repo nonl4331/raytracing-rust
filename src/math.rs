@@ -1,4 +1,5 @@
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
+use std::mem::transmute;
 
 use ultraviolet::vec::Vec3;
 
@@ -33,4 +34,36 @@ pub fn random_f32() -> f32 {
 pub fn near_zero(vec: Vec3) -> bool {
     let s = 0.001;
     vec.x.abs() < s && vec.y.abs() < s && vec.z.abs() < s
+}
+
+pub fn next_float(mut float: f32) -> f32 {
+    if float.is_infinite() && float > 0.0 {
+        return float;
+    }
+
+    if float == -0.0 {
+        float = 0.0
+    }
+
+    f32::from_bits(if float >= 0.0 {
+        f32::to_bits(float) + 1
+    } else {
+        f32::to_bits(float) - 1
+    })
+}
+
+pub fn previous_float(mut float: f32) -> f32 {
+    if float.is_infinite() && float < 0.0 {
+        return float;
+    }
+
+    if float == 0.0 {
+        float = -0.0
+    }
+
+    f32::from_bits(if float <= 0.0 {
+        f32::to_bits(float) + 1
+    } else {
+        f32::to_bits(float) - 1
+    })
 }

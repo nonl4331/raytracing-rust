@@ -1,5 +1,7 @@
 use crate::bvh::aabb::AABB;
 
+use crate::math::{next_float, previous_float};
+
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
     primitives::{AACuboid, AARect, Axis, Primitive, Sphere, Triangle, TriangleMesh},
@@ -42,44 +44,36 @@ pub trait PrimitiveTrait {
     }
 }
 
-/*fn offset_ray(origin: Vec3, normal: Vec3) -> Vec3 {
-    let normal = normal.normalized();
-    let offset_int = 256.0 * normal;
+fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, incoming_dir: Vec3) -> Vec3 {
+    let offset_val = normal.abs().dot(error);
+    let mut offset = offset_val * normal;
 
-    let mut int_point = Vec3::one();
-    use std::mem::transmute;
-
-    unsafe {
-        int_point.x = transmute::<u32, f32>(if origin.x < 0.0 {
-            transmute::<f32, u32>(origin.x) - (offset_int.x as u32)
-        } else {
-            transmute::<f32, u32>(origin.x) + offset_int.x as u32
-        });
-
-        int_point.y = transmute::<u32, f32>(if origin.y < 0.0 {
-            transmute::<f32, u32>(origin.y) - (offset_int.y as u32)
-        } else {
-            transmute::<f32, u32>(origin.y) + offset_int.y as u32
-        });
-
-        int_point.z = transmute::<u32, f32>(if origin.z < 0.0 {
-            transmute::<f32, u32>(origin.z) - (offset_int.z as u32)
-        } else {
-            transmute::<f32, u32>(origin.z) + offset_int.z as u32
-        });
+    if normal.dot(incoming_dir) < 0.0 {
+        offset = -offset;
     }
 
-    if origin.x.abs() < 1.0 / 32.0 {
-        int_point.x = origin.x + normal.x * (1.0 / 65536.0);
+    let mut new_origin = origin + offset;
+
+    if new_origin.x > 0.0 {
+        new_origin.x = next_float(new_origin.x);
+    } else {
+        new_origin.x = previous_float(new_origin.x);
     }
-    if origin.x.abs() < 1.0 / 32.0 {
-        int_point.y = origin.x + normal.y * (1.0 / 65536.0);
+
+    if new_origin.y > 0.0 {
+        new_origin.y = next_float(new_origin.y);
+    } else {
+        new_origin.y = previous_float(new_origin.y);
     }
-    if origin.x.abs() < 1.0 / 32.0 {
-        int_point.z = origin.x + normal.z * (1.0 / 65536.0);
+
+    if new_origin.z > 0.0 {
+        new_origin.z = next_float(new_origin.z);
+    } else {
+        new_origin.z = previous_float(new_origin.z);
     }
-    int_point
-}*/
+
+    new_origin
+}
 
 impl PrimitiveTrait for Primitive {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
