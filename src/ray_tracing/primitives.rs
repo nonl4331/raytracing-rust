@@ -54,6 +54,28 @@ impl Axis {
         }
     }
 
+    pub fn get_max_abs_axis(vec: &Vec3) -> Self {
+        if vec.x.abs() > vec.y.abs() && vec.x.abs() > vec.z.abs() {
+            Axis::X
+        } else if vec.y.abs() > vec.z.abs() {
+            Axis::Y
+        } else {
+            Axis::Z
+        }
+    }
+
+    pub fn swap_z(vec: &mut Vec3, axis: Self) {
+        match axis {
+            Axis::X => {
+                std::mem::swap(&mut vec.x, &mut vec.z);
+            }
+            Axis::Y => {
+                std::mem::swap(&mut vec.x, &mut vec.z);
+            }
+            _ => {}
+        }
+    }
+
     pub fn point_from_2d(vec: &Vec2, axis: &Axis, axis_value: f32) -> Vec3 {
         match axis {
             Axis::X => Vec3::new(axis_value, vec.x, vec.y),

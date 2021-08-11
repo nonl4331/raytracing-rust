@@ -305,6 +305,25 @@ impl PrimitiveTrait for AACuboid {
 
 impl PrimitiveTrait for Triangle {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
+        /*
+        let p0t = self.points[0] - ray.origin;
+        let p1t = self.points[1] - ray.origin;
+        let p2t = self.points[2] - ray.origin;
+
+        let max_axis = Axis::get_max_abs_axis(ray.direction);
+
+        Axis::swap_z(p0t, max_axis);
+        Axis::swap_z(p1t, max_axis);
+        Axis::swap_z(p2t, max_axis);
+
+        p0t.x += ray.shear_x * p0t.z;
+        p0t.y += ray.shear_y * p0t.z;
+        p1t.x += ray.shear_x * p1t.z;
+        p1t.y += ray.shear_y * p1t.z;
+        p2t.x += ray.shear_x * p2t.z;
+        p2t.y += ray.shear_y * p2t.z;
+
+        */
         let edge1 = self.points[1] - self.points[0];
         let edge2 = self.points[2] - self.points[0];
 

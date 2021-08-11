@@ -1,9 +1,11 @@
-use crate::ray_tracing::ray::{Colour, Ray};
-use crate::ray_tracing::texture::Texture;
-use crate::ray_tracing::texture::TextureTrait;
-use core::f32::consts::PI;
-use ultraviolet::Vec2;
-use ultraviolet::Vec3;
+use crate::ray_tracing::{
+    ray::{Colour, Ray},
+    texture::{Texture, TextureTrait},
+};
+
+use std::f32::consts::PI;
+
+use ultraviolet::{Vec2, Vec3};
 
 pub struct Sky {
     texture: Option<Texture>,

@@ -18,6 +18,8 @@ pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
     pub d_inverse: Vec3,
+    pub shear_x: f32,
+    pub shear_y: f32,
     pub hit: Option<Hit>,
     pub time: f32,
 }
@@ -32,6 +34,8 @@ impl Ray {
             origin,
             direction,
             d_inverse: Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
+            shear_x: -direction.x / direction.z,
+            shear_y: -direction.y / direction.z,
             time,
             hit: None,
         }
