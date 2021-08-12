@@ -323,6 +323,40 @@ impl PrimitiveTrait for Triangle {
         p2t.x += ray.shear_x * p2t.z;
         p2t.y += ray.shear_y * p2t.z;
 
+        let mut e0 = p1t.x * p2t.y - p1t.y * p2t.x;
+        if e0 == 0.0 {
+            e0 = (p1t.x as f64 * p2t.y as f64 - p1t.y as f64 * p2t.x as f64) as f32;
+        }
+
+        let e1 = p2t.x * p0t.y - p2t.y * p0t.x;
+        if e1 == 0 {
+            e1 = (p2t.x as f64 * p0t.y as f64 - p2t.y as f64 * p0t.x as f64) as f32;
+        }
+
+        let e2 = p0t.x * p1t.y - p0t.y * p1t.x;
+        if e2 == 0 {
+            e2 = (p0t.x as f64 * p1t.y as f64 - p0t.y as f64 * p1t.x as f64) as f32;
+        }
+
+        if (e0 < 0.0 || e1 < 0.0 || e2 < 0.0) && (e0 > 0.0 || e1 > 0.0 || e2 > 0.0) {
+            return None;
+        }
+
+        let det = e0 + e1 + e2;
+        if det == 0 {
+            return None;
+        }
+
+        let inv_det = 1.0/det;
+
+        let b0 = e0 * inv_det;
+        let b1 = e1 * inv_det;
+        let b2 = e2 * inv_det;
+
+        let t = inv_det * (e0 * p0t.z + e1*p1t.z + e2*p2t.z);
+
+        let uv = b0 * Vec2::new(0, 0) + b1 * Vec2::new(1, 0) + b2 * Vec2::new(1, 1);
+
         */
         let edge1 = self.points[1] - self.points[0];
         let edge2 = self.points[2] - self.points[0];
