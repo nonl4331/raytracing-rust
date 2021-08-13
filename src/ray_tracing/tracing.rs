@@ -305,16 +305,15 @@ impl PrimitiveTrait for AACuboid {
 
 impl PrimitiveTrait for Triangle {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        /*
-        let p0t = self.points[0] - ray.origin;
-        let p1t = self.points[1] - ray.origin;
-        let p2t = self.points[2] - ray.origin;
+        let mut p0t = self.points[0] - ray.origin;
+        let mut p1t = self.points[1] - ray.origin;
+        let mut p2t = self.points[2] - ray.origin;
 
-        let max_axis = Axis::get_max_abs_axis(ray.direction);
+        let max_axis = Axis::get_max_abs_axis(&ray.direction);
 
-        Axis::swap_z(p0t, max_axis);
-        Axis::swap_z(p1t, max_axis);
-        Axis::swap_z(p2t, max_axis);
+        Axis::swap_z(&mut p0t, &max_axis);
+        Axis::swap_z(&mut p1t, &max_axis);
+        Axis::swap_z(&mut p2t, &max_axis);
 
         p0t.x += ray.shear_x * p0t.z;
         p0t.y += ray.shear_y * p0t.z;
@@ -328,13 +327,13 @@ impl PrimitiveTrait for Triangle {
             e0 = (p1t.x as f64 * p2t.y as f64 - p1t.y as f64 * p2t.x as f64) as f32;
         }
 
-        let e1 = p2t.x * p0t.y - p2t.y * p0t.x;
-        if e1 == 0 {
+        let mut e1 = p2t.x * p0t.y - p2t.y * p0t.x;
+        if e1 == 0.0 {
             e1 = (p2t.x as f64 * p0t.y as f64 - p2t.y as f64 * p0t.x as f64) as f32;
         }
 
-        let e2 = p0t.x * p1t.y - p0t.y * p1t.x;
-        if e2 == 0 {
+        let mut e2 = p0t.x * p1t.y - p0t.y * p1t.x;
+        if e2 == 0.0 {
             e2 = (p0t.x as f64 * p1t.y as f64 - p0t.y as f64 * p1t.x as f64) as f32;
         }
 
@@ -343,69 +342,38 @@ impl PrimitiveTrait for Triangle {
         }
 
         let det = e0 + e1 + e2;
-        if det == 0 {
+        if det == 0.0 {
             return None;
         }
 
-        let inv_det = 1.0/det;
+        let inv_det = 1.0 / det;
 
         let b0 = e0 * inv_det;
         let b1 = e1 * inv_det;
         let b2 = e2 * inv_det;
 
-        let t = inv_det * (e0 * p0t.z + e1*p1t.z + e2*p2t.z);
+        let t = inv_det * (e0 * p0t.z + e1 * p1t.z + e2 * p2t.z);
 
-        let uv = b0 * Vec2::new(0, 0) + b1 * Vec2::new(1, 0) + b2 * Vec2::new(1, 1);
+        let uv = b0 * Vec2::new(0.0, 0.0) + b1 * Vec2::new(1.0, 0.0) + b2 * Vec2::new(1.0, 1.0);
 
-        */
-        let edge1 = self.points[1] - self.points[0];
-        let edge2 = self.points[2] - self.points[0];
+        let point = ray.at(t);
 
-        let n = edge1.cross(edge2);
-        let t = (self.points[0] - ray.origin).dot(n) / ray.direction.dot(n);
+        let mut normal = b0 * self.normals[0] + b1 * self.normals[1] + b2 * self.normals[2];
 
-        let p = ray.at(t);
-        let p0 = p - self.points[0];
-        let b = Vec2::new(p0.dot(edge1), p0.dot(edge2));
-        let a = Mat2::new(
-            Vec2::new(edge2.dot(edge2), -1.0 * edge1.dot(edge2)),
-            Vec2::new(-1.0 * edge1.dot(edge2), edge1.dot(edge1)),
-        );
-        let id = 1.0 / (a[0][0] * a[1][1] - a[0][1] * a[1][0]);
-        let uv = id * (a * b);
-
-        if t > EPSILON && uv.x > 0.0 && uv.y > 0.0 && uv.x + uv.y < 1.0 {
-            let point = ray.at(t);
-            let w1 = ((self.points[1].y - self.points[2].y) * (point.x - self.points[2].x)
-                + (self.points[2].x - self.points[1].x) * (point.y - self.points[2].y))
-                / ((self.points[1].y - self.points[2].y) * (self.points[0].x - self.points[2].x)
-                    + (self.points[2].x - self.points[1].x)
-                        * (self.points[0].y - self.points[2].y));
-
-            let w2 = ((self.points[2].y - self.points[0].y) * (point.x - self.points[2].x)
-                + (self.points[0].x - self.points[2].x) * (point.y - self.points[2].y))
-                / ((self.points[1].y - self.points[2].y) * (self.points[0].x - self.points[2].x)
-                    + (self.points[2].x - self.points[1].x)
-                        * (self.points[0].y - self.points[2].y));
-
-            let w3 = 1.0 - w1 - w2;
-            let mut out = true;
-            let mut normal = w1 * self.normals[0] + w2 * self.normals[1] + w3 * self.normals[2];
-            if normal.dot(ray.direction) > 0.0 {
-                normal *= -1.0;
-                out = false;
-            }
-            Some(Hit {
-                t,
-                point: point + 0.000001 * normal,
-                normal,
-                uv: Some(uv),
-                out,
-                material: self.material.clone(),
-            })
-        } else {
-            None
+        let mut out = true;
+        if normal.dot(ray.direction) > 0.0 {
+            normal *= -1.0;
+            out = false;
         }
+
+        Some(Hit {
+            t,
+            point,
+            normal,
+            uv: Some(uv),
+            out,
+            material: self.material.clone(),
+        })
     }
     fn get_internal(self) -> Vec<Primitive> {
         vec![Primitive::Triangle(self)]

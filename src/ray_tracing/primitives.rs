@@ -64,7 +64,7 @@ impl Axis {
         }
     }
 
-    pub fn swap_z(vec: &mut Vec3, axis: Self) {
+    pub fn swap_z(vec: &mut Vec3, axis: &Self) {
         match axis {
             Axis::X => {
                 std::mem::swap(&mut vec.x, &mut vec.z);
