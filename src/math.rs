@@ -1,5 +1,4 @@
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
-use std::mem::transmute;
 
 use ultraviolet::vec::Vec3;
 

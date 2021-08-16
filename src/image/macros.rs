@@ -241,6 +241,47 @@ macro_rules! model {
     };
 }
 
+// assumes orientation
+#[macro_export]
+macro_rules! triangle {
+    ($point_one:expr, $point_two:expr, $point_three:expr, $material:expr) => {{
+        let normal = {
+            let a = $point_two - $point_one;
+            let b = $point_three - $point_one;
+            a.cross(b)
+        }
+        .normalized();
+
+        crate::ray_tracing::primitives::Primitive::Triangle(
+            crate::ray_tracing::primitives::Triangle::new_from_arc(
+                [$point_one, $point_two, $point_two],
+                [normal; 3],
+                $material,
+            ),
+        )
+    }};
+
+    ($p1x:expr, $p1y:expr, $p1z:expr, $p2x:expr, $p2y:expr, $p2z:expr, $p3x:expr, $p3y:expr, $p3z:expr, $material:expr) => {{
+        let point_one = position!($p1x, $p1y, $p1z);
+        let point_two = position!($p2x, $p2y, $p2z);
+        let point_three = position!($p3x, $p3y, $p3z);
+        let normal = {
+            let a = point_two - point_one;
+            let b = point_three - point_one;
+            a.cross(b)
+        }
+        .normalized();
+
+        crate::ray_tracing::primitives::Primitive::Triangle(
+            crate::ray_tracing::primitives::Triangle::new_from_arc(
+                [point_one, point_two, point_two],
+                [normal; 3],
+                $material,
+            ),
+        )
+    }};
+}
+
 //-----
 // OTHER STRUCTURES
 //-----

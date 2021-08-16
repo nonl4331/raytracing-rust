@@ -4,6 +4,7 @@ use crate::image::scene::PrimitivesType;
 
 use crate::ray_tracing::{
     material::MaterialTrait,
+    primitives::Axis,
     sky::Sky,
     tracing::{Hit, PrimitiveTrait},
 };
@@ -18,8 +19,7 @@ pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
     pub d_inverse: Vec3,
-    pub shear_x: f32,
-    pub shear_y: f32,
+    pub shear: Vec3,
     pub hit: Option<Hit>,
     pub time: f32,
 }
@@ -30,12 +30,18 @@ impl Ray {
     pub fn new(origin: Vec3, mut direction: Vec3, time: f32) -> Self {
         direction.normalize();
 
+        let max_axis = Axis::get_max_abs_axis(&direction);
+        let mut swaped_dir = direction;
+        Axis::swap_z(&mut swaped_dir, &max_axis);
+        let shear_x = -swaped_dir.x / swaped_dir.z;
+        let shear_y = -swaped_dir.y / swaped_dir.z;
+        let shear_z = 1.0 / swaped_dir.z;
+
         Ray {
             origin,
             direction,
             d_inverse: Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
-            shear_x: -direction.x / direction.z,
-            shear_y: -direction.y / direction.z,
+            shear: Vec3::new(shear_x, shear_y, shear_z),
             time,
             hit: None,
         }
