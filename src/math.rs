@@ -68,6 +68,6 @@ pub fn previous_float(mut float: f32) -> f32 {
 }
 
 pub fn gamma(n: u32) -> f32 {
-    let nm = n as f32 * f32::EPSILON;
+    let nm = n as f32 * 0.5 * f32::EPSILON;
     return (nm) / (1.0 - nm);
 }
