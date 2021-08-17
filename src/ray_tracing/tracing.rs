@@ -44,11 +44,11 @@ pub trait PrimitiveTrait {
     }
 }
 
-fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, incoming_dir: Vec3) -> Vec3 {
+fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, out_dir: bool) -> Vec3 {
     let offset_val = normal.abs().dot(error);
     let mut offset = offset_val * normal;
 
-    if normal.dot(incoming_dir) < 0.0 {
+    if out_dir {
         offset = -offset;
     }
 
@@ -379,13 +379,26 @@ impl PrimitiveTrait for Triangle {
 
         let mut normal = b0 * self.normals[0] + b1 * self.normals[1] + b2 * self.normals[2];
 
-        let point = b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2];
-
         let mut out = true;
         if normal.dot(ray.direction) > 0.0 {
             normal *= -1.0;
             out = false;
         }
+
+        let x_abs_sum = (b0 * self.points[0].x).abs() + (b1 * self.points[1].x).abs();
+        let y_abs_sum = (b0 * self.points[0].y).abs() + (b1 * self.points[1].y).abs();
+        let z_abs_sum = (b0 * self.points[0].z).abs() + (b1 * self.points[1].z).abs();
+
+        let point_error = gamma(7) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum)
+            + gamma(6)
+                * Vec3::new(
+                    b2 * self.points[2].x,
+                    b2 * self.points[2].y,
+                    b2 * self.points[2].z,
+                );
+
+        let point = b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2];
+        let point = offset_ray(point, normal, point_error, out);
 
         Some(Hit {
             t,
