@@ -1,6 +1,6 @@
 use crate::bvh::aabb::AABB;
 
-use crate::math::{next_float, previous_float};
+use crate::math::{gamma, next_float, previous_float};
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},
@@ -356,18 +356,36 @@ impl PrimitiveTrait for Triangle {
 
         let t = inv_det * t_scaled;
 
+        let max_z_t = Vec3::new(p0t.z.abs(), p1t.z.abs(), p2t.z.abs()).component_max();
+        let delta_z = gamma(3) * max_z_t;
+
+        let max_x_t = Vec3::new(p0t.x.abs(), p1t.x.abs(), p2t.x.abs()).component_max();
+        let max_y_t = Vec3::new(p0t.y.abs(), p1t.y.abs(), p2t.y.abs()).component_max();
+        let delta_x = gamma(5) * (max_x_t + max_z_t);
+        let delta_y = gamma(5) * (max_y_t + max_z_t);
+
+        let delta_e = 2.0 * (gamma(2) * max_x_t * max_y_t + delta_y * max_x_t + delta_x + max_x_t);
+
+        let max_e = Vec3::new(e0.abs(), e1.abs(), e2.abs()).component_max();
+
+        let delta_t = 3.0
+            * (gamma(3) * max_e * max_z_t + delta_e * max_z_t + delta_z * max_e * inv_det.abs());
+
+        if t < delta_t {
+            return None;
+        }
+
         let uv = b0 * Vec2::new(0.0, 0.0) + b1 * Vec2::new(1.0, 0.0) + b2 * Vec2::new(1.0, 1.0);
 
         let mut normal = b0 * self.normals[0] + b1 * self.normals[1] + b2 * self.normals[2];
+
+        let point = b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2];
 
         let mut out = true;
         if normal.dot(ray.direction) > 0.0 {
             normal *= -1.0;
             out = false;
         }
-
-        let point =
-            b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2] + 0.000000001 * normal;
 
         Some(Hit {
             t,
