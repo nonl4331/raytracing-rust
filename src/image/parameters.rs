@@ -1,4 +1,5 @@
 use crate::bvh::split::SplitType;
+use crate::math::Float;
 
 use crate::image::{generate, scene::Scene};
 
@@ -114,7 +115,7 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
     match scene_index {
         Some(scene_index) => {
             let aspect_ratio =
-                width.unwrap_or(WIDTH_DEFAULT) as f32 / height.unwrap_or(HEIGHT_DEFAULT) as f32;
+                width.unwrap_or(WIDTH_DEFAULT) as Float / height.unwrap_or(HEIGHT_DEFAULT) as Float;
             let bvh_type = bvh_type.unwrap_or(BVH_DEFAULT);
             let scene = get_scene(&args, scene_index, bvh_type, aspect_ratio);
 
@@ -252,7 +253,7 @@ fn get_info(args: &Vec<String>, index: usize) {
     }
 }
 
-fn get_scene(args: &Vec<String>, index: usize, bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+fn get_scene(args: &Vec<String>, index: usize, bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");

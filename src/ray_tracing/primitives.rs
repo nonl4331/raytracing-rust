@@ -1,3 +1,4 @@
+use crate::math::Float;
 use crate::ray_tracing::{material::Material, tracing::PrimitiveTrait};
 
 use std::sync::Arc;
@@ -21,7 +22,7 @@ pub enum Axis {
 }
 
 impl Axis {
-    pub fn get_axis_value(&self, point: Vec3) -> f32 {
+    pub fn get_axis_value(&self, point: Vec3) -> Float {
         match self {
             Axis::X => point.x,
             Axis::Y => point.y,
@@ -76,7 +77,7 @@ impl Axis {
         }
     }
 
-    pub fn point_from_2d(vec: &Vec2, axis: &Axis, axis_value: f32) -> Vec3 {
+    pub fn point_from_2d(vec: &Vec2, axis: &Axis, axis_value: Float) -> Vec3 {
         match axis {
             Axis::X => Vec3::new(axis_value, vec.x, vec.y),
             Axis::Y => Vec3::new(vec.x, axis_value, vec.y),
@@ -89,13 +90,13 @@ impl Axis {
 pub struct AARect {
     pub min: Vec2,
     pub max: Vec2,
-    pub k: f32,
+    pub k: Float,
     pub axis: Axis,
     pub material: Arc<Material>,
 }
 
 impl AARect {
-    pub fn new(point_one: Vec2, point_two: Vec2, k: f32, axis: Axis, material: Material) -> Self {
+    pub fn new(point_one: Vec2, point_two: Vec2, k: Float, axis: Axis, material: Material) -> Self {
         if point_one == point_two {
             panic!("AARect called with two of the same point!");
         }
@@ -112,7 +113,7 @@ impl AARect {
     pub fn new_with_arc(
         min: Vec2,
         max: Vec2,
-        k: f32,
+        k: Float,
         axis: Axis,
         material: &Arc<Material>,
     ) -> Self {
@@ -197,12 +198,12 @@ impl AACuboid {
 
 pub struct Sphere {
     pub center: Vec3,
-    pub radius: f32,
+    pub radius: Float,
     pub material: Arc<Material>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material: Material) -> Self {
+    pub fn new(center: Vec3, radius: Float, material: Material) -> Self {
         Sphere {
             center,
             radius,

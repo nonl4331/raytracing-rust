@@ -1,3 +1,4 @@
+use crate::math::Float;
 use crate::ray_tracing::ray::Colour;
 
 use image::GenericImageView;
@@ -108,8 +109,8 @@ impl ImageTexture {
         for col in (img.to_rgb8().to_vec())
             .to_vec()
             .iter()
-            .map(|val| *val as f32 / 255.999)
-            .collect::<Vec<f32>>()
+            .map(|val| *val as Float / 255.999)
+            .collect::<Vec<Float>>()
             .chunks(3)
         {
             data.push(Colour::new(
@@ -126,8 +127,8 @@ impl ImageTexture {
 impl TextureTrait for ImageTexture {
     fn colour_value(&self, uv: Option<Vec2>, _: Vec3) -> Colour {
         let uv = uv.unwrap();
-        let x_pixel = (self.dim.0 as f32 * uv.x) as usize;
-        let y_pixel = (self.dim.1 as f32 * uv.y) as usize;
+        let x_pixel = (self.dim.0 as Float * uv.x) as usize;
+        let y_pixel = (self.dim.1 as Float * uv.y) as usize;
 
         // + 1 to get width in pixels
         let index = y_pixel * (self.dim.0 + 1) + x_pixel;

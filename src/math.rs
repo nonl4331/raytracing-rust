@@ -2,6 +2,8 @@ use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 use ultraviolet::vec::Vec3;
 
+pub type Float = f32;
+
 pub fn random_unit_vector() -> Vec3 {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     let (mut x, mut y, mut z) = (1.0, 1.0, 1.0);
@@ -25,7 +27,7 @@ pub fn random_in_unit_disk() -> Vec3 {
     point
 }
 
-pub fn random_f32() -> f32 {
+pub fn random_Float() -> Float {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     rng.gen()
 }
@@ -35,7 +37,7 @@ pub fn near_zero(vec: Vec3) -> bool {
     vec.x.abs() < s && vec.y.abs() < s && vec.z.abs() < s
 }
 
-pub fn next_float(mut float: f32) -> f32 {
+pub fn next_float(mut float: Float) -> Float {
     if float.is_infinite() && float > 0.0 {
         return float;
     }
@@ -44,14 +46,14 @@ pub fn next_float(mut float: f32) -> f32 {
         float = 0.0
     }
 
-    f32::from_bits(if float >= 0.0 {
-        f32::to_bits(float) + 1
+    Float::from_bits(if float >= 0.0 {
+        Float::to_bits(float) + 1
     } else {
-        f32::to_bits(float) - 1
+        Float::to_bits(float) - 1
     })
 }
 
-pub fn previous_float(mut float: f32) -> f32 {
+pub fn previous_float(mut float: Float) -> Float {
     if float.is_infinite() && float < 0.0 {
         return float;
     }
@@ -60,14 +62,14 @@ pub fn previous_float(mut float: f32) -> f32 {
         float = -0.0
     }
 
-    f32::from_bits(if float <= 0.0 {
-        f32::to_bits(float) + 1
+    Float::from_bits(if float <= 0.0 {
+        Float::to_bits(float) + 1
     } else {
-        f32::to_bits(float) - 1
+        Float::to_bits(float) - 1
     })
 }
 
-pub fn gamma(n: u32) -> f32 {
-    let nm = n as f32 * 0.5 * f32::EPSILON;
+pub fn gamma(n: u32) -> Float {
+    let nm = n as Float * 0.5 * Float::EPSILON;
     return (nm) / (1.0 - nm);
 }

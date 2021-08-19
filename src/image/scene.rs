@@ -1,8 +1,9 @@
 use crate::bvh::{bvh::BVH, split::SplitType};
+use crate::math::Float;
 
 use crate::image::camera::Camera;
 
-use crate::math::{random_f32, random_in_unit_disk};
+use crate::math::{random_Float, random_in_unit_disk};
 
 use crate::parameters::Parameters;
 
@@ -37,10 +38,10 @@ impl Scene {
         origin: Vec3,
         lookat: Vec3,
         vup: Vec3,
-        fov: f32,
-        aspect_ratio: f32,
-        aperture: f32,
-        focus_dist: f32,
+        fov: Float,
+        aspect_ratio: Float,
+        aperture: Float,
+        focus_dist: Float,
         sky: Sky,
         split_type: SplitType,
         mut primitives: Vec<Primitive>,
@@ -81,7 +82,7 @@ impl Scene {
         height: u32,
         pixel_samples: u32,
         real_pixel_samples: u32,
-    ) -> (Vec<f32>, u64) {
+    ) -> (Vec<Float>, u64) {
         let channels = 3;
         let pixel_num = height * width;
 
@@ -96,8 +97,8 @@ impl Scene {
             let y = (pixel_i - x) / width;
             let mut colour = Colour::new(0.0, 0.0, 0.0);
             for _ in 0..pixel_samples {
-                let u = (rng.gen_range(0.0..1.0) + x as f32) / width as f32;
-                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as f32) / height as f32;
+                let u = (rng.gen_range(0.0..1.0) + x as Float) / width as Float;
+                let v = 1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
 
                 let mut ray = self.get_ray(u, v);
                 let result = Ray::get_colour(
@@ -109,7 +110,7 @@ impl Scene {
                 colour += result.0;
                 ray_count += result.1;
             }
-            colour /= real_pixel_samples as f32;
+            colour /= real_pixel_samples as Float;
 
             rgb_vec.push(colour.x);
             rgb_vec.push(colour.y);
@@ -128,12 +129,12 @@ impl Scene {
 
         let pixel_num = height * width;
 
-        let image: Arc<Mutex<Vec<f32>>> =
+        let image: Arc<Mutex<Vec<Float>>> =
             Arc::new(Mutex::new(vec![0.0; (pixel_num * channels) as usize]));
 
         let threads = num_cpus::get();
 
-        let sample_chunk_size = (pixel_samples as f32 / threads as f32).floor() as u32;
+        let sample_chunk_size = (pixel_samples as Float / threads as Float).floor() as u32;
 
         let last_chunk_size = pixel_samples - sample_chunk_size * (threads as u32 - 1);
 
@@ -187,13 +188,13 @@ impl Scene {
         println!("Rays: {}", ray_count);
         println!(
             "Mrays/s: {:.2}",
-            (ray_count as f32 / duration.as_secs_f32()) / 1000000.0
+            (ray_count as Float / duration.as_secs_f32()) / 1000000.0
         );
         line_break();
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();
     }
 
-    fn get_ray(&self, u: f32, v: f32) -> Ray {
+    fn get_ray(&self, u: Float, v: Float) -> Ray {
         let rd = self.camera.lens_radius * random_in_unit_disk();
         let offset = rd.x * self.camera.u + rd.y * self.camera.v;
         Ray::new(
@@ -201,7 +202,7 @@ impl Scene {
             self.camera.lower_left + self.camera.horizontal * u + self.camera.vertical * v
                 - self.camera.origin
                 - offset,
-            random_f32(),
+            random_Float(),
         )
     }
 }

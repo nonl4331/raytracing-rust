@@ -1,3 +1,4 @@
+use crate::math::Float;
 use crate::ray_tracing::{
     material::Material,
     primitives::{Primitive, Triangle, TriangleMesh},
@@ -64,5 +65,5 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
 }
 
 fn vertex_to_vec3(vertex: wavefront_obj::obj::Vertex) -> Vec3 {
-    Vec3::new(vertex.x as f32, vertex.y as f32, vertex.z as f32)
+    Vec3::new(vertex.x as Float, vertex.y as Float, vertex.z as Float)
 }

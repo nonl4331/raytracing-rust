@@ -1,4 +1,5 @@
 use crate::bvh::bvh::BVH;
+use crate::math::Float;
 
 use crate::image::scene::PrimitivesType;
 
@@ -21,13 +22,13 @@ pub struct Ray {
     pub d_inverse: Vec3,
     pub shear: Vec3,
     pub hit: Option<Hit>,
-    pub time: f32,
+    pub time: Float,
 }
 
 const MAX_DEPTH: u32 = 50;
 
 impl Ray {
-    pub fn new(origin: Vec3, mut direction: Vec3, time: f32) -> Self {
+    pub fn new(origin: Vec3, mut direction: Vec3, time: Float) -> Self {
         direction.normalize();
 
         let max_axis = Axis::get_max_abs_axis(&direction);
@@ -47,7 +48,7 @@ impl Ray {
         }
     }
 
-    pub fn at(&self, t: f32) -> Vec3 {
+    pub fn at(&self, t: Float) -> Vec3 {
         self.origin + self.direction * t
     }
 

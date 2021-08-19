@@ -1,4 +1,5 @@
 use crate::bvh::aabb::AABB;
+use crate::math::Float;
 
 use crate::math::{gamma, next_float, previous_float};
 
@@ -14,10 +15,10 @@ use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
 
-pub const EPSILON: f32 = 0.0001;
+pub const EPSILON: Float = 0.0001;
 
 pub struct Hit {
-    pub t: f32,
+    pub t: Float,
     pub point: Vec3,
     pub normal: Vec3,
     pub uv: Option<Vec2>,
@@ -325,9 +326,9 @@ impl PrimitiveTrait for Triangle {
         let mut e1 = p2t.x * p0t.y - p2t.y * p0t.x;
         let mut e2 = p0t.x * p1t.y - p0t.y * p1t.x;
         if e0 == 0.0 || e1 == 0.0 || e2 == 0.0 {
-            e0 = (p1t.x as f64 * p2t.y as f64 - p1t.y as f64 * p2t.x as f64) as f32;
-            e1 = (p2t.x as f64 * p0t.y as f64 - p2t.y as f64 * p0t.x as f64) as f32;
-            e2 = (p0t.x as f64 * p1t.y as f64 - p0t.y as f64 * p1t.x as f64) as f32;
+            e0 = (p1t.x as f64 * p2t.y as f64 - p1t.y as f64 * p2t.x as f64) as Float;
+            e1 = (p2t.x as f64 * p0t.y as f64 - p2t.y as f64 * p0t.x as f64) as Float;
+            e2 = (p0t.x as f64 * p1t.y as f64 - p0t.y as f64 * p1t.x as f64) as Float;
         }
 
         if (e0 < 0.0 || e1 < 0.0 || e2 < 0.0) && (e0 > 0.0 || e1 > 0.0 || e2 > 0.0) {

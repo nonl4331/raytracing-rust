@@ -1,3 +1,4 @@
+use crate::math::Float;
 use crate::{
     aacuboid, aarect, axis, checkered, colour, diffuse, emit, image, model, position, reflect,
     refract, scene, sky, solid_colour, sphere, texture_lerp,
@@ -11,7 +12,7 @@ use crate::math;
 
 use crate::ray_tracing::primitives::Primitive;
 
-pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -27,19 +28,19 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     primitives.push(sphere_two);
     primitives.push(sphere_three);
 
-    use math::random_f32;
+    use math::random_Float;
 
     for a in -11..11 {
         for b in -11..11 {
             let center = position!(
-                a as f32 + 0.9 * random_f32(),
+                a as Float + 0.9 * random_Float(),
                 0.2,
-                b as f32 + 0.9 * random_f32()
+                b as Float + 0.9 * random_Float()
             );
 
             if (center - position!(4.0, 0.2, 0.0)).mag() > 0.9 {
-                let choose_material = random_f32();
-                let colour = colour!(random_f32(), random_f32(), random_f32());
+                let choose_material = random_Float();
+                let colour = colour!(random_Float(), random_Float(), random_Float());
 
                 let sphere;
 
@@ -49,7 +50,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
                     sphere = sphere!(
                         center,
                         0.2,
-                        reflect!(&solid_colour!(colour), random_f32() / 2.0)
+                        reflect!(&solid_colour!(colour), random_Float() / 2.0)
                     );
                 } else {
                     sphere = sphere!(center, 0.2, refract!(&solid_colour!(colour!(1)), 1.5));
@@ -75,7 +76,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     )
 }
 
-pub fn scene_two(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -116,7 +117,7 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     )
 }
 
-pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -159,7 +160,7 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     )
 }
 
-pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -194,7 +195,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     )
 }
 
-pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground = sphere!(
@@ -229,7 +230,7 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
     )
 }
 
-pub fn scene_six(bvh_type: SplitType, aspect_ratio: f32) -> Scene {
+pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
