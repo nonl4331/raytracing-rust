@@ -27,7 +27,7 @@ pub fn random_in_unit_disk() -> Vec3 {
     point
 }
 
-pub fn random_Float() -> Float {
+pub fn random_float() -> Float {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     rng.gen()
 }

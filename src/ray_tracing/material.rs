@@ -153,7 +153,7 @@ impl MaterialTrait for Refract {
 
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
         let cannot_refract = eta_fraction * sin_theta > 1.0;
-        if cannot_refract || reflectance(cos_theta, eta_fraction) > math::random_Float() {
+        if cannot_refract || reflectance(cos_theta, eta_fraction) > math::random_float() {
             let ref_mat = Reflect::new(&self.texture.clone(), 0.0);
             return ref_mat.scatter_ray(ray, hit);
         }

@@ -28,19 +28,19 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     primitives.push(sphere_two);
     primitives.push(sphere_three);
 
-    use math::random_Float;
+    use math::random_float;
 
     for a in -11..11 {
         for b in -11..11 {
             let center = position!(
-                a as Float + 0.9 * random_Float(),
+                a as Float + 0.9 * random_float(),
                 0.2,
-                b as Float + 0.9 * random_Float()
+                b as Float + 0.9 * random_float()
             );
 
             if (center - position!(4.0, 0.2, 0.0)).mag() > 0.9 {
-                let choose_material = random_Float();
-                let colour = colour!(random_Float(), random_Float(), random_Float());
+                let choose_material = random_float();
+                let colour = colour!(random_float(), random_float(), random_float());
 
                 let sphere;
 
@@ -50,7 +50,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
                     sphere = sphere!(
                         center,
                         0.2,
-                        reflect!(&solid_colour!(colour), random_Float() / 2.0)
+                        reflect!(&solid_colour!(colour), random_float() / 2.0)
                     );
                 } else {
                     sphere = sphere!(center, 0.2, refract!(&solid_colour!(colour!(1)), 1.5));

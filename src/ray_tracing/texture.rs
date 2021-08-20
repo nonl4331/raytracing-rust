@@ -5,6 +5,8 @@ use image::GenericImageView;
 
 use ultraviolet::{Vec2, Vec3};
 
+use rand::{Rng, SeedableRng};
+
 pub enum Texture {
     CheckeredTexture(CheckeredTexture),
     SolidColour(SolidColour),
@@ -63,6 +65,67 @@ impl TextureTrait for CheckeredTexture {
             self.secondary_colour
         }
     }
+    fn requires_uv(&self) -> bool {
+        false
+    }
+}
+
+pub struct PerlinNoise {
+    ran_float: [Float; 256],
+    perm_x: [u32; 256],
+    perm_y: [u32; 256],
+    perm_z: [u32; 256],
+}
+
+impl PerlinNoise {
+    pub fn new() -> Self {
+        let mut ran_float: [Float; 256] = [0.0; 256];
+        for i in 0..256 {
+            ran_float[i] = crate::math::random_float();
+        }
+        let perm_x = Self::generate_perm();
+        let perm_y = Self::generate_perm();
+        let perm_z = Self::generate_perm();
+
+        PerlinNoise {
+            ran_float,
+            perm_x,
+            perm_y,
+            perm_z,
+        }
+    }
+
+    pub fn noise(&self, point: Vec3) -> f32 {
+        let i = ((4.0 * point.x) as u32 & 255) as usize;
+        let j = ((4.0 * point.y) as u32 & 255) as usize;
+        let k = ((4.0 * point.z) as u32 & 255) as usize;
+
+        self.ran_float[(self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]) as usize]
+    }
+
+    fn generate_perm() -> [u32; 256] {
+        let mut perm: [u32; 256] = [0; 256];
+        for i in 0..256 {
+            perm[i] = i as u32;
+        }
+        Self::permute(&mut perm);
+        perm
+    }
+    fn permute(perm: &mut [u32; 256]) {
+        let mut rng = rand::rngs::SmallRng::from_rng(rand::thread_rng()).unwrap();
+
+        for i in (0..256).rev() {
+            let target = rng.gen_range(0..i);
+            perm[0..256].swap(i, target);
+        }
+    }
+}
+
+impl TextureTrait for PerlinNoise {
+    fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
+        Colour::one() * self.noise(point)
+    }
+
     fn requires_uv(&self) -> bool {
         false
     }

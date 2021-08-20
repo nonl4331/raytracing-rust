@@ -3,7 +3,7 @@ use crate::math::Float;
 
 use crate::image::camera::Camera;
 
-use crate::math::{random_Float, random_in_unit_disk};
+use crate::math::{random_float, random_in_unit_disk};
 
 use crate::parameters::Parameters;
 
@@ -202,7 +202,7 @@ impl Scene {
             self.camera.lower_left + self.camera.horizontal * u + self.camera.vertical * v
                 - self.camera.origin
                 - offset,
-            random_Float(),
+            random_float(),
         )
     }
 }
