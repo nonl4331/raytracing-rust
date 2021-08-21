@@ -2,17 +2,22 @@ use crate::ray_tracing::{
     ray::{Colour, Ray},
     texture::{Texture, TextureTrait},
 };
+use std::sync::Arc;
 
 use std::f32::consts::PI;
 
 use ultraviolet::{Vec2, Vec3};
 
 pub struct Sky {
-    texture: Option<Texture>,
+    texture: Option<Arc<Texture>>,
 }
 
 impl Sky {
-    pub fn new(texture: Option<Texture>) -> Self {
+    pub fn new(texture: Option<&Arc<Texture>>) -> Self {
+        let texture = match texture {
+            Some(texture) => Some(texture.clone()),
+            None => None,
+        };
         Sky { texture }
     }
 

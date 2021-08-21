@@ -88,15 +88,22 @@ macro_rules! checkered {
 #[macro_export]
 macro_rules! texture_lerp {
     ($colour_one:expr, $colour_two:expr) => {
-        crate::ray_tracing::texture::Texture::Lerp(crate::ray_tracing::texture::Lerp::new(
-            $colour_one,
-            $colour_two,
+        std::sync::Arc::new(crate::ray_tracing::texture::Texture::Lerp(
+            crate::ray_tracing::texture::Lerp::new($colour_one, $colour_two),
         ))
     };
     ($r1:expr, $g1:expr, $b1:expr, $r2:expr, $g2:expr, $b2:expr) => {
-        crate::ray_tracing::texture::Texture::Lerp(crate::ray_tracing::texture::Lerp::new(
-            colour!($r1, $g1, $b1),
-            colour!($r2, $g2, $b2),
+        std::sync::Arc::new(crate::ray_tracing::texture::Texture::Lerp(
+            crate::ray_tracing::texture::Lerp::new(colour!($r1, $g1, $b1), colour!($r2, $g2, $b2)),
+        ))
+    };
+}
+
+#[macro_export]
+macro_rules! perlin {
+    () => {
+        std::sync::Arc::new(crate::ray_tracing::texture::Texture::Perlin(
+            crate::ray_tracing::texture::Perlin::new(),
         ))
     };
 }

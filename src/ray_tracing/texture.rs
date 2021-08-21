@@ -12,6 +12,7 @@ pub enum Texture {
     SolidColour(SolidColour),
     ImageTexture(ImageTexture),
     Lerp(Lerp),
+    Perlin(Perlin),
 }
 
 pub trait TextureTrait {
@@ -30,6 +31,7 @@ impl TextureTrait for Texture {
             Texture::SolidColour(texture) => texture.colour_value(uv, point),
             Texture::ImageTexture(texture) => texture.colour_value(uv, point),
             Texture::Lerp(texture) => texture.colour_value(uv, point),
+            Texture::Perlin(texture) => texture.colour_value(uv, point),
         }
     }
     fn requires_uv(&self) -> bool {
@@ -38,6 +40,7 @@ impl TextureTrait for Texture {
             Texture::SolidColour(_) => false,
             Texture::ImageTexture(_) => true,
             Texture::Lerp(_) => true,
+            Texture::Perlin(_) => false,
         }
     }
 }
@@ -70,14 +73,14 @@ impl TextureTrait for CheckeredTexture {
     }
 }
 
-pub struct PerlinNoise {
+pub struct Perlin {
     ran_float: [Float; 256],
     perm_x: [u32; 256],
     perm_y: [u32; 256],
     perm_z: [u32; 256],
 }
 
-impl PerlinNoise {
+impl Perlin {
     pub fn new() -> Self {
         let mut ran_float: [Float; 256] = [0.0; 256];
         for i in 0..256 {
@@ -87,7 +90,7 @@ impl PerlinNoise {
         let perm_y = Self::generate_perm();
         let perm_z = Self::generate_perm();
 
-        PerlinNoise {
+        Perlin {
             ran_float,
             perm_x,
             perm_y,
@@ -114,14 +117,14 @@ impl PerlinNoise {
     fn permute(perm: &mut [u32; 256]) {
         let mut rng = rand::rngs::SmallRng::from_rng(rand::thread_rng()).unwrap();
 
-        for i in (0..256).rev() {
+        for i in (1..256).rev() {
             let target = rng.gen_range(0..i);
             perm[0..256].swap(i, target);
         }
     }
 }
 
-impl TextureTrait for PerlinNoise {
+impl TextureTrait for Perlin {
     fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
         Colour::one() * self.noise(point)
     }

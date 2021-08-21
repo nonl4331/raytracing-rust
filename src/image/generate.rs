@@ -1,7 +1,7 @@
 use crate::math::Float;
 use crate::{
-    aacuboid, aarect, axis, checkered, colour, diffuse, emit, image, model, position, reflect,
-    refract, scene, sky, solid_colour, sphere, texture_lerp,
+    aacuboid, aarect, axis, checkered, colour, diffuse, emit, image, model, perlin, position,
+    reflect, refract, scene, sky, solid_colour, sphere, texture_lerp,
 };
 
 use crate::bvh::split::SplitType;
@@ -60,7 +60,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
         }
     }
 
-    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(13, 2, -3),
@@ -79,7 +79,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
-    let ground = sphere!(0, -1000, 0, 1000, diffuse!(0.5, 0.5, 0.5, 0.5));
+    let ground = sphere!(0, -1000, 0, 1000, diffuse!(&perlin!(), 0.5)); //diffuse!(0.5, 0.5, 0.5, 0.5));
 
     let sphere_two = sphere!(-1.5, 0.5, 1.5, 0.5, diffuse!(0, 1, 0, 0.5));
 
@@ -101,7 +101,7 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     primitives.push(sphere_three);
     primitives.push(sphere_four);
 
-    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(3, 1, -15),
@@ -144,7 +144,7 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     primitives.push(sphere_middle);
     primitives.push(box_right);
 
-    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(-5, 3, -3),
@@ -214,7 +214,7 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     primitives.push(cube);
     primitives.push(earth);
 
-    let sky = sky!(texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+    let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
     scene!(
         position!(-5, 4, -3),
