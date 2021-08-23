@@ -99,9 +99,9 @@ impl Perlin {
     }
 
     pub fn noise(&self, point: Vec3) -> f32 {
-        let i = ((4.0 * point.x) as u32 & 255) as usize;
-        let j = ((4.0 * point.y) as u32 & 255) as usize;
-        let k = ((4.0 * point.z) as u32 & 255) as usize;
+        let i = ((4.0 * point.x) as i32 & 255) as usize;
+        let j = ((4.0 * point.y) as i32 & 255) as usize;
+        let k = ((4.0 * point.z) as i32 & 255) as usize;
 
         self.ran_float[(self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]) as usize]
     }
