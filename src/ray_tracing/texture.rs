@@ -98,12 +98,27 @@ impl Perlin {
         }
     }
 
-    pub fn noise(&self, point: Vec3) -> f32 {
-        let i = ((4.0 * point.x) as i32 & 255) as usize;
-        let j = ((4.0 * point.y) as i32 & 255) as usize;
-        let k = ((4.0 * point.z) as i32 & 255) as usize;
+    pub fn noise(&self, point: Vec3) -> Float {
+        let u = point.x - point.x.floor();
+        let v = point.y - point.y.floor();
+        let w = point.z - point.z.floor();
 
-        self.ran_float[(self.perm_x[i] ^ self.perm_y[j] ^ self.perm_z[k]) as usize]
+        let i = point.x.floor() as i32;
+        let j = point.y.floor() as i32;
+        let k = point.z.floor() as i32;
+        let mut c: [Float; 8] = [0.0; 8];
+
+        for index in 0..8 {
+            let di = (index / 4) as i32;
+            let dj = ((index / 2) % 2) as i32;
+            let dk = (index % 2) as i32;
+            c[index] = self.ran_float[(self.perm_x[((i + di) & 255) as usize]
+                ^ self.perm_y[((j + dj) & 255) as usize]
+                ^ self.perm_z[((k + dk) & 255) as usize])
+                as usize];
+        }
+
+        Perlin::trilinear_lerp(c, u, v, w)
     }
 
     fn generate_perm() -> [u32; 256] {
@@ -114,6 +129,7 @@ impl Perlin {
         Self::permute(&mut perm);
         perm
     }
+
     fn permute(perm: &mut [u32; 256]) {
         let mut rng = rand::rngs::SmallRng::from_rng(rand::thread_rng()).unwrap();
 
@@ -121,6 +137,20 @@ impl Perlin {
             let target = rng.gen_range(0..i);
             perm[0..256].swap(i, target);
         }
+    }
+
+    fn trilinear_lerp(c: [Float; 8], u: Float, v: Float, w: Float) -> Float {
+        let mut value = 0.0;
+        for index in 0..8 {
+            let i = index / 4;
+            let j = (index / 2) % 2;
+            let k = index % 2;
+            value += (i as Float * u + (1.0 - i as Float) * (1.0 - u))
+                * (j as Float * v + (1.0 - j as Float) * (1.0 - v))
+                * (k as Float * w + (1.0 - k as Float) * (1.0 - w))
+                * c[i * 4 + j * 2 + k * 1];
+        }
+        value
     }
 }
 
