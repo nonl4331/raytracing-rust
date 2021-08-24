@@ -7,6 +7,8 @@ use ultraviolet::{Vec2, Vec3};
 
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
+const PERLIN_RVECS: usize = 256;
+
 pub enum Texture {
     CheckeredTexture(CheckeredTexture),
     SolidColour(SolidColour),
@@ -74,18 +76,18 @@ impl TextureTrait for CheckeredTexture {
 }
 
 pub struct Perlin {
-    ran_vecs: [Vec3; 256],
-    perm_x: [u32; 256],
-    perm_y: [u32; 256],
-    perm_z: [u32; 256],
+    ran_vecs: [Vec3; PERLIN_RVECS],
+    perm_x: [u32; PERLIN_RVECS],
+    perm_y: [u32; PERLIN_RVECS],
+    perm_z: [u32; PERLIN_RVECS],
 }
 
 impl Perlin {
     pub fn new() -> Self {
         let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
 
-        let mut ran_vecs: [Vec3; 256] = [Vec3::one(); 256];
-        for i in 0..256 {
+        let mut ran_vecs: [Vec3; PERLIN_RVECS] = [Vec3::one(); PERLIN_RVECS];
+        for i in 0..PERLIN_RVECS {
             ran_vecs[i] = rng.gen_range(-1.0..1.0) * Vec3::one();
         }
 
@@ -126,9 +128,9 @@ impl Perlin {
         Perlin::trilinear_lerp(c, u, v, w)
     }
 
-    fn generate_perm() -> [u32; 256] {
-        let mut perm: [u32; 256] = [0; 256];
-        for i in 0..256 {
+    fn generate_perm() -> [u32; PERLIN_RVECS] {
+        let mut perm: [u32; PERLIN_RVECS] = [0; PERLIN_RVECS];
+        for i in 0..PERLIN_RVECS {
             perm[i] = i as u32;
         }
         Self::permute(&mut perm);
