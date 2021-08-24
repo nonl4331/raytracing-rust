@@ -5,7 +5,7 @@ use image::GenericImageView;
 
 use ultraviolet::{Vec2, Vec3};
 
-use rand::{Rng, SeedableRng};
+use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 pub enum Texture {
     CheckeredTexture(CheckeredTexture),
@@ -74,7 +74,7 @@ impl TextureTrait for CheckeredTexture {
 }
 
 pub struct Perlin {
-    ran_float: [Float; 256],
+    ran_vecs: [Vec3; 256],
     perm_x: [u32; 256],
     perm_y: [u32; 256],
     perm_z: [u32; 256],
@@ -82,16 +82,19 @@ pub struct Perlin {
 
 impl Perlin {
     pub fn new() -> Self {
-        let mut ran_float: [Float; 256] = [0.0; 256];
+        let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+
+        let mut ran_vecs: [Vec3; 256] = [Vec3::one(); 256];
         for i in 0..256 {
-            ran_float[i] = crate::math::random_float();
+            ran_vecs[i] = rng.gen_range(-1.0..1.0) * Vec3::one();
         }
+
         let perm_x = Self::generate_perm();
         let perm_y = Self::generate_perm();
         let perm_z = Self::generate_perm();
 
         Perlin {
-            ran_float,
+            ran_vecs,
             perm_x,
             perm_y,
             perm_z,
@@ -100,24 +103,21 @@ impl Perlin {
 
     pub fn noise(&self, point: Vec3) -> Float {
         let u = point.x - point.x.floor();
-        let u = u * u * (3.0 - 2.0 * u);
 
         let v = point.y - point.y.floor();
-        let v = v * v * (3.0 - 2.0 * v);
 
         let w = point.z - point.z.floor();
-        let w = w * w * (3.0 - 2.0 * w);
 
         let i = point.x.floor() as i32;
         let j = point.y.floor() as i32;
         let k = point.z.floor() as i32;
-        let mut c: [Float; 8] = [0.0; 8];
+        let mut c: [Vec3; 8] = [Vec3::one(); 8];
 
         for index in 0..8 {
             let di = (index / 4) as i32;
             let dj = ((index / 2) % 2) as i32;
             let dk = (index % 2) as i32;
-            c[index] = self.ran_float[(self.perm_x[((i + di) & 255) as usize]
+            c[index] = self.ran_vecs[(self.perm_x[((i + di) & 255) as usize]
                 ^ self.perm_y[((j + dj) & 255) as usize]
                 ^ self.perm_z[((k + dk) & 255) as usize])
                 as usize];
@@ -144,16 +144,21 @@ impl Perlin {
         }
     }
 
-    fn trilinear_lerp(c: [Float; 8], u: Float, v: Float, w: Float) -> Float {
+    fn trilinear_lerp(c: [Vec3; 8], u: Float, v: Float, w: Float) -> Float {
+        let uu = u * u * (3.0 - 2.0 * u);
+        let vv = v * v * (3.0 - 2.0 * v);
+        let ww = w * w * (3.0 - 2.0 * w);
+
         let mut value = 0.0;
         for index in 0..8 {
             let i = index / 4;
             let j = (index / 2) % 2;
             let k = index % 2;
-            value += (i as Float * u + (1.0 - i as Float) * (1.0 - u))
-                * (j as Float * v + (1.0 - j as Float) * (1.0 - v))
-                * (k as Float * w + (1.0 - k as Float) * (1.0 - w))
-                * c[i * 4 + j * 2 + k * 1];
+            let weight = Vec3::new(u - i as f32, v - j as f32, w - k as f32);
+            value += (i as Float * uu + (1.0 - i as Float) * (1.0 - uu))
+                * (j as Float * vv + (1.0 - j as Float) * (1.0 - vv))
+                * (k as Float * ww + (1.0 - k as Float) * (1.0 - ww))
+                * c[i * 4 + j * 2 + k * 1].dot(weight);
         }
         value
     }
@@ -161,7 +166,7 @@ impl Perlin {
 
 impl TextureTrait for Perlin {
     fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
-        Colour::one() * self.noise(point)
+        0.5 * Colour::one() * (1.0 + self.noise(point))
     }
 
     fn requires_uv(&self) -> bool {
