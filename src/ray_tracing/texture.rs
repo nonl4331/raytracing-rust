@@ -100,8 +100,13 @@ impl Perlin {
 
     pub fn noise(&self, point: Vec3) -> Float {
         let u = point.x - point.x.floor();
+        let u = u * u * (3.0 - 2.0 * u);
+
         let v = point.y - point.y.floor();
+        let v = v * v * (3.0 - 2.0 * v);
+
         let w = point.z - point.z.floor();
+        let w = w * w * (3.0 - 2.0 * w);
 
         let i = point.x.floor() as i32;
         let j = point.y.floor() as i32;
