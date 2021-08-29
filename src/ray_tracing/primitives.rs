@@ -1,5 +1,5 @@
 use crate::math::Float;
-use crate::ray_tracing::{material::Material, tracing::PrimitiveTrait};
+use crate::ray_tracing::material::Material;
 
 use std::sync::Arc;
 
@@ -10,7 +10,7 @@ pub enum Primitive {
     AARect(AARect),
     AACuboid(AACuboid),
     Triangle(Triangle),
-    TriangleMesh(TriangleMesh),
+    MeshTriangle(MeshTriangle),
     None,
 }
 
@@ -219,36 +219,40 @@ impl Triangle {
     }
 }
 
-pub struct TriangleMesh {
-    pub mesh: Vec<Triangle>,
-    pub min: Vec3,
-    pub max: Vec3,
+pub struct MeshTriangle {
+    pub point_indices: [usize; 3],
+    pub normal_indices: [usize; 3],
+    pub material: Arc<Material>,
+    pub mesh: Arc<MeshData>,
+}
+
+impl MeshTriangle {
+    pub fn new(
+        point_indices: [usize; 3],
+        normal_indices: [usize; 3],
+        material: &Arc<Material>,
+        mesh: &Arc<MeshData>,
+    ) -> Self {
+        MeshTriangle {
+            point_indices,
+            normal_indices,
+            material: material.clone(),
+            mesh: mesh.clone(),
+        }
+    }
+}
+
+pub struct MeshData {
+    pub vertices: Vec<Vec3>,
+    pub normals: Vec<Vec3>,
     pub material: Arc<Material>,
 }
 
-impl TriangleMesh {
-    pub fn new(mesh: Vec<Triangle>, material: &Arc<Material>) -> Self {
-        let mut min = None;
-        let mut max = None;
-
-        for triangle in &mesh {
-            let aabb = triangle.get_aabb().unwrap();
-            match (min, max) {
-                (None, None) => {
-                    min = Some(aabb.min);
-                    max = Some(aabb.max);
-                }
-                (_, _) => {
-                    min = Some(min.unwrap().min_by_component(aabb.min));
-                    max = Some(max.unwrap().max_by_component(aabb.max))
-                }
-            }
-        }
-
-        TriangleMesh {
-            mesh,
-            min: min.unwrap(),
-            max: max.unwrap(),
+impl MeshData {
+    pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<Material>) -> Self {
+        MeshData {
+            vertices,
+            normals,
             material: material.clone(),
         }
     }
