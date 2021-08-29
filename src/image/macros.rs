@@ -114,72 +114,73 @@ macro_rules! perlin {
 #[macro_export]
 macro_rules! diffuse {
     ($r:expr,$g:expr,$b:expr, $absorption:expr) => {
-        crate::ray_tracing::material::Material::Diffuse(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Diffuse(
             crate::ray_tracing::material::Diffuse::new(
                 &std::sync::Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
                 $absorption as Float,
             ),
-        );
+        ));
     };
     ($texture:expr,$absorption:expr) => {
-        crate::ray_tracing::material::Material::Diffuse(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Diffuse(
             crate::ray_tracing::material::Diffuse::new($texture, $absorption as Float),
-        );
+        ));
     };
 }
 
 #[macro_export]
 macro_rules! reflect {
     ($r:expr,$g:expr,$b:expr, $fuzz:expr) => {
-        crate::ray_tracing::material::Material::Reflect(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Reflect(
             crate::ray_tracing::material::Reflect::new(
                 &Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
                 $fuzz as Float,
             ),
-        );
+        ));
     };
     ($texture:expr,$fuzz:expr) => {
-        crate::ray_tracing::material::Material::Reflect(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Reflect(
             crate::ray_tracing::material::Reflect::new($texture, $fuzz as Float),
-        );
+        ));
     };
 }
 
 #[macro_export]
 macro_rules! refract {
     ($r:expr,$g:expr,$b:expr, $eta:expr) => {
-        crate::ray_tracing::material::Material::Refract(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Refract(
             crate::ray_tracing::material::Refract::new(
                 &std::sync::Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
                 $eta as math::Float,
             ),
-        );
+        ));
     };
     ($texture:expr,$eta:expr) => {
-        crate::ray_tracing::material::Material::Refract(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Refract(
             crate::ray_tracing::material::Refract::new($texture, $eta as Float),
-        );
+        ));
     };
 }
 
 #[macro_export]
 macro_rules! emit {
     ($r:expr,$g:expr,$b:expr, $strength:expr) => {
-        crate::ray_tracing::material::Material::Emit(crate::ray_tracing::material::Emit::new(
-            &std::sync::Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
-            $strength as Float,
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Emit(
+            crate::ray_tracing::material::Emit::new(
+                &std::sync::Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
+                $strength as Float,
+            ),
         ));
     };
     ($texture:expr,$strength:expr) => {
-        crate::ray_tracing::material::Material::Emit(crate::ray_tracing::material::Emit::new(
-            $texture,
-            $strength as Float,
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Emit(
+            crate::ray_tracing::material::Emit::new($texture, $strength as Float),
         ));
     };
 }

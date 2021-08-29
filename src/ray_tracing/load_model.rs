@@ -10,7 +10,7 @@ use ultraviolet::Vec3;
 
 use wavefront_obj;
 
-pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
+pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<Primitive> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());
 
     let model = model.unwrap();
@@ -44,8 +44,7 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
                             vertex_to_vec3(normals[i3.2.unwrap()]),
                         ];
 
-                        let triangle =
-                            Triangle::new_from_arc(points, tri_normals, material.clone());
+                        let triangle = Triangle::new(points, tri_normals, &material);
 
                         mesh.push(triangle)
                     }
@@ -55,10 +54,7 @@ pub fn load_model(filepath: &str, material: Material) -> Vec<Primitive> {
         }
 
         if mesh.len() != 0 {
-            primitives.push(Primitive::TriangleMesh(TriangleMesh::new(
-                mesh,
-                material.clone(),
-            )));
+            primitives.push(Primitive::TriangleMesh(TriangleMesh::new(mesh, &material)));
         }
     }
     primitives

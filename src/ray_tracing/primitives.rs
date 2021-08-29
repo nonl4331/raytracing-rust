@@ -96,27 +96,18 @@ pub struct AARect {
 }
 
 impl AARect {
-    pub fn new(point_one: Vec2, point_two: Vec2, k: Float, axis: Axis, material: Material) -> Self {
+    pub fn new(
+        point_one: Vec2,
+        point_two: Vec2,
+        k: Float,
+        axis: Axis,
+        material: &Arc<Material>,
+    ) -> Self {
         if point_one == point_two {
             panic!("AARect called with two of the same point!");
         }
         let min = point_one.min_by_component(point_two);
         let max = point_one.max_by_component(point_two);
-        AARect {
-            min,
-            max,
-            k,
-            axis,
-            material: Arc::new(material),
-        }
-    }
-    pub fn new_with_arc(
-        min: Vec2,
-        max: Vec2,
-        k: Float,
-        axis: Axis,
-        material: &Arc<Material>,
-    ) -> Self {
         AARect {
             min,
             max,
@@ -135,63 +126,62 @@ pub struct AACuboid {
 }
 
 impl AACuboid {
-    pub fn new(point_one: Vec3, point_two: Vec3, material: Material) -> Self {
+    pub fn new(point_one: Vec3, point_two: Vec3, material: &Arc<Material>) -> Self {
         if point_one == point_two {
             panic!("AACuboid called with two of the same point!");
         }
         let min = point_one.min_by_component(point_two);
         let max = point_one.max_by_component(point_two);
 
-        let arc = Arc::new(material);
         let rects = [
-            AARect::new_with_arc(
+            AARect::new(
                 Axis::X.point_without_axis(min),
                 Axis::X.point_without_axis(max),
                 min.x,
                 Axis::X,
-                &arc,
+                material,
             ),
-            AARect::new_with_arc(
+            AARect::new(
                 Axis::X.point_without_axis(min),
                 Axis::X.point_without_axis(max),
                 max.x,
                 Axis::X,
-                &arc,
+                material,
             ),
-            AARect::new_with_arc(
+            AARect::new(
                 Axis::Y.point_without_axis(min),
                 Axis::Y.point_without_axis(max),
                 min.y,
                 Axis::Y,
-                &arc,
+                material,
             ),
-            AARect::new_with_arc(
+            AARect::new(
                 Axis::Y.point_without_axis(min),
                 Axis::Y.point_without_axis(max),
                 max.y,
                 Axis::Y,
-                &arc,
+                material,
             ),
-            AARect::new_with_arc(
+            AARect::new(
                 Axis::Z.point_without_axis(min),
                 Axis::Z.point_without_axis(max),
                 min.z,
                 Axis::Z,
-                &arc,
+                material,
             ),
-            AARect::new_with_arc(
+            AARect::new(
                 Axis::Z.point_without_axis(min),
                 Axis::Z.point_without_axis(max),
                 max.z,
                 Axis::Z,
-                &arc,
+                material,
             ),
         ];
         AACuboid {
             min,
             max,
             rects,
-            material: arc.clone(),
+            material: material.clone(),
         }
     }
 }
@@ -203,11 +193,11 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: Float, material: Material) -> Self {
+    pub fn new(center: Vec3, radius: Float, material: &Arc<Material>) -> Self {
         Sphere {
             center,
             radius,
-            material: Arc::new(material),
+            material: material.clone(),
         }
     }
 }
@@ -220,11 +210,11 @@ pub struct Triangle {
 }
 
 impl Triangle {
-    pub fn new_from_arc(points: [Vec3; 3], normals: [Vec3; 3], material: Arc<Material>) -> Self {
+    pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<Material>) -> Self {
         Triangle {
             points,
             normals,
-            material,
+            material: material.clone(),
         }
     }
 }
@@ -237,7 +227,7 @@ pub struct TriangleMesh {
 }
 
 impl TriangleMesh {
-    pub fn new(mesh: Vec<Triangle>, material: Arc<Material>) -> Self {
+    pub fn new(mesh: Vec<Triangle>, material: &Arc<Material>) -> Self {
         let mut min = None;
         let mut max = None;
 
@@ -259,7 +249,7 @@ impl TriangleMesh {
             mesh,
             min: min.unwrap(),
             max: max.unwrap(),
-            material,
+            material: material.clone(),
         }
     }
 }

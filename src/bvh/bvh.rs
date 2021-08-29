@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn primitive_info_new() {
-        let sphere = sphere!(colour!(1), 0.2, refract!(1, 1, 1, 1.5));
+        let sphere = sphere!(colour!(1), 0.2, &refract!(1, 1, 1, 1.5));
         let info = PrimitiveInfo::new(3, &sphere);
         assert!(
             info.max == 1.2 * Vec3::one()
