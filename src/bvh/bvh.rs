@@ -100,14 +100,9 @@ impl BVH {
                     ordered_primitives.push(primitives_info[i].index);
                 }
             } else {
-                let mid = self.split_type.split(
-                    0,
-                    number_primitives,
-                    &bounds.unwrap(),
-                    &center_bounds,
-                    &axis,
-                    primitives_info,
-                );
+                let mid =
+                    self.split_type
+                        .split(&bounds.unwrap(), &center_bounds, &axis, primitives_info);
                 if mid != 0 {
                     let (left, right) = primitives_info.split_at_mut(mid);
 

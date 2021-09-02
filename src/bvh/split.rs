@@ -16,8 +16,6 @@ pub enum SplitType {
 pub trait Split {
     fn split(
         &self,
-        start: usize,
-        end: usize,
         bounds: &AABB,
         center_bounds: &AABB,
         axis: &Axis,
@@ -43,8 +41,6 @@ impl BucketInfo {
 impl Split for SplitType {
     fn split(
         &self,
-        start: usize,
-        end: usize,
         bounds: &AABB,
         center_bounds: &AABB,
         axis: &Axis,
@@ -78,10 +74,10 @@ impl Split for SplitType {
                     primitives_info.swap(left, right);
                 }
 
-                let mid_index = mid_index + start;
+                let mid_index = mid_index;
 
-                if mid_index == start || mid_index == end {
-                    primitives_info[start..end].sort_by(|a, b| {
+                if mid_index == 0 || mid_index == (len - 1) {
+                    primitives_info[0..len].sort_by(|a, b| {
                         axis.get_axis_value(a.center)
                             .partial_cmp(&axis.get_axis_value(b.center))
                             .unwrap()
@@ -90,8 +86,9 @@ impl Split for SplitType {
                 mid_index
             }
             SplitType::EqualCounts => {
-                let point_mid = (start + end) / 2;
-                primitives_info[start..end].sort_by(|a, b| {
+                let len = primitives_info.len();
+                let point_mid = len / 2;
+                primitives_info[0..len].sort_by(|a, b| {
                     axis.get_axis_value(a.center)
                         .partial_cmp(&axis.get_axis_value(b.center))
                         .unwrap()
@@ -99,9 +96,11 @@ impl Split for SplitType {
                 point_mid
             }
             SplitType::SAH => {
-                if end - start <= 4 {
-                    let point_mid = (start + end) / 2;
-                    primitives_info[start..end].sort_by(|a, b| {
+                let len = primitives_info.len();
+
+                if len <= 4 {
+                    let point_mid = len / 2;
+                    primitives_info[0..len].sort_by(|a, b| {
                         axis.get_axis_value(a.center)
                             .partial_cmp(&axis.get_axis_value(b.center))
                             .unwrap()
@@ -109,30 +108,25 @@ impl Split for SplitType {
                     return point_mid;
                 }
 
-                let mut buckets: [BucketInfo; NUM_BUCKETS] = [BucketInfo::new(); NUM_BUCKETS];
+                let mut buckets = [BucketInfo::new(); NUM_BUCKETS];
 
-                let max_val = &axis.get_axis_value(center_bounds.max);
-                let min_val = &axis.get_axis_value(center_bounds.min);
+                let max_val = axis.get_axis_value(center_bounds.max);
+                let min_val = axis.get_axis_value(center_bounds.min);
 
                 let centroid_extent = max_val - min_val;
 
-                for i in start..end {
-                    let axis_val = &axis.get_axis_value(primitives_info[i].center);
+                for primitive_info in primitives_info.iter() {
+                    let b = calculate_b(&axis, &primitive_info, min_val, centroid_extent);
 
-                    let mut b: usize =
-                        (NUM_BUCKETS as Float * (axis_val - min_val) / centroid_extent) as usize;
-
-                    if b == NUM_BUCKETS {
-                        b -= 1;
-                    }
                     buckets[b].count += 1;
+
                     AABB::merge(
                         &mut buckets[b].bounds,
-                        AABB::new(primitives_info[i].min, primitives_info[i].max),
+                        AABB::new(primitive_info.min, primitive_info.max),
                     );
                 }
 
-                let mut costs: [Float; NUM_BUCKETS - 1] = [0.0; NUM_BUCKETS - 1];
+                let mut costs = [0.0; NUM_BUCKETS - 1];
                 for i in 0..(NUM_BUCKETS - 1) {
                     let mut bounds_left = None;
                     let mut count_left = 0;
@@ -159,17 +153,20 @@ impl Split for SplitType {
                             None => {}
                         }
                     }
+
                     let left_sa = match bounds_left {
                         Some(val) => val.surface_area(),
                         None => 0.0,
                     };
+
                     let right_sa = match bounds_right {
                         Some(val) => val.surface_area(),
                         None => 0.0,
                     };
+
                     costs[i] = 0.125
-                        * (count_left as Float * left_sa + count_right as Float * right_sa)
-                        / bounds.surface_area();
+                        + (count_left as Float * left_sa + count_right as Float * right_sa)
+                            / bounds.surface_area();
                 }
 
                 let mut min_cost = costs[0];
@@ -182,45 +179,24 @@ impl Split for SplitType {
                     }
                 }
 
-                if end - start > MAX_IN_NODE || min_cost < (end - start) as f32 {
-                    // TODO
+                if len > MAX_IN_NODE || min_cost < len as f32 {
                     let len = primitives_info.len();
                     let (mut left, mut right) = (0, len - 1);
                     let mid_index: usize;
 
                     loop {
-                        let axis_val = &axis.get_axis_value(primitives_info[left].center);
-                        let mut b: usize = (NUM_BUCKETS as Float * (axis_val - min_val)
-                            / centroid_extent) as usize;
-                        if b == NUM_BUCKETS {
-                            b -= 1;
-                        }
-
-                        while left < len && b <= min_cost_index {
+                        while left < len
+                            && calculate_b(&axis, &primitives_info[left], min_val, centroid_extent)
+                                <= min_cost_index
+                        {
                             left += 1;
-                            let axis_val = &axis.get_axis_value(primitives_info[left].center);
-                            b = (NUM_BUCKETS as Float * (axis_val - min_val) / centroid_extent)
-                                as usize;
-                            if b == NUM_BUCKETS {
-                                b -= 1;
-                            }
                         }
 
-                        let axis_val = &axis.get_axis_value(primitives_info[right].center);
-                        let mut b: usize = (NUM_BUCKETS as Float * (axis_val - min_val)
-                            / centroid_extent) as usize;
-                        if b == NUM_BUCKETS {
-                            b -= 1;
-                        }
-
-                        while right > 0 && b > min_cost_index {
+                        while right > 0
+                            && calculate_b(&axis, &primitives_info[right], min_val, centroid_extent)
+                                > min_cost_index
+                        {
                             right -= 1;
-                            let axis_val = &axis.get_axis_value(primitives_info[right].center);
-                            b = (NUM_BUCKETS as Float * (axis_val - min_val) / centroid_extent)
-                                as usize;
-                            if b == NUM_BUCKETS {
-                                b -= 1;
-                            }
                         }
 
                         if left >= right {
@@ -229,7 +205,7 @@ impl Split for SplitType {
                         }
                         primitives_info.swap(left, right);
                     }
-                    mid_index + start
+                    mid_index
                 } else {
                     0
                 }
@@ -239,4 +215,16 @@ impl Split for SplitType {
             }
         }
     }
+}
+
+fn calculate_b(axis: &Axis, primitive_info: &PrimitiveInfo, min: Float, extent: Float) -> usize {
+    let absolute_value = axis.get_axis_value(primitive_info.center);
+
+    let mut b = (NUM_BUCKETS as Float * (absolute_value - min) / extent) as usize;
+
+    if b == NUM_BUCKETS {
+        b -= 1;
+    }
+
+    b
 }
