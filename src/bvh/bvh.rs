@@ -15,9 +15,9 @@ use ultraviolet::Vec3;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrimitiveInfo {
-    index: usize,
-    min: Vec3,
-    max: Vec3,
+    pub index: usize,
+    pub min: Vec3,
+    pub max: Vec3,
     pub center: Vec3,
 }
 
@@ -58,7 +58,6 @@ impl BVH {
             .iter()
             .map(|&info| std::mem::replace(&mut primitives[info.index], Primitive::None))
             .collect();
-
         bvh
     }
 
@@ -104,17 +103,23 @@ impl BVH {
                 let mid = self.split_type.split(
                     0,
                     number_primitives,
+                    &bounds.unwrap(),
                     &center_bounds,
                     &axis,
                     primitives_info,
                 );
+                if mid != 0 {
+                    let (left, right) = primitives_info.split_at_mut(mid);
 
-                let (left, right) = primitives_info.split_at_mut(mid);
-
-                children = Some((
-                    self.build_bvh(ordered_primitives, offset, left),
-                    self.build_bvh(ordered_primitives, offset + left.len(), right),
-                ));
+                    children = Some((
+                        self.build_bvh(ordered_primitives, offset, left),
+                        self.build_bvh(ordered_primitives, offset + left.len(), right),
+                    ));
+                } else {
+                    for i in 0..number_primitives {
+                        ordered_primitives.push(primitives_info[i].index);
+                    }
+                }
             }
         }
 
@@ -151,6 +156,9 @@ impl BVH {
             }
         }
         offset_len
+    }
+    pub fn number_nodes(&self) -> usize {
+        self.nodes.len()
     }
 }
 

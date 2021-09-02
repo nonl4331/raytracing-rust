@@ -65,6 +65,7 @@ impl Scene {
         line_break();
 
         println!("BVH construction finished in: {}ms", duration.as_millis());
+        println!("Number of BVH nodes: {}", bvh.number_nodes());
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 

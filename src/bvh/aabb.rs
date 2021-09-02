@@ -1,3 +1,5 @@
+use crate::math::Float;
+
 use crate::ray_tracing::ray::Ray;
 
 use ultraviolet::Vec3;
@@ -60,6 +62,11 @@ impl AABB {
 
     pub fn get_extent(&self) -> Vec3 {
         self.max - self.min
+    }
+
+    pub fn surface_area(&self) -> Float {
+        let extent = self.get_extent();
+        2.0 * (extent.x * extent.y + extent.x * extent.z + extent.y * extent.z) as Float
     }
 }
 

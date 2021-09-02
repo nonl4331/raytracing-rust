@@ -313,6 +313,7 @@ fn get_bvh_type(args: &Vec<String>, index: usize) -> SplitType {
         Some(string) => match &string.to_lowercase()[..] {
             "equal" => SplitType::EqualCounts,
             "middle" => SplitType::Middle,
+            "sah" => SplitType::SAH,
             _ => {
                 println!("{} is not a valid value for bvh type!", string);
                 println!("Please specify a valid value for bvh type!");
