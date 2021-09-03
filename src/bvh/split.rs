@@ -56,7 +56,7 @@ impl Split for SplitType {
                 let len = primitives_info.len();
 
                 let closure = |primitive_info: &PrimitiveInfo| -> bool {
-                    axis.get_axis_value(primitive_info.center) >= point_mid
+                    axis.get_axis_value(primitive_info.center) < point_mid
                 };
                 let mid_index = partition!(primitives_info, closure);
 
@@ -97,41 +97,30 @@ impl Split for SplitType {
 
                 let mut costs = [0.0; NUM_BUCKETS - 1];
                 for i in 0..(NUM_BUCKETS - 1) {
-                    let mut bounds_left = None;
-                    let mut count_left = 0;
-
-                    let mut bounds_right = None;
-                    let mut count_right = 0;
+                    let (mut bounds_left, mut bounds_right) = (None, None);
+                    let (mut count_left, mut count_right) = (0, 0);
 
                     for j in 0..(i + 1) {
-                        match buckets[j].bounds {
-                            Some(bounds) => {
-                                AABB::merge(&mut bounds_left, bounds);
-                                count_left += buckets[j].count;
-                            }
-                            None => {}
+                        if buckets[j].bounds.is_some() {
+                            AABB::merge(&mut bounds_left, buckets[j].bounds.unwrap());
+                            count_left += buckets[j].count;
                         }
                     }
 
                     for j in (i + 1)..NUM_BUCKETS {
-                        match buckets[j].bounds {
-                            Some(bounds) => {
-                                AABB::merge(&mut bounds_right, bounds);
-                                count_right += buckets[j].count;
-                            }
-                            None => {}
+                        if buckets[j].bounds.is_some() {
+                            AABB::merge(&mut bounds_right, buckets[j].bounds.unwrap());
+                            count_right += buckets[j].count;
                         }
                     }
 
-                    let left_sa = match bounds_left {
-                        Some(val) => val.surface_area(),
-                        None => 0.0,
-                    };
+                    let left_sa = bounds_left
+                        .and_then(|bounds: AABB| Some(bounds.surface_area()))
+                        .unwrap_or(0.0);
 
-                    let right_sa = match bounds_right {
-                        Some(val) => val.surface_area(),
-                        None => 0.0,
-                    };
+                    let right_sa = bounds_right
+                        .and_then(|bounds: AABB| Some(bounds.surface_area()))
+                        .unwrap_or(0.0);
 
                     costs[i] = 0.125
                         + (count_left as Float * left_sa + count_right as Float * right_sa)
@@ -153,10 +142,9 @@ impl Split for SplitType {
                         calculate_b(&axis, &primitive_info, min_val, centroid_extent)
                             <= min_cost_index
                     };
-                    partition!(primitives_info, closure)
-                } else {
-                    0
+                    return partition!(primitives_info, closure);
                 }
+                0
             }
             SplitType::HLBVH => {
                 unimplemented!()

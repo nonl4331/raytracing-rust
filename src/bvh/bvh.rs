@@ -82,9 +82,7 @@ impl BVH {
             .push(Node::new(bounds.unwrap(), offset, number_primitives));
 
         if number_primitives == 1 {
-            for i in 0..number_primitives {
-                ordered_primitives.push(primitives_info[i].index);
-            }
+            ordered_primitives.push(primitives_info[0].index);
         } else {
             let mut center_bounds = None;
             for info in primitives_info[0..number_primitives].iter() {
@@ -96,8 +94,8 @@ impl BVH {
             let axis = Axis::get_max_axis(&center_bounds.get_extent());
 
             if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max) {
-                for i in 0..number_primitives {
-                    ordered_primitives.push(primitives_info[i].index);
+                for primitive in primitives_info {
+                    ordered_primitives.push(primitive.index);
                 }
             } else {
                 let mid =
@@ -111,8 +109,8 @@ impl BVH {
                         self.build_bvh(ordered_primitives, offset + left.len(), right),
                     ));
                 } else {
-                    for i in 0..number_primitives {
-                        ordered_primitives.push(primitives_info[i].index);
+                    for primitive in primitives_info {
+                        ordered_primitives.push(primitive.index);
                     }
                 }
             }
@@ -131,7 +129,7 @@ impl BVH {
 
         let mut node_stack = VecDeque::new();
         node_stack.push_back(0);
-        while node_stack.len() > 0 {
+        while !node_stack.is_empty() {
             let index = node_stack.pop_front().unwrap();
 
             let node = &self.nodes[index];
