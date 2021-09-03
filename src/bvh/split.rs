@@ -1,5 +1,6 @@
 use crate::bvh::{aabb::AABB, bvh::PrimitiveInfo};
 use crate::math::Float;
+use crate::partition;
 
 use crate::ray_tracing::primitives::Axis;
 
@@ -53,28 +54,11 @@ impl Split for SplitType {
                         + axis.get_axis_value(center_bounds.max));
 
                 let len = primitives_info.len();
-                let (mut left, mut right) = (0, len - 1);
-                let mid_index: usize;
 
-                loop {
-                    while left < len
-                        && axis.get_axis_value(primitives_info[left].center) < point_mid
-                    {
-                        left += 1;
-                    }
-                    while right > 0
-                        && axis.get_axis_value(primitives_info[right].center) >= point_mid
-                    {
-                        right -= 1;
-                    }
-                    if left >= right {
-                        mid_index = left;
-                        break;
-                    }
-                    primitives_info.swap(left, right);
-                }
-
-                let mid_index = mid_index;
+                let closure = |primitive_info: &PrimitiveInfo| -> bool {
+                    axis.get_axis_value(primitive_info.center) >= point_mid
+                };
+                let mid_index = partition!(primitives_info, closure);
 
                 if mid_index == 0 || mid_index == (len - 1) {
                     primitives_info[0..len].sort_by(|a, b| {
@@ -85,27 +69,12 @@ impl Split for SplitType {
                 }
                 mid_index
             }
-            SplitType::EqualCounts => {
-                let len = primitives_info.len();
-                let point_mid = len / 2;
-                primitives_info[0..len].sort_by(|a, b| {
-                    axis.get_axis_value(a.center)
-                        .partial_cmp(&axis.get_axis_value(b.center))
-                        .unwrap()
-                });
-                point_mid
-            }
+            SplitType::EqualCounts => split_equal(axis, primitives_info),
             SplitType::SAH => {
                 let len = primitives_info.len();
 
                 if len <= 4 {
-                    let point_mid = len / 2;
-                    primitives_info[0..len].sort_by(|a, b| {
-                        axis.get_axis_value(a.center)
-                            .partial_cmp(&axis.get_axis_value(b.center))
-                            .unwrap()
-                    });
-                    return point_mid;
+                    return split_equal(axis, primitives_info);
                 }
 
                 let mut buckets = [BucketInfo::new(); NUM_BUCKETS];
@@ -180,32 +149,11 @@ impl Split for SplitType {
                 }
 
                 if len > MAX_IN_NODE || min_cost < len as f32 {
-                    let len = primitives_info.len();
-                    let (mut left, mut right) = (0, len - 1);
-                    let mid_index: usize;
-
-                    loop {
-                        while left < len
-                            && calculate_b(&axis, &primitives_info[left], min_val, centroid_extent)
-                                <= min_cost_index
-                        {
-                            left += 1;
-                        }
-
-                        while right > 0
-                            && calculate_b(&axis, &primitives_info[right], min_val, centroid_extent)
-                                > min_cost_index
-                        {
-                            right -= 1;
-                        }
-
-                        if left >= right {
-                            mid_index = left;
-                            break;
-                        }
-                        primitives_info.swap(left, right);
-                    }
-                    mid_index
+                    let closure = |primitive_info: &PrimitiveInfo| -> bool {
+                        calculate_b(&axis, &primitive_info, min_val, centroid_extent)
+                            <= min_cost_index
+                    };
+                    partition!(primitives_info, closure)
                 } else {
                     0
                 }
@@ -227,4 +175,15 @@ fn calculate_b(axis: &Axis, primitive_info: &PrimitiveInfo, min: Float, extent: 
     }
 
     b
+}
+
+fn split_equal(axis: &Axis, primitives_info: &mut [PrimitiveInfo]) -> usize {
+    let len = primitives_info.len();
+    let point_mid = len / 2;
+    primitives_info[0..len].sort_by(|a, b| {
+        axis.get_axis_value(a.center)
+            .partial_cmp(&axis.get_axis_value(b.center))
+            .unwrap()
+    });
+    point_mid
 }

@@ -332,3 +332,29 @@ macro_rules! scene {
         )
     };
 }
+
+#[macro_export]
+macro_rules! partition {
+    ($array:expr, $closure:expr) => {{
+        let len = $array.len();
+        let (mut left, mut right) = (0, len - 1);
+        let mid_index: usize;
+
+        loop {
+            while left < len && $closure(&$array[left]) {
+                left += 1;
+            }
+
+            while right > 0 && !($closure(&$array[right])) {
+                right -= 1;
+            }
+
+            if left >= right {
+                mid_index = left;
+                break;
+            }
+            $array.swap(left, right);
+        }
+        mid_index
+    }};
+}
