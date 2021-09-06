@@ -143,12 +143,14 @@ impl PrimitiveTrait for Primitive {
     }
 }
 
+#[allow(clippy::suspicious_operation_groupings)]
 impl PrimitiveTrait for Sphere {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let oc = ray.origin - self.center;
         let a = ray.direction.dot(ray.direction);
         let h = ray.direction.dot(oc); // b/2
         let c = oc.dot(oc) - self.radius * self.radius;
+
         let disc = h * h - a * c;
         if disc > 0.0 {
             let mut t = (-h - disc.sqrt()) / a;

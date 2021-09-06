@@ -170,9 +170,7 @@ impl Scene {
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 
-        let ray_count = receiver
-            .iter()
-            .fold(0, |rays, partial_rays| rays + partial_rays);
+        let ray_count: u64 = receiver.iter().sum();
 
         let image: Vec<u8> = (*(image.lock().unwrap()))
             .iter()

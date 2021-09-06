@@ -30,14 +30,13 @@ impl AABB {
 
         let tmin = tmin.max(t1.min(t2));
         let tmax = tmax.min(t1.max(t2));
-
         let t1 = (self.min.z - ray.origin.z) * ray.d_inverse.z;
         let t2 = (self.max.z - ray.origin.z) * ray.d_inverse.z;
 
         let tmin = tmin.max(t1.min(t2));
         let tmax = tmax.min(t1.max(t2));
 
-        return tmax > tmin.max(0.0);
+        tmax > tmin.max(0.0)
     }
 
     pub fn merge(aabb: &mut Option<Self>, second: Self) {

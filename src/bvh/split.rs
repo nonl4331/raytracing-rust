@@ -8,8 +8,8 @@ const NUM_BUCKETS: usize = 12;
 const MAX_IN_NODE: usize = 255;
 
 pub enum SplitType {
-    SAH,
-    HLBVH,
+    Sah,
+    Hlbvh,
     Middle,
     EqualCounts,
 }
@@ -70,7 +70,7 @@ impl Split for SplitType {
                 mid_index
             }
             SplitType::EqualCounts => split_equal(axis, primitives_info),
-            SplitType::SAH => {
+            SplitType::Sah => {
                 let len = primitives_info.len();
 
                 if len <= 4 {
@@ -146,7 +146,7 @@ impl Split for SplitType {
                 }
                 0
             }
-            SplitType::HLBVH => {
+            SplitType::Hlbvh => {
                 unimplemented!()
             }
         }

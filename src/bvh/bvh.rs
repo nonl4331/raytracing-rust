@@ -116,9 +116,9 @@ impl BVH {
             }
         }
 
-        if children.is_some() {
-            self.nodes[node_index].set_child(children.unwrap().0, 0);
-            self.nodes[node_index].set_child(children.unwrap().1, 1);
+        if let Some(children) = children {
+            self.nodes[node_index].set_child(children.0, 0);
+            self.nodes[node_index].set_child(children.1, 1);
         }
 
         node_index

@@ -128,9 +128,9 @@ macro_rules! texture_lerp {
 #[macro_export]
 macro_rules! perlin {
     () => {
-        std::sync::Arc::new(crate::ray_tracing::texture::Texture::Perlin(
+        std::sync::Arc::new(crate::ray_tracing::texture::Texture::Perlin(Box::new(
             crate::ray_tracing::texture::Perlin::new(),
-        ))
+        )))
     };
 }
 

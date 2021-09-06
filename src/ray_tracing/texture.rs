@@ -14,7 +14,7 @@ pub enum Texture {
     SolidColour(SolidColour),
     ImageTexture(ImageTexture),
     Lerp(Lerp),
-    Perlin(Perlin),
+    Perlin(Box<Perlin>),
 }
 
 pub trait TextureTrait {
@@ -87,8 +87,8 @@ impl Perlin {
         let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
 
         let mut ran_vecs: [Vec3; PERLIN_RVECS] = [Vec3::one(); PERLIN_RVECS];
-        for i in 0..PERLIN_RVECS {
-            ran_vecs[i] = rng.gen_range(-1.0..1.0) * Vec3::one();
+        for ran_vec in &mut ran_vecs {
+            *ran_vec = rng.gen_range(-1.0..1.0) * Vec3::one();
         }
 
         let perm_x = Self::generate_perm();
@@ -130,8 +130,8 @@ impl Perlin {
 
     fn generate_perm() -> [u32; PERLIN_RVECS] {
         let mut perm: [u32; PERLIN_RVECS] = [0; PERLIN_RVECS];
-        for i in 0..PERLIN_RVECS {
-            perm[i] = i as u32;
+        for (i, perm) in perm.iter_mut().enumerate() {
+            *perm = i as u32;
         }
         Self::permute(&mut perm);
         perm

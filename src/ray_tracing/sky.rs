@@ -14,10 +14,7 @@ pub struct Sky {
 
 impl Sky {
     pub fn new(texture: Option<&Arc<Texture>>) -> Self {
-        let texture = match texture {
-            Some(texture) => Some(texture.clone()),
-            None => None,
-        };
+        let texture = texture.cloned();
         Sky { texture }
     }
 
@@ -32,7 +29,7 @@ impl Sky {
                     return texture
                         .colour_value(Some(Vec2::new(phi / (2.0 * PI), theta / PI)), Vec3::zero());
                 }
-                return texture.colour_value(None, Vec3::zero());
+                texture.colour_value(None, Vec3::zero())
             }
             None => Colour::zero(),
         }

@@ -29,7 +29,7 @@ impl Parameters {
             samples: samples.unwrap_or(SAMPLES_DEFAULT),
             width: width.unwrap_or(WIDTH_DEFAULT),
             height: height.unwrap_or(HEIGHT_DEFAULT),
-            filename: filename.unwrap_or(FILENAME_DEFAULT.to_string()),
+            filename: filename.unwrap_or_else(|| FILENAME_DEFAULT.to_string()),
         }
     }
 }
@@ -49,8 +49,8 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
     }
 
     for arg_i in (0..(args.len() / 2)).map(|i| i * 2 + 1) {
-        match args.get(arg_i) {
-            Some(arg) => match &arg[..] {
+        if let Some(arg) = args.get(arg_i) {
+            match &arg[..] {
                 "-H" => {
                     display_help();
                     process::exit(0);
@@ -108,8 +108,7 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
                     filename = Some(get_filename(&args, arg_i + 1));
                 }
                 _ => {}
-            },
-            None => {}
+            }
         }
     }
     match scene_index {
@@ -193,7 +192,7 @@ fn get_list() {
     println!("-------------------");
 }
 
-fn get_info(args: &Vec<String>, index: usize) {
+fn get_info(args: &[String], index: usize) {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");
@@ -253,7 +252,7 @@ fn get_info(args: &Vec<String>, index: usize) {
     }
 }
 
-fn get_scene(args: &Vec<String>, index: usize, bvh_type: SplitType, aspect_ratio: Float) -> Scene {
+fn get_scene(args: &[String], index: usize, bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");
@@ -261,12 +260,12 @@ fn get_scene(args: &Vec<String>, index: usize, bvh_type: SplitType, aspect_ratio
             process::exit(0);
         }
         Some(string) => match &string[..] {
-            "1" => return generate::scene_one(bvh_type, aspect_ratio),
-            "2" => return generate::scene_two(bvh_type, aspect_ratio),
-            "3" => return generate::scene_three(bvh_type, aspect_ratio),
-            "4" => return generate::scene_four(bvh_type, aspect_ratio),
-            "5" => return generate::scene_five(bvh_type, aspect_ratio),
-            "6" => return generate::scene_six(bvh_type, aspect_ratio),
+            "1" => generate::scene_one(bvh_type, aspect_ratio),
+            "2" => generate::scene_two(bvh_type, aspect_ratio),
+            "3" => generate::scene_three(bvh_type, aspect_ratio),
+            "4" => generate::scene_four(bvh_type, aspect_ratio),
+            "5" => generate::scene_five(bvh_type, aspect_ratio),
+            "6" => generate::scene_six(bvh_type, aspect_ratio),
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");
@@ -277,10 +276,10 @@ fn get_scene(args: &Vec<String>, index: usize, bvh_type: SplitType, aspect_ratio
     }
 }
 
-fn get_filename(args: &Vec<String>, index: usize) -> String {
+fn get_filename(args: &[String], index: usize) -> String {
     match args.get(index) {
         Some(string) => {
-            let split_vec: Vec<&str> = string.split(".").collect();
+            let split_vec: Vec<&str> = string.split('.').collect();
             if split_vec.len() < 2 {
                 println!("Please specify a valid extension!");
                 println!("Do -H or --help for more information.");
@@ -288,8 +287,8 @@ fn get_filename(args: &Vec<String>, index: usize) -> String {
             }
 
             match split_vec[split_vec.len() - 1] {
-                "jpeg" => return string.to_string(),
-                "png" => return string.to_string(),
+                "jpeg" => string.to_string(),
+                "png" => string.to_string(),
                 _ => {
                     println!(
                         "Unsupported file extension: {}",
@@ -308,12 +307,12 @@ fn get_filename(args: &Vec<String>, index: usize) -> String {
     }
 }
 
-fn get_bvh_type(args: &Vec<String>, index: usize) -> SplitType {
+fn get_bvh_type(args: &[String], index: usize) -> SplitType {
     match args.get(index) {
         Some(string) => match &string.to_lowercase()[..] {
             "equal" => SplitType::EqualCounts,
             "middle" => SplitType::Middle,
-            "sah" => SplitType::SAH,
+            "sah" => SplitType::Sah,
             _ => {
                 println!("{} is not a valid value for bvh type!", string);
                 println!("Please specify a valid value for bvh type!");
@@ -329,7 +328,7 @@ fn get_bvh_type(args: &Vec<String>, index: usize) -> SplitType {
     }
 }
 
-fn get_samples(args: &Vec<String>, index: usize) -> u32 {
+fn get_samples(args: &[String], index: usize) -> u32 {
     match args.get(index) {
         Some(string) => match string.parse::<u32>() {
             Ok(parsed) => match parsed {
@@ -339,7 +338,7 @@ fn get_samples(args: &Vec<String>, index: usize) -> u32 {
                     println!("Do -H or --help for more information.");
                     process::exit(0);
                 }
-                _ => return parsed,
+                _ => parsed,
             },
             Err(_) => {
                 println!("{} is not a valid value for samples!", string);
@@ -356,7 +355,7 @@ fn get_samples(args: &Vec<String>, index: usize) -> u32 {
     }
 }
 
-fn get_dimension(args: &Vec<String>, index: usize) -> u32 {
+fn get_dimension(args: &[String], index: usize) -> u32 {
     match args.get(index) {
         Some(string) => match string.parse::<u32>() {
             Ok(parsed) => match parsed {
@@ -366,7 +365,7 @@ fn get_dimension(args: &Vec<String>, index: usize) -> u32 {
                     println!("Do -H or --help for more information.");
                     process::exit(0);
                 }
-                _ => return parsed,
+                _ => parsed,
             },
             Err(_) => {
                 println!("{} is not a valid value for height!", string);
