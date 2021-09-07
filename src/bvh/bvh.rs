@@ -35,12 +35,12 @@ impl PrimitiveInfo {
     }
 }
 
-pub struct BVH {
+pub struct Bvh {
     split_type: SplitType,
     nodes: Vec<Node>,
 }
 
-impl BVH {
+impl Bvh {
     pub fn new(primitives: &mut Vec<Primitive>, split_type: SplitType) -> Self {
         let mut bvh = Self {
             split_type,
@@ -93,7 +93,10 @@ impl BVH {
 
             let axis = Axis::get_max_axis(&center_bounds.get_extent());
 
-            if axis.get_axis_value(center_bounds.min) == axis.get_axis_value(center_bounds.max) {
+            if (axis.get_axis_value(center_bounds.min) - axis.get_axis_value(center_bounds.max))
+                .abs()
+                < 100.0 * f32::EPSILON
+            {
                 for primitive in primitives_info {
                     ordered_primitives.push(primitive.index);
                 }

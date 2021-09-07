@@ -1,4 +1,4 @@
-use crate::bvh::bvh::BVH;
+use crate::bvh::bvh::Bvh;
 use crate::math::Float;
 
 use crate::image::scene::PrimitivesType;
@@ -52,7 +52,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn check_hit(&mut self, bvh: &Arc<BVH>, primitives: &PrimitivesType) {
+    fn check_hit(&mut self, bvh: &Arc<Bvh>, primitives: &PrimitivesType) {
         let offset_lens = bvh.get_intersection_candidates(&self);
 
         for offset_len in offset_lens {
@@ -83,7 +83,7 @@ impl Ray {
     pub fn get_colour(
         ray: &mut Ray,
         sky: Arc<Sky>,
-        bvh: Arc<BVH>,
+        bvh: Arc<Bvh>,
         primitives: PrimitivesType,
     ) -> (Colour, u64) {
         let mut colour = Colour::one();

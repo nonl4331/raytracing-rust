@@ -144,7 +144,7 @@ fn display_help() {
     println!("-Y [pixels], --height [pixels]");
     println!("\t Sets height of image");
     println!("-B [split_type], --bvh [split_type]");
-    println!("\t Sets split type for bvh.");
+    println!("\t Sets split type for BVH.");
     println!("\t supported split types: \"equal\", \"middle\"");
     println!("-O [filename], --output [filename]");
     println!("\t filename of output with supported file extension.");
@@ -314,14 +314,14 @@ fn get_bvh_type(args: &[String], index: usize) -> SplitType {
             "middle" => SplitType::Middle,
             "sah" => SplitType::Sah,
             _ => {
-                println!("{} is not a valid value for bvh type!", string);
-                println!("Please specify a valid value for bvh type!");
+                println!("{} is not a valid value for BVH type!", string);
+                println!("Please specify a valid value for BVH type!");
                 println!("Do -H or --help for more information.");
                 process::exit(0);
             }
         },
         None => {
-            println!("Please specify a value for bvh type!");
+            println!("Please specify a value for BVH type!");
             println!("Do -H or --help for more information.");
             process::exit(0);
         }

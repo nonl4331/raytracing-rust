@@ -1,4 +1,4 @@
-use crate::bvh::{bvh::BVH, split::SplitType};
+use crate::bvh::{bvh::Bvh, split::SplitType};
 use crate::math::Float;
 
 use crate::image::camera::Camera;
@@ -28,7 +28,7 @@ pub type PrimitivesType = Arc<Vec<Primitive>>;
 
 pub struct Scene {
     pub primitives: PrimitivesType,
-    pub bvh: Arc<BVH>,
+    pub bvh: Arc<Bvh>,
     pub camera: Camera,
     pub sky: Arc<Sky>,
 }
@@ -55,16 +55,16 @@ impl Scene {
 
         line_break();
 
-        println!("BVH construction started.");
+        println!("Bvh construction started.");
 
         let start = Instant::now();
-        let bvh = Arc::new(BVH::new(&mut primitives, split_type));
+        let bvh = Arc::new(Bvh::new(&mut primitives, split_type));
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 
         line_break();
 
-        println!("BVH construction finished in: {}ms", duration.as_millis());
+        println!("Bvh construction finished in: {}ms", duration.as_millis());
         println!("Number of BVH nodes: {}", bvh.number_nodes());
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);

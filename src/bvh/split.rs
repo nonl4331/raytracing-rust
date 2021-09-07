@@ -9,7 +9,6 @@ const MAX_IN_NODE: usize = 255;
 
 pub enum SplitType {
     Sah,
-    Hlbvh,
     Middle,
     EqualCounts,
 }
@@ -145,9 +144,6 @@ impl Split for SplitType {
                     return partition!(primitives_info, closure);
                 }
                 0
-            }
-            SplitType::Hlbvh => {
-                unimplemented!()
             }
         }
     }
