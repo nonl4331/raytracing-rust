@@ -1,4 +1,4 @@
-use crate::bvh::{aabb::AABB, bvh::PrimitiveInfo};
+use crate::acceleration::{aabb::Aabb, bvh::PrimitiveInfo};
 use crate::math::Float;
 use crate::partition;
 
@@ -16,8 +16,8 @@ pub enum SplitType {
 pub trait Split {
     fn split(
         &self,
-        bounds: &AABB,
-        center_bounds: &AABB,
+        bounds: &Aabb,
+        center_bounds: &Aabb,
         axis: &Axis,
         primitives_info: &mut [PrimitiveInfo],
     ) -> usize;
@@ -26,7 +26,7 @@ pub trait Split {
 #[derive(Copy, Clone)]
 pub struct BucketInfo {
     count: u32,
-    bounds: Option<AABB>,
+    bounds: Option<Aabb>,
 }
 
 impl BucketInfo {
@@ -41,8 +41,8 @@ impl BucketInfo {
 impl Split for SplitType {
     fn split(
         &self,
-        bounds: &AABB,
-        center_bounds: &AABB,
+        bounds: &Aabb,
+        center_bounds: &Aabb,
         axis: &Axis,
         primitives_info: &mut [PrimitiveInfo],
     ) -> usize {
@@ -88,40 +88,40 @@ impl Split for SplitType {
 
                     buckets[b].count += 1;
 
-                    AABB::merge(
+                    Aabb::merge(
                         &mut buckets[b].bounds,
-                        AABB::new(primitive_info.min, primitive_info.max),
+                        Aabb::new(primitive_info.min, primitive_info.max),
                     );
                 }
 
                 let mut costs = [0.0; NUM_BUCKETS - 1];
-                for i in 0..(NUM_BUCKETS - 1) {
+                for (i, cost) in costs.iter_mut().enumerate().take(NUM_BUCKETS - 1) {
                     let (mut bounds_left, mut bounds_right) = (None, None);
                     let (mut count_left, mut count_right) = (0, 0);
 
-                    for j in 0..(i + 1) {
-                        if buckets[j].bounds.is_some() {
-                            AABB::merge(&mut bounds_left, buckets[j].bounds.unwrap());
-                            count_left += buckets[j].count;
+                    for bucket in buckets.iter().take(i + 1) {
+                        if bucket.bounds.is_some() {
+                            Aabb::merge(&mut bounds_left, bucket.bounds.unwrap());
+                            count_left += bucket.count;
                         }
                     }
 
-                    for j in (i + 1)..NUM_BUCKETS {
-                        if buckets[j].bounds.is_some() {
-                            AABB::merge(&mut bounds_right, buckets[j].bounds.unwrap());
-                            count_right += buckets[j].count;
+                    for bucket in buckets.iter().take(NUM_BUCKETS).skip(i + 1) {
+                        if bucket.bounds.is_some() {
+                            Aabb::merge(&mut bounds_right, bucket.bounds.unwrap());
+                            count_right += bucket.count;
                         }
                     }
 
                     let left_sa = bounds_left
-                        .and_then(|bounds: AABB| Some(bounds.surface_area()))
+                        .map(|bounds: Aabb| bounds.surface_area())
                         .unwrap_or(0.0);
 
                     let right_sa = bounds_right
-                        .and_then(|bounds: AABB| Some(bounds.surface_area()))
+                        .map(|bounds: Aabb| bounds.surface_area())
                         .unwrap_or(0.0);
 
-                    costs[i] = 0.125
+                    *cost = 0.125
                         + (count_left as Float * left_sa + count_right as Float * right_sa)
                             / bounds.surface_area();
                 }
@@ -129,9 +129,9 @@ impl Split for SplitType {
                 let mut min_cost = costs[0];
                 let mut min_cost_index = 0;
 
-                for i in 1..(NUM_BUCKETS - 1) {
-                    if costs[i] < min_cost {
-                        min_cost = costs[i];
+                for (i, cost) in costs.iter().enumerate().take(NUM_BUCKETS - 1).skip(1) {
+                    if cost < &min_cost {
+                        min_cost = *cost;
                         min_cost_index = i;
                     }
                 }

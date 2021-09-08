@@ -1,4 +1,4 @@
-use crate::bvh::{bvh::Bvh, split::SplitType};
+use crate::acceleration::{bvh::Bvh, split::SplitType};
 use crate::math::Float;
 
 use crate::image::camera::Camera;

@@ -4,7 +4,7 @@ use crate::{
     reflect, refract, scene, sky, solid_colour, sphere, texture_lerp,
 };
 
-use crate::bvh::split::SplitType;
+use crate::acceleration::split::SplitType;
 
 use crate::image::scene::Scene;
 

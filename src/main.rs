@@ -2,7 +2,7 @@ use crate::image::parameters;
 
 use std::env;
 
-mod bvh;
+mod acceleration;
 
 mod image;
 

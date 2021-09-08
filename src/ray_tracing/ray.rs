@@ -1,4 +1,4 @@
-use crate::bvh::bvh::Bvh;
+use crate::acceleration::bvh::Bvh;
 use crate::math::Float;
 
 use crate::image::scene::PrimitivesType;

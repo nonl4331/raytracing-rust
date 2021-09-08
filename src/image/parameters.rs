@@ -1,4 +1,4 @@
-use crate::bvh::split::SplitType;
+use crate::acceleration::split::SplitType;
 use crate::math::Float;
 
 use crate::image::{generate, scene::Scene};

@@ -1,5 +1,5 @@
-use crate::bvh::{
-    aabb::AABB,
+use crate::acceleration::{
+    aabb::Aabb,
     split::{Split, SplitType},
 };
 
@@ -71,7 +71,7 @@ impl Bvh {
 
         let mut bounds = None;
         for info in primitives_info.iter() {
-            AABB::merge(&mut bounds, AABB::new(info.min, info.max));
+            Aabb::merge(&mut bounds, Aabb::new(info.min, info.max));
         }
 
         let mut children = None;
@@ -86,7 +86,7 @@ impl Bvh {
         } else {
             let mut center_bounds = None;
             for info in primitives_info[0..number_primitives].iter() {
-                AABB::extend_contains(&mut center_bounds, info.center);
+                Aabb::extend_contains(&mut center_bounds, info.center);
             }
 
             let center_bounds = center_bounds.unwrap();
@@ -160,14 +160,14 @@ impl Bvh {
 
 #[derive(Debug)]
 pub struct Node {
-    bounds: AABB,
+    bounds: Aabb,
     children: Option<[usize; 2]>,
     primitive_offset: usize,
     number_primitives: usize,
 }
 
 impl Node {
-    fn new(bounds: AABB, primitive_offset: usize, number_primitives: usize) -> Self {
+    fn new(bounds: Aabb, primitive_offset: usize, number_primitives: usize) -> Self {
         Node {
             bounds,
             children: None,

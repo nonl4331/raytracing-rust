@@ -5,17 +5,17 @@ use crate::ray_tracing::ray::Ray;
 use ultraviolet::Vec3;
 
 #[derive(Copy, Clone, Debug)]
-pub struct AABB {
+pub struct Aabb {
     pub min: Vec3,
     pub max: Vec3,
 }
 
-impl AABB {
+impl Aabb {
     pub fn new(min: Vec3, max: Vec3) -> Self {
         if min.x > max.x || min.y > max.y || min.z > max.z {
             panic!("Maximum value in AABB must be greater or equal to minimum!");
         }
-        AABB { min, max }
+        Aabb { min, max }
     }
 
     pub fn does_int(&self, ray: &Ray) -> bool {
@@ -55,7 +55,7 @@ impl AABB {
                 inner.min = inner.min.min_by_component(point);
                 inner.max = inner.max.max_by_component(point);
             }
-            None => *aabb = Some(AABB::new(point, point)),
+            None => *aabb = Some(Aabb::new(point, point)),
         }
     }
 
@@ -78,21 +78,21 @@ mod tests {
     fn new() {
         let min = -0.5 * Vec3::one();
         let max = 1.5 * Vec3::one();
-        AABB::new(max, min);
+        Aabb::new(max, min);
     }
 
     #[test]
     fn merge() {
-        let first = AABB::new(-1.0 * Vec3::one(), Vec3::one());
+        let first = Aabb::new(-1.0 * Vec3::one(), Vec3::one());
         let mut second = None;
-        AABB::merge(&mut second, first);
+        Aabb::merge(&mut second, first);
         assert!(first.min == second.unwrap().min && first.max == second.unwrap().max);
     }
 
     #[test]
     fn extend_contains() {
-        let mut first = Some(AABB::new(-1.0 * Vec3::one(), Vec3::one()));
-        AABB::extend_contains(&mut first, Vec3::new(-1.5, 3.0, 0.1));
+        let mut first = Some(Aabb::new(-1.0 * Vec3::one(), Vec3::one()));
+        Aabb::extend_contains(&mut first, Vec3::new(-1.5, 3.0, 0.1));
 
         assert!(
             first.unwrap().min == Vec3::new(-1.5, -1.0, -1.0)
@@ -108,14 +108,14 @@ mod tests {
             0.0,
         );
 
-        let aabb = AABB::new(Vec3::new(1.0, 1.0, 1.0), Vec3::new(1.1, 2.0, 2.0));
+        let aabb = Aabb::new(Vec3::new(1.0, 1.0, 1.0), Vec3::new(1.1, 2.0, 2.0));
 
         assert!(aabb.does_int(&ray));
     }
 
     #[test]
     fn get_extent() {
-        let aabb = AABB::new(Vec3::new(-1.0, 1.5, 1.0), Vec3::new(1.1, 2.0, 2.0));
+        let aabb = Aabb::new(Vec3::new(-1.0, 1.5, 1.0), Vec3::new(1.1, 2.0, 2.0));
         assert_eq!(aabb.get_extent(), Vec3::new(2.1, 0.5, 1.0));
     }
 }

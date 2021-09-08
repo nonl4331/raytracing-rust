@@ -1,4 +1,4 @@
-use crate::bvh::aabb::AABB;
+use crate::acceleration::aabb::Aabb;
 use crate::math::Float;
 
 use crate::math::{gamma, next_float, previous_float};
@@ -34,7 +34,7 @@ pub trait PrimitiveTrait {
         false
     }
     fn get_internal(self) -> Vec<Primitive>;
-    fn get_aabb(&self) -> Option<AABB> {
+    fn get_aabb(&self) -> Option<Aabb> {
         None
     }
     fn requires_uv(&self) -> bool {
@@ -110,7 +110,7 @@ impl PrimitiveTrait for Primitive {
         }
     }
 
-    fn get_aabb(&self) -> Option<AABB> {
+    fn get_aabb(&self) -> Option<Aabb> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_aabb(),
             Primitive::AARect(rect) => rect.get_aabb(),
@@ -193,8 +193,8 @@ impl PrimitiveTrait for Sphere {
         }
         None
     }
-    fn get_aabb(&self) -> Option<AABB> {
-        Some(AABB::new(
+    fn get_aabb(&self) -> Option<Aabb> {
+        Some(Aabb::new(
             self.center - self.radius * Vec3::one(),
             self.center + self.radius * Vec3::one(),
         ))
@@ -255,8 +255,8 @@ impl PrimitiveTrait for AARect {
         }
         None
     }
-    fn get_aabb(&self) -> Option<AABB> {
-        Some(AABB::new(
+    fn get_aabb(&self) -> Option<Aabb> {
+        Some(Aabb::new(
             Axis::point_from_2d(&self.min, &self.axis, self.k - 0.0001),
             Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
         ))
@@ -301,7 +301,7 @@ impl PrimitiveTrait for AACuboid {
         }
         false
     }
-    fn get_aabb(&self) -> Option<AABB> {
+    fn get_aabb(&self) -> Option<Aabb> {
         None
     }
 }
@@ -418,8 +418,8 @@ impl PrimitiveTrait for Triangle {
     fn does_int(&self, ray: &Ray) -> bool {
         self.get_int(ray).is_some()
     }
-    fn get_aabb(&self) -> Option<AABB> {
-        Some(AABB::new(
+    fn get_aabb(&self) -> Option<Aabb> {
+        Some(Aabb::new(
             self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
             self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
         ))
@@ -544,14 +544,14 @@ impl PrimitiveTrait for MeshTriangle {
     fn does_int(&self, ray: &Ray) -> bool {
         self.get_int(ray).is_some()
     }
-    fn get_aabb(&self) -> Option<AABB> {
+    fn get_aabb(&self) -> Option<Aabb> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],
             (*self.mesh).vertices[self.point_indices[1]],
             (*self.mesh).vertices[self.point_indices[2]],
         ];
 
-        Some(AABB::new(
+        Some(Aabb::new(
             points[0].min_by_component(points[1].min_by_component(points[2])),
             points[0].max_by_component(points[1].max_by_component(points[2])),
         ))
