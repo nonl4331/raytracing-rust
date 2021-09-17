@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 use ultraviolet::{Vec2, Vec3};
 
-pub const EPSILON: Float = 0.0001;
+pub const EPSILON: Float = 0.00000003;
 
 pub struct Hit {
     pub t: Float,
@@ -147,17 +147,27 @@ impl PrimitiveTrait for Primitive {
 impl PrimitiveTrait for Sphere {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let oc = ray.origin - self.center;
-        let a = ray.direction.dot(ray.direction);
-        let h = ray.direction.dot(oc); // b/2
+
+        let b_prime = -oc.dot(ray.direction);
+
+        let disc = self.radius * self.radius - (oc + b_prime * ray.direction).mag_sq();
+
         let c = oc.dot(oc) - self.radius * self.radius;
 
-        let disc = h * h - a * c;
         if disc > 0.0 {
-            let mut t = (-h - disc.sqrt()) / a;
-
-            if t < 0.0 {
-                t = (-h + disc.sqrt()) / a;
+            let q = b_prime + b_prime.signum() * disc.sqrt();
+            let mut t0 = q;
+            let mut t1 = c / q;
+            if t1 < t0 {
+                std::mem::swap(&mut t0, &mut t1)
             }
+            let t = if t1 < 0.0 {
+                return None;
+            } else if t0 < 0.0 {
+                t1
+            } else {
+                t0
+            };
 
             let point = ray.at(t);
             let mut normal = (point - self.center) / self.radius;
@@ -166,9 +176,10 @@ impl PrimitiveTrait for Sphere {
                 normal *= -1.0;
                 out = false;
             }
+
             Some(Hit {
                 t,
-                point: point + EPSILON * normal,
+                point,
                 normal,
                 uv: self.get_uv(point),
                 out,
