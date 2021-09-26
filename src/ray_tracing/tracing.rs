@@ -27,7 +27,7 @@ pub struct Hit {
 }
 
 pub trait PrimitiveTrait {
-    fn get_int(&self, _: &Ray) -> Option<Hit> {
+    fn get_int(&self, _: &Ray, _: bool) -> Option<Hit> {
         None
     }
     fn does_int(&self, _: &Ray) -> bool {
@@ -43,13 +43,14 @@ pub trait PrimitiveTrait {
     fn get_uv(&self, _: Vec3) -> Option<Vec2> {
         None
     }
+    fn is_brdf(&self) -> bool;
 }
 
-fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, out_dir: bool) -> Vec3 {
+fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec3 {
     let offset_val = normal.abs().dot(error);
     let mut offset = offset_val * normal;
 
-    if out_dir {
+    if !is_brdf {
         offset = -offset;
     }
 
@@ -77,13 +78,13 @@ fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, out_dir: bool) -> Vec3 {
 }
 
 impl PrimitiveTrait for Primitive {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         match self {
-            Primitive::Sphere(sphere) => sphere.get_int(ray),
-            Primitive::AARect(rect) => rect.get_int(ray),
-            Primitive::AACuboid(aab) => aab.get_int(ray),
-            Primitive::Triangle(triangle) => triangle.get_int(ray),
-            Primitive::MeshTriangle(triangle) => triangle.get_int(ray),
+            Primitive::Sphere(sphere) => sphere.get_int(ray, is_brdf),
+            Primitive::AARect(rect) => rect.get_int(ray, is_brdf),
+            Primitive::AACuboid(aab) => aab.get_int(ray, is_brdf),
+            Primitive::Triangle(triangle) => triangle.get_int(ray, is_brdf),
+            Primitive::MeshTriangle(triangle) => triangle.get_int(ray, is_brdf),
             Primitive::None => panic!("get_int called on PrimitiveNone"),
         }
     }
@@ -141,11 +142,21 @@ impl PrimitiveTrait for Primitive {
             Primitive::None => panic!("requires_uv called on PrimitiveNone"),
         }
     }
+    fn is_brdf(&self) -> bool {
+        match self {
+            Primitive::Sphere(sphere) => (*sphere.material).is_brdf(),
+            Primitive::AARect(rect) => rect.material.is_brdf(),
+            Primitive::AACuboid(aab) => aab.material.is_brdf(),
+            Primitive::Triangle(triangle) => triangle.material.is_brdf(),
+            Primitive::MeshTriangle(triangle) => triangle.material.is_brdf(),
+            Primitive::None => panic!("requires_uv called on PrimitiveNone"),
+        }
+    }
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
 impl PrimitiveTrait for Sphere {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let oc = ray.origin - self.center;
 
         let b_prime = -oc.dot(ray.direction);
@@ -169,14 +180,16 @@ impl PrimitiveTrait for Sphere {
                 t0
             };
 
-            let point = ray.at(t);
-            let mut normal = (point - self.center) / self.radius;
+            let mut point = oc + ray.direction * t;
+            point *= self.radius / point.mag();
+            let mut normal = point / self.radius;
             let mut out = true;
             if normal.dot(ray.direction) > 0.0 {
                 normal *= -1.0;
                 out = false;
             }
-
+            let point_error = gamma(5) * point.abs();
+            let point = offset_ray(point, normal, point_error, is_brdf) + self.center;
             Some(Hit {
                 t,
                 point,
@@ -210,10 +223,13 @@ impl PrimitiveTrait for Sphere {
             self.center + self.radius * Vec3::one(),
         ))
     }
+    fn is_brdf(&self) -> bool {
+        self.material.is_brdf()
+    }
 }
 
 impl PrimitiveTrait for AARect {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let t = (self.k - self.axis.get_axis_value(ray.origin))
             / self.axis.get_axis_value(ray.direction);
         let point = ray.at(t);
@@ -272,13 +288,16 @@ impl PrimitiveTrait for AARect {
             Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
         ))
     }
+    fn is_brdf(&self) -> bool {
+        self.material.is_brdf()
+    }
 }
 
 impl PrimitiveTrait for AACuboid {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let mut hit: Option<Hit> = None;
         for side in self.rects.iter() {
-            if let Some(current_hit) = side.get_int(ray) {
+            if let Some(current_hit) = side.get_int(ray, self.material.is_brdf()) {
                 // make sure ray is going forwards
                 if current_hit.t > 0.0 {
                     // check if hit already exists
@@ -315,10 +334,13 @@ impl PrimitiveTrait for AACuboid {
     fn get_aabb(&self) -> Option<Aabb> {
         None
     }
+    fn is_brdf(&self) -> bool {
+        self.material.is_brdf()
+    }
 }
 
 impl PrimitiveTrait for Triangle {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let mut p0t = self.points[0] - ray.origin;
         let mut p1t = self.points[1] - ray.origin;
         let mut p2t = self.points[2] - ray.origin;
@@ -412,7 +434,7 @@ impl PrimitiveTrait for Triangle {
                 );
 
         let point = b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2];
-        let point = offset_ray(point, normal, point_error, out);
+        let point = offset_ray(point, normal, point_error, is_brdf);
 
         Some(Hit {
             t,
@@ -427,7 +449,7 @@ impl PrimitiveTrait for Triangle {
         vec![Primitive::Triangle(self)]
     }
     fn does_int(&self, ray: &Ray) -> bool {
-        self.get_int(ray).is_some()
+        self.get_int(ray, true).is_some()
     }
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(
@@ -435,10 +457,13 @@ impl PrimitiveTrait for Triangle {
             self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
         ))
     }
+    fn is_brdf(&self) -> bool {
+        self.material.is_brdf()
+    }
 }
 
 impl PrimitiveTrait for MeshTriangle {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],
             (*self.mesh).vertices[self.point_indices[1]],
@@ -538,7 +563,7 @@ impl PrimitiveTrait for MeshTriangle {
             + gamma(6) * Vec3::new(b2 * points[2].x, b2 * points[2].y, b2 * points[2].z);
 
         let point = b0 * points[0] + b1 * points[1] + b2 * points[2];
-        let point = offset_ray(point, normal, point_error, out);
+        let point = offset_ray(point, normal, point_error, is_brdf);
 
         Some(Hit {
             t,
@@ -553,7 +578,7 @@ impl PrimitiveTrait for MeshTriangle {
         vec![Primitive::MeshTriangle(self)]
     }
     fn does_int(&self, ray: &Ray) -> bool {
-        self.get_int(ray).is_some()
+        self.get_int(ray, true).is_some()
     }
     fn get_aabb(&self) -> Option<Aabb> {
         let points = [
@@ -566,5 +591,8 @@ impl PrimitiveTrait for MeshTriangle {
             points[0].min_by_component(points[1].min_by_component(points[2])),
             points[0].max_by_component(points[1].max_by_component(points[2])),
         ))
+    }
+    fn is_brdf(&self) -> bool {
+        self.material.is_brdf()
     }
 }

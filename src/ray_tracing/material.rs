@@ -42,6 +42,14 @@ impl MaterialTrait for Material {
             Material::Emit(emit) => emit.texture.requires_uv(),
         }
     }
+    fn is_brdf(&self) -> bool {
+        match self {
+            Material::Diffuse(_) => true,
+            Material::Reflect(_) => true,
+            Material::Refract(_) => false,
+            Material::Emit(_) => false,
+        }
+    }
 }
 
 pub trait MaterialTrait {
@@ -54,6 +62,7 @@ pub trait MaterialTrait {
     fn requires_uv(&self) -> bool {
         false
     }
+    fn is_brdf(&self) -> bool;
 }
 
 pub struct Diffuse {
@@ -124,6 +133,9 @@ impl MaterialTrait for Diffuse {
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
     }
+    fn is_brdf(&self) -> bool {
+        true
+    }
 }
 
 impl MaterialTrait for Reflect {
@@ -139,6 +151,9 @@ impl MaterialTrait for Reflect {
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
+    }
+    fn is_brdf(&self) -> bool {
+        true
     }
 }
 
@@ -167,6 +182,9 @@ impl MaterialTrait for Refract {
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
     }
+    fn is_brdf(&self) -> bool {
+        false
+    }
 }
 
 impl MaterialTrait for Emit {
@@ -175,6 +193,9 @@ impl MaterialTrait for Emit {
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
+    }
+    fn is_brdf(&self) -> bool {
+        true
     }
 }
 

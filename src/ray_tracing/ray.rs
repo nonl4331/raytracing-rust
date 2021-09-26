@@ -53,14 +53,14 @@ impl Ray {
     }
 
     fn check_hit(&mut self, bvh: &Arc<Bvh>, primitives: &PrimitivesType) {
-        let offset_lens = bvh.get_intersection_candidates(&self);
+        let offset_lens = bvh.get_intersection_candidates(self);
 
         for offset_len in offset_lens {
             let offset = offset_len.0;
             let len = offset_len.1;
             for object in &primitives[offset..offset + len] {
                 // check for hit
-                if let Some(current_hit) = object.get_int(&self) {
+                if let Some(current_hit) = object.get_int(self, object.is_brdf()) {
                     // make sure ray is going forwards
                     if current_hit.t > 0.0 {
                         // check if hit already exists
@@ -110,7 +110,7 @@ impl Ray {
                 }
                 depth += 1;
             } else {
-                return (colour * sky.get_colour(&ray), ray_count);
+                return (colour * sky.get_colour(ray), ray_count);
             }
         }
         (colour, ray_count)
