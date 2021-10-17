@@ -3,7 +3,7 @@ use crate::{math, math::Float};
 use crate::ray_tracing::{
     ray::{Colour, Ray},
     texture::{Texture, TextureTrait},
-    tracing::Hit,
+    tracing::{offset_ray, Hit},
 };
 
 use std::sync::Arc;
@@ -42,14 +42,6 @@ impl MaterialTrait for Material {
             Material::Emit(emit) => emit.texture.requires_uv(),
         }
     }
-    fn is_brdf(&self) -> bool {
-        match self {
-            Material::Diffuse(_) => true,
-            Material::Reflect(_) => true,
-            Material::Refract(_) => false,
-            Material::Emit(_) => false,
-        }
-    }
 }
 
 pub trait MaterialTrait {
@@ -62,7 +54,6 @@ pub trait MaterialTrait {
     fn requires_uv(&self) -> bool {
         false
     }
-    fn is_brdf(&self) -> bool;
 }
 
 pub struct Diffuse {
@@ -127,14 +118,12 @@ impl MaterialTrait for Diffuse {
         if math::near_zero(direction) {
             direction = hit.normal;
         }
-        *ray = Ray::new(hit.point, direction, ray.time);
+        let point = offset_ray(hit.point, hit.normal, hit.error, true);
+        *ray = Ray::new(point, direction, ray.time);
         (self.absorption, false)
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
-    }
-    fn is_brdf(&self) -> bool {
-        true
     }
 }
 
@@ -142,8 +131,9 @@ impl MaterialTrait for Reflect {
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
         let mut direction = ray.direction;
         direction.reflect(hit.normal);
+        let point = offset_ray(hit.point, hit.normal, hit.error, true);
         *ray = Ray::new(
-            hit.point,
+            point,
             direction + self.fuzz * math::random_unit_vector(),
             ray.time,
         );
@@ -151,9 +141,6 @@ impl MaterialTrait for Reflect {
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
-    }
-    fn is_brdf(&self) -> bool {
-        true
     }
 }
 
@@ -176,14 +163,12 @@ impl MaterialTrait for Refract {
         let perp = eta_fraction * (ray.direction + cos_theta * hit.normal);
         let para = -1.0 * (1.0 - perp.mag_sq()).abs().sqrt() * hit.normal;
         let direction = perp + para;
-        *ray = Ray::new(hit.point, direction, ray.time);
+        let point = offset_ray(hit.point, hit.normal, hit.error, false);
+        *ray = Ray::new(point, direction, ray.time);
         (1.0, false)
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
-    }
-    fn is_brdf(&self) -> bool {
-        false
     }
 }
 
@@ -193,9 +178,6 @@ impl MaterialTrait for Emit {
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         self.texture.colour_value(uv, point)
-    }
-    fn is_brdf(&self) -> bool {
-        true
     }
 }
 

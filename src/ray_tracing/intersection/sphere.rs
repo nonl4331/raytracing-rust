@@ -84,16 +84,16 @@ pub fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec
     new_origin
 }
 
-pub fn sphere_intersection(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
     match SPHERE_INTERSECTION {
-        SphereIntersection::One => sphere_intersection_one(sphere, ray, is_brdf),
-        SphereIntersection::Two => sphere_intersection_two(sphere, ray, is_brdf),
-        SphereIntersection::Three => sphere_intersection_three(sphere, ray, is_brdf),
+        SphereIntersection::One => sphere_intersection_one(sphere, ray),
+        SphereIntersection::Two => sphere_intersection_two(sphere, ray),
+        SphereIntersection::Three => sphere_intersection_three(sphere, ray),
     }
 }
 
-// baseline algorithm (exibits some issues)
-pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+// baseline algorithm
+pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
     let oc = ray.origin - sphere.center;
     let a = ray.direction.dot(ray.direction);
     let h = ray.direction.dot(oc); // b / 2 ( becuase of slightly simplified quadratic formula)
@@ -111,7 +111,7 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Opt
         }
 
         // get point, normal (opposite ray direction) and check if ray is inside object
-        let mut point = ray.at(t);
+        let point = ray.at(t);
         let mut normal = (point - sphere.center) / sphere.radius;
         let mut out = true;
 
@@ -120,17 +120,12 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Opt
             normal = -normal;
             out = false;
         }
-        // offset point along normal
-        if is_brdf {
-            point = point + 0.0001 * normal;
-        } else {
-            point = point - 0.0001 * normal;
-        }
 
         // return hit
         Some(Hit {
             t,
             point: point,
+            error: ultraviolet::Vec3::one() * 0.0001,
             normal: normal,
             uv: sphere.get_uv(point),
             out,
@@ -141,7 +136,7 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Opt
     }
 }
 
-pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
     let center = Vec3::from_uv(sphere.center);
     let radius = sphere.radius;
     let direction = Vec3::from_uv(ray.direction);
@@ -180,10 +175,13 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Opt
             out = false;
         }
         let point_error = gamma(5) * point.abs();
-        let point = offset_ray(point, normal, point_error, is_brdf) + center;
+
+        let point = point + center;
+
         Some(Hit {
             t,
             point: point.to_uv(),
+            error: point_error.to_uv(),
             normal: normal.to_uv(),
             uv: sphere.get_uv(point.to_uv()),
             out,
@@ -194,7 +192,7 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Opt
     }
 }
 
-pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
     let dir = Vec3::from_uv(ray.direction);
     let center = Vec3::from_uv(sphere.center);
     let radius = sphere.radius;
@@ -252,13 +250,11 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray, is_brdf: bool) -> O
             normal = -normal;
         }
 
-        // offset point along normal
-        let point = offset_ray(point, normal, 0.000001 * Vec3::new(1.0, 1.0, 1.0), is_brdf);
-
         // fill in details about intersection point
         Some(Hit {
             t,
             point: point.to_uv(),
+            error: 0.000001 * ultraviolet::Vec3::one(),
             normal: normal.to_uv(),
             uv: sphere.get_uv(point.to_uv()),
             out,

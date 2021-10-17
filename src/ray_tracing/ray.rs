@@ -7,7 +7,7 @@ use crate::ray_tracing::{
     material::MaterialTrait,
     primitives::Axis,
     sky::Sky,
-    tracing::{Hit, Intersection, PrimitiveTrait},
+    tracing::{Hit, Intersection},
 };
 
 use std::sync::Arc;
@@ -60,7 +60,7 @@ impl Ray {
             let len = offset_len.1;
             for object in &primitives[offset..offset + len] {
                 // check for hit
-                if let Some(current_hit) = object.get_int(self, object.is_brdf()) {
+                if let Some(current_hit) = object.get_int(self) {
                     // make sure ray is going forwards
                     if current_hit.t > 0.0 {
                         // check if hit already exists

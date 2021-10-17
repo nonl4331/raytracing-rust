@@ -20,6 +20,7 @@ pub const EPSILON: Float = 0.00000003;
 pub struct Hit {
     pub t: Float,
     pub point: Vec3,
+    pub error: Vec3,
     pub normal: Vec3,
     pub uv: Option<Vec2>,
     pub out: bool,
@@ -27,11 +28,11 @@ pub struct Hit {
 }
 
 pub trait Intersection {
-    fn get_int(&self, _: &Ray, _: bool) -> Option<Hit> {
+    fn get_int(&self, _: &Ray) -> Option<Hit> {
         None
     }
     fn does_int(&self, ray: &Ray) -> bool {
-        self.get_int(ray, true).is_some()
+        self.get_int(ray).is_some()
     }
 }
 
@@ -46,7 +47,6 @@ pub trait PrimitiveTrait: Intersection {
     fn get_uv(&self, _: Vec3) -> Option<Vec2> {
         None
     }
-    fn is_brdf(&self) -> bool;
 }
 
 pub fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec3 {
@@ -90,13 +90,13 @@ pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
 }
 
 impl Intersection for Primitive {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
         match self {
-            Primitive::Sphere(sphere) => sphere.get_int(ray, is_brdf),
-            Primitive::AARect(rect) => rect.get_int(ray, is_brdf),
-            Primitive::AACuboid(aab) => aab.get_int(ray, is_brdf),
-            Primitive::Triangle(triangle) => triangle.get_int(ray, is_brdf),
-            Primitive::MeshTriangle(triangle) => triangle.get_int(ray, is_brdf),
+            Primitive::Sphere(sphere) => sphere.get_int(ray),
+            Primitive::AARect(rect) => rect.get_int(ray),
+            Primitive::AACuboid(aab) => aab.get_int(ray),
+            Primitive::Triangle(triangle) => triangle.get_int(ray),
+            Primitive::MeshTriangle(triangle) => triangle.get_int(ray),
             Primitive::None => panic!("get_int called on PrimitiveNone"),
         }
     }
@@ -156,7 +156,7 @@ impl PrimitiveTrait for Primitive {
             Primitive::None => panic!("requires_uv called on PrimitiveNone"),
         }
     }
-    fn is_brdf(&self) -> bool {
+    /*fn is_brdf(&self) -> bool {
         match self {
             Primitive::Sphere(sphere) => (*sphere.material).is_brdf(),
             Primitive::AARect(rect) => rect.material.is_brdf(),
@@ -165,12 +165,12 @@ impl PrimitiveTrait for Primitive {
             Primitive::MeshTriangle(triangle) => triangle.material.is_brdf(),
             Primitive::None => panic!("requires_uv called on PrimitiveNone"),
         }
-    }
+    }*/
 }
 
 impl Intersection for Sphere {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
-        crate::ray_tracing::intersection::sphere::sphere_intersection(self, ray, is_brdf)
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+        crate::ray_tracing::intersection::sphere::sphere_intersection(self, ray)
     }
 }
 
@@ -197,13 +197,10 @@ impl PrimitiveTrait for Sphere {
             self.center + self.radius * Vec3::one(),
         ))
     }
-    fn is_brdf(&self) -> bool {
-        self.material.is_brdf()
-    }
 }
 
 impl Intersection for AARect {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let t = (self.k - self.axis.get_axis_value(ray.origin))
             / self.axis.get_axis_value(ray.direction);
         let point = ray.at(t);
@@ -218,6 +215,7 @@ impl Intersection for AARect {
             Some(Hit {
                 t,
                 point: point + EPSILON * self.axis.return_point_with_axis(Vec3::one()),
+                error: Vec3::zero(),
                 normal: self
                     .axis
                     .return_point_with_axis(-1.0 * ray.direction)
@@ -265,16 +263,13 @@ impl PrimitiveTrait for AARect {
             Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
         ))
     }
-    fn is_brdf(&self) -> bool {
-        self.material.is_brdf()
-    }
 }
 
 impl Intersection for AACuboid {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let mut hit: Option<Hit> = None;
         for side in self.rects.iter() {
-            if let Some(current_hit) = side.get_int(ray, self.material.is_brdf()) {
+            if let Some(current_hit) = side.get_int(ray) {
                 // make sure ray is going forwards
                 if current_hit.t > 0.0 {
                     // check if hit already exists
@@ -315,13 +310,10 @@ impl PrimitiveTrait for AACuboid {
     fn get_aabb(&self) -> Option<Aabb> {
         None
     }
-    fn is_brdf(&self) -> bool {
-        self.material.is_brdf()
-    }
 }
 
 impl Intersection for Triangle {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let mut p0t = self.points[0] - ray.origin;
         let mut p1t = self.points[1] - ray.origin;
         let mut p2t = self.points[2] - ray.origin;
@@ -411,11 +403,11 @@ impl Intersection for Triangle {
                 );
 
         let point = b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2];
-        let point = offset_ray(point, normal, point_error, is_brdf);
 
         Some(Hit {
             t,
             point,
+            error: point_error,
             normal,
             uv: Some(uv),
             out,
@@ -435,13 +427,10 @@ impl PrimitiveTrait for Triangle {
             self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
         ))
     }
-    fn is_brdf(&self) -> bool {
-        self.material.is_brdf()
-    }
 }
 
 impl Intersection for MeshTriangle {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<Hit> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],
             (*self.mesh).vertices[self.point_indices[1]],
@@ -537,11 +526,11 @@ impl Intersection for MeshTriangle {
             + gamma(6) * Vec3::new(b2 * points[2].x, b2 * points[2].y, b2 * points[2].z);
 
         let point = b0 * points[0] + b1 * points[1] + b2 * points[2];
-        let point = offset_ray(point, normal, point_error, is_brdf);
 
         Some(Hit {
             t,
             point,
+            error: point_error,
             normal,
             uv: Some(uv),
             out,
@@ -566,8 +555,5 @@ impl PrimitiveTrait for MeshTriangle {
             points[0].min_by_component(points[1].min_by_component(points[2])),
             points[0].max_by_component(points[1].max_by_component(points[2])),
         ))
-    }
-    fn is_brdf(&self) -> bool {
-        self.material.is_brdf()
     }
 }
