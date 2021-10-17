@@ -1,5 +1,5 @@
 use crate::math::Float;
-use ultraviolet::vec::Vec3;
+use crate::utility::vec::Vec3;
 
 pub struct Camera {
     pub viewport_width: Float,
@@ -27,8 +27,8 @@ impl Camera {
         let viewport_width = 2.0 * (fov.to_radians() / 2.0).tan();
         let viewport_height = viewport_width / aspect_ratio;
 
-        let w = (origin - lookat).normalized();
-        let u = w.cross(vup).normalized();
+        let w = (origin - lookat).normalised();
+        let u = w.cross(vup).normalised();
         let v = u.cross(w);
 
         let horizontal = focus_dist * u * viewport_width;

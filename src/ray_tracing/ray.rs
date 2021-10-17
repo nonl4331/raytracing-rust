@@ -12,7 +12,7 @@ use crate::ray_tracing::{
 
 use std::sync::Arc;
 
-use ultraviolet::vec::Vec3;
+use crate::utility::vec::Vec3;
 
 pub type Colour = Vec3;
 
@@ -29,7 +29,7 @@ const MAX_DEPTH: u32 = 50;
 
 impl Ray {
     pub fn new(origin: Vec3, mut direction: Vec3, time: Float) -> Self {
-        direction.normalize();
+        direction.normalise();
 
         let max_axis = Axis::get_max_abs_axis(&direction);
         let mut swaped_dir = direction;

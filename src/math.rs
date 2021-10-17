@@ -1,6 +1,6 @@
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
-use ultraviolet::vec::Vec3;
+use crate::utility::vec::Vec3;
 
 pub type Float = f32;
 
@@ -13,7 +13,7 @@ pub fn random_unit_vector() -> Vec3 {
         z = rng.gen_range(-1.0..1.0);
     }
 
-    Vec3::new(x, y, z).normalized()
+    Vec3::new(x, y, z).normalised()
 }
 
 pub fn random_in_unit_disk() -> Vec3 {

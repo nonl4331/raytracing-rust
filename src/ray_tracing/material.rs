@@ -8,7 +8,7 @@ use crate::ray_tracing::{
 
 use std::sync::Arc;
 
-use ultraviolet::{Vec2, Vec3};
+use crate::utility::vec::{Vec2, Vec3};
 
 pub enum Material {
     Diffuse(Diffuse),

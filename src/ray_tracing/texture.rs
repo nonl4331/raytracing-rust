@@ -3,7 +3,7 @@ use crate::ray_tracing::ray::Colour;
 
 use image::GenericImageView;
 
-use ultraviolet::{Vec2, Vec3};
+use crate::utility::vec::{Vec2, Vec3};
 
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 

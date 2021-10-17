@@ -59,7 +59,7 @@ impl IntervalVec3 {
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
         IntervalVec3 { x, y, z }
     }
-    pub fn from_uv(vec: ultraviolet::Vec3) -> Self {
+    pub fn from_uv(vec: crate::utility::vec::Vec3) -> Self {
         IntervalVec3 {
             x: Interval::from_float(vec.x),
             y: Interval::from_float(vec.y),

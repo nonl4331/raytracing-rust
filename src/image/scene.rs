@@ -22,7 +22,7 @@ use std::sync::{mpsc::channel, Arc, Mutex};
 
 use std::time::{Duration, Instant};
 
-use ultraviolet::vec::Vec3;
+use crate::utility::vec::Vec3;
 
 pub type PrimitivesType = Arc<Vec<Primitive>>;
 

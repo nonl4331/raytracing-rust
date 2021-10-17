@@ -1,4 +1,4 @@
-use crate::math::{gamma, next_float, previous_float};
+use crate::math::gamma;
 
 use crate::ray_tracing::{
     primitives::Sphere,
@@ -63,7 +63,7 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         Some(Hit {
             t,
             point: point,
-            error: ultraviolet::Vec3::one() * 0.0001,
+            error: Vec3::one() * 0.0001,
             normal: normal,
             uv: sphere.get_uv(point),
             out,
@@ -192,7 +192,7 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         Some(Hit {
             t,
             point: point.to_uv(),
-            error: 0.000001 * ultraviolet::Vec3::one(),
+            error: 0.000001 * crate::utility::vec::Vec3::one(),
             normal: normal.to_uv(),
             uv: sphere.get_uv(point.to_uv()),
             out,

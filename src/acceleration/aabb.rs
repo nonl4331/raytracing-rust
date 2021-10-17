@@ -2,7 +2,7 @@ use crate::math::Float;
 
 use crate::ray_tracing::ray::Ray;
 
-use ultraviolet::Vec3;
+use crate::utility::vec::Vec3;
 
 #[derive(Copy, Clone, Debug)]
 pub struct Aabb {
@@ -104,7 +104,7 @@ mod tests {
     fn ray_intersection() {
         let ray = Ray::new(
             0.5 * Vec3::one(),
-            Vec3::new(1.5, 2.5, 1.7).normalized(),
+            Vec3::new(1.5, 2.5, 1.7).normalised(),
             0.0,
         );
 

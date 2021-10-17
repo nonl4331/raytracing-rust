@@ -4,10 +4,10 @@
 #[macro_export]
 macro_rules! position {
     ($x:expr, $y:expr, $z:expr) => {
-        ultraviolet::Vec3::new($x as math::Float, $y as math::Float, $z as math::Float)
+        crate::utility::vec::Vec3::new($x as math::Float, $y as math::Float, $z as math::Float)
     };
     ($x:expr, $y:expr) => {
-        ultraviolet::Vec2::new($x as math::Float, $y as math::Float)
+        crate::utility::vec::Vec2::new($x as math::Float, $y as math::Float)
     };
 }
 

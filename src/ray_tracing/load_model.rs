@@ -6,7 +6,7 @@ use crate::ray_tracing::{
 
 use std::sync::Arc;
 
-use ultraviolet::Vec3;
+use crate::utility::vec::Vec3;
 
 pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<Primitive> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());

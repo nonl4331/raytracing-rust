@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use std::f32::consts::PI;
 
-use ultraviolet::{Vec2, Vec3};
+use crate::utility::vec::{Vec2, Vec3};
 
 pub struct Sky {
     texture: Option<Arc<Texture>>,
@@ -21,7 +21,7 @@ impl Sky {
     pub fn get_colour(&self, ray: &Ray) -> Colour {
         match &self.texture {
             Some(texture) => {
-                let direction = ray.direction.normalized();
+                let direction = ray.direction.normalised();
                 if texture.requires_uv() {
                     let phi = (-1.0 * direction.z).atan2(direction.x) + PI;
                     let theta = (direction.y).acos();

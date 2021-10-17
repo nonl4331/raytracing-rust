@@ -13,7 +13,7 @@ use std::f32::consts::PI;
 
 use std::sync::Arc;
 
-use ultraviolet::{Vec2, Vec3};
+use crate::utility::vec::{Vec2, Vec3};
 
 pub const EPSILON: Float = 0.00000003;
 
@@ -219,7 +219,7 @@ impl Intersection for AARect {
                 normal: self
                     .axis
                     .return_point_with_axis(-1.0 * ray.direction)
-                    .normalized(),
+                    .normalised(),
                 uv: self.get_uv(point),
                 out: true,
                 material: self.material.clone(),

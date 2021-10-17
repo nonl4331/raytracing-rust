@@ -11,7 +11,7 @@ use crate::ray_tracing::{
 
 use std::collections::VecDeque;
 
-use ultraviolet::Vec3;
+use crate::utility::vec::Vec3;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrimitiveInfo {
