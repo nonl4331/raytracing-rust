@@ -6,8 +6,6 @@ mod acceleration;
 
 mod image;
 
-mod math;
-
 mod ray_tracing;
 
 mod utility;

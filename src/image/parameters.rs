@@ -1,5 +1,5 @@
 use crate::acceleration::split::SplitType;
-use crate::math::Float;
+use crate::utility::math::Float;
 
 use crate::image::{generate, scene::Scene};
 

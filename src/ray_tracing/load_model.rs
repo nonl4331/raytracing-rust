@@ -1,8 +1,8 @@
-use crate::math::Float;
 use crate::ray_tracing::{
     material::Material,
     primitives::{MeshData, MeshTriangle, Primitive},
 };
+use crate::utility::math::Float;
 
 use std::sync::Arc;
 

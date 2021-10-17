@@ -1,6 +1,6 @@
 use crate::acceleration::{aabb::Aabb, bvh::PrimitiveInfo};
-use crate::math::Float;
 use crate::partition;
+use crate::utility::math::Float;
 
 use crate::ray_tracing::primitives::Axis;
 

@@ -1,5 +1,5 @@
-use crate::math::Float;
 use crate::ray_tracing::material::Material;
+use crate::utility::math::Float;
 
 use std::sync::Arc;
 

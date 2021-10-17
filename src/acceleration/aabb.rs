@@ -1,4 +1,4 @@
-use crate::math::Float;
+use crate::utility::math::Float;
 
 use crate::ray_tracing::ray::Ray;
 

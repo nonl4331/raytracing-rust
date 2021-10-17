@@ -1,5 +1,5 @@
 use crate::acceleration::bvh::Bvh;
-use crate::math::Float;
+use crate::utility::math::Float;
 
 use crate::image::scene::PrimitivesType;
 

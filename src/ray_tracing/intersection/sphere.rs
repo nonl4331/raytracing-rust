@@ -1,4 +1,4 @@
-use crate::math::gamma;
+use crate::utility::math::gamma;
 
 use crate::ray_tracing::{
     primitives::Sphere,

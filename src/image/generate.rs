@@ -1,4 +1,4 @@
-use crate::math::Float;
+use crate::utility::math::Float;
 use crate::{
     aacuboid, aarect, axis, checkered, colour, diffuse, emit, image, model, perlin, position,
     reflect, refract, scene, sky, solid_colour, sphere, texture_lerp,
@@ -8,7 +8,7 @@ use crate::acceleration::split::SplitType;
 
 use crate::image::scene::Scene;
 
-use crate::math;
+use crate::utility::math;
 
 use crate::ray_tracing::primitives::Primitive;
 

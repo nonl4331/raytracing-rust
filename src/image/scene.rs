@@ -1,9 +1,9 @@
 use crate::acceleration::{bvh::Bvh, split::SplitType};
-use crate::math::Float;
+use crate::utility::math::Float;
 
 use crate::image::camera::Camera;
 
-use crate::math::{random_float, random_in_unit_disk};
+use crate::utility::math::{random_float, random_in_unit_disk};
 
 use crate::parameters::Parameters;
 

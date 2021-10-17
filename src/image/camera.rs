@@ -1,4 +1,4 @@
-use crate::math::Float;
+use crate::utility::math::Float;
 use crate::utility::vec::Vec3;
 
 pub struct Camera {

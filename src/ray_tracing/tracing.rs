@@ -1,7 +1,7 @@
 use crate::acceleration::aabb::Aabb;
-use crate::math::Float;
+use crate::utility::math::Float;
 
-use crate::math::{gamma, next_float, previous_float};
+use crate::utility::math::{gamma, next_float, previous_float};
 
 use crate::ray_tracing::{
     material::{Material, MaterialTrait},

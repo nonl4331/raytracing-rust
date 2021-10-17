@@ -1,4 +1,4 @@
-use crate::math::{next_float, previous_float, Float};
+use crate::utility::math::{next_float, previous_float, Float};
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
