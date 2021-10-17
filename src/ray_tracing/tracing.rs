@@ -59,19 +59,19 @@ pub fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec
 
     let mut new_origin = origin + offset;
 
-    if new_origin.x > 0.0 {
+    if offset.x > 0.0 {
         new_origin.x = next_float(new_origin.x);
     } else {
         new_origin.x = previous_float(new_origin.x);
     }
 
-    if new_origin.y > 0.0 {
+    if offset.y > 0.0 {
         new_origin.y = next_float(new_origin.y);
     } else {
         new_origin.y = previous_float(new_origin.y);
     }
 
-    if new_origin.z > 0.0 {
+    if offset.z > 0.0 {
         new_origin.z = next_float(new_origin.z);
     } else {
         new_origin.z = previous_float(new_origin.z);

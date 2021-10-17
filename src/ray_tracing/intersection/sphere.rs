@@ -22,68 +22,6 @@ enum SphereIntersection {
 
 use crate::utility::vec::Vec3;
 
-/*pub fn test_offset_ray(origin: IntervalVec3, normal: Vec3, is_brdf: bool) -> Vec3 {
-    let offset_val = normal.abs().dot(10.0 * origin.error());
-    let mut offset = offset_val * normal;
-
-    if !is_brdf {
-        offset = -offset;
-    }
-
-    let mut new_origin = origin.average() + offset;
-
-    if offset.x > 0.0 {
-        new_origin.x = next_float(new_origin.x);
-    } else {
-        new_origin.x = previous_float(new_origin.x);
-    }
-
-    if offset.y > 0.0 {
-        new_origin.y = next_float(new_origin.y);
-    } else {
-        new_origin.y = previous_float(new_origin.y);
-    }
-
-    if offset.z > 0.0 {
-        new_origin.z = next_float(new_origin.z);
-    } else {
-        new_origin.z = previous_float(new_origin.z);
-    }
-
-    new_origin
-}*/
-
-pub fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec3 {
-    let offset_val = normal.abs().dot(error);
-    let mut offset = offset_val * normal;
-
-    if !is_brdf {
-        offset = -offset;
-    }
-
-    let mut new_origin = origin + offset;
-
-    if offset.x > 0.0 {
-        new_origin.x = next_float(new_origin.x);
-    } else {
-        new_origin.x = previous_float(new_origin.x);
-    }
-
-    if offset.y > 0.0 {
-        new_origin.y = next_float(new_origin.y);
-    } else {
-        new_origin.y = previous_float(new_origin.y);
-    }
-
-    if offset.z > 0.0 {
-        new_origin.z = next_float(new_origin.z);
-    } else {
-        new_origin.z = previous_float(new_origin.z);
-    }
-
-    new_origin
-}
-
 pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
     match SPHERE_INTERSECTION {
         SphereIntersection::One => sphere_intersection_one(sphere, ray),
