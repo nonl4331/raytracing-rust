@@ -6,6 +6,8 @@ use crate::ray_tracing::{
     tracing::{Hit, PrimitiveTrait},
 };
 
+use crate::utility::vec::Vec3;
+
 const SPHERE_INTERSECTION: SphereIntersection = if cfg!(sphere_three) {
     SphereIntersection::Three
 } else if cfg!(sphere_two) {
@@ -19,8 +21,6 @@ enum SphereIntersection {
     Two,
     Three,
 }
-
-use crate::utility::vec::Vec3;
 
 pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
     match SPHERE_INTERSECTION {
@@ -75,10 +75,10 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 }
 
 pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
-    let center = Vec3::from_uv(sphere.center);
+    let center = sphere.center;
     let radius = sphere.radius;
-    let direction = Vec3::from_uv(ray.direction);
-    let origin = Vec3::from_uv(ray.origin);
+    let direction = ray.direction;
+    let origin = ray.origin;
 
     let oc = origin - center;
 
@@ -118,10 +118,10 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 
         Some(Hit {
             t,
-            point: point.to_uv(),
-            error: point_error.to_uv(),
-            normal: normal.to_uv(),
-            uv: sphere.get_uv(point.to_uv()),
+            point: point,
+            error: point_error,
+            normal: normal,
+            uv: sphere.get_uv(point),
             out,
             material: sphere.material.clone(),
         })
@@ -131,10 +131,10 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 }
 
 pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
-    let dir = Vec3::from_uv(ray.direction);
-    let center = Vec3::from_uv(sphere.center);
+    let dir = ray.direction;
+    let center = sphere.center;
     let radius = sphere.radius;
-    let orig = Vec3::from_uv(ray.origin);
+    let orig = ray.origin;
 
     // simplified terms for algorithm below
     let deltap = center - orig;
@@ -176,7 +176,7 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         };
 
         // Get point at "t"
-        let point = Vec3::from_uv(ray.at(t));
+        let point = ray.at(t);
 
         // Get normal from intersection point
         let mut normal = (point - center) / radius;
@@ -191,10 +191,10 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         // fill in details about intersection point
         Some(Hit {
             t,
-            point: point.to_uv(),
-            error: 0.000001 * crate::utility::vec::Vec3::one(),
-            normal: normal.to_uv(),
-            uv: sphere.get_uv(point.to_uv()),
+            point: point,
+            error: 0.000001 * Vec3::one(),
+            normal: normal,
+            uv: sphere.get_uv(point),
             out,
             material: sphere.material.clone(),
         })

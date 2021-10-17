@@ -138,16 +138,6 @@ impl Vec3 {
     }
 
     #[inline]
-    pub fn from_uv(vec: crate::utility::vec::Vec3) -> Self {
-        Vec3::new(vec.x, vec.y, vec.z)
-    }
-
-    #[inline]
-    pub fn to_uv(self) -> crate::utility::vec::Vec3 {
-        crate::utility::vec::Vec3::new(self.x, self.y, self.z)
-    }
-
-    #[inline]
     pub fn dot(&self, other: Self) -> Float {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
@@ -232,16 +222,6 @@ impl Vec2 {
     #[inline]
     pub fn zero() -> Self {
         Vec2::new(0.0, 0.0)
-    }
-
-    #[inline]
-    pub fn from_uv(vec: crate::utility::vec::Vec2) -> Self {
-        Vec2::new(vec.x, vec.y)
-    }
-
-    #[inline]
-    pub fn to_uv(self) -> crate::utility::vec::Vec2 {
-        crate::utility::vec::Vec2::new(self.x, self.y)
     }
 
     #[inline]
