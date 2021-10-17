@@ -10,6 +10,8 @@ mod math;
 
 mod ray_tracing;
 
+mod utility;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
 

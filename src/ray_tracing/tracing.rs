@@ -26,13 +26,16 @@ pub struct Hit {
     pub material: Arc<Material>,
 }
 
-pub trait PrimitiveTrait {
+pub trait Intersection {
     fn get_int(&self, _: &Ray, _: bool) -> Option<Hit> {
         None
     }
-    fn does_int(&self, _: &Ray) -> bool {
-        false
+    fn does_int(&self, ray: &Ray) -> bool {
+        self.get_int(ray, true).is_some()
     }
+}
+
+pub trait PrimitiveTrait: Intersection {
     fn get_internal(self) -> Vec<Primitive>;
     fn get_aabb(&self) -> Option<Aabb> {
         None
@@ -46,7 +49,7 @@ pub trait PrimitiveTrait {
     fn is_brdf(&self) -> bool;
 }
 
-fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec3 {
+pub fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec3 {
     let offset_val = normal.abs().dot(error);
     let mut offset = offset_val * normal;
 
@@ -77,7 +80,16 @@ fn offset_ray(origin: Vec3, normal: Vec3, error: Vec3, is_brdf: bool) -> Vec3 {
     new_origin
 }
 
-impl PrimitiveTrait for Primitive {
+pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
+    if normal.dot(*ray_direction) > 0.0 {
+        *normal = -*normal;
+        false
+    } else {
+        true
+    }
+}
+
+impl Intersection for Primitive {
     fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_int(ray, is_brdf),
@@ -99,7 +111,9 @@ impl PrimitiveTrait for Primitive {
             Primitive::None => panic!("does_int called on PrimitiveNone"),
         }
     }
+}
 
+impl PrimitiveTrait for Primitive {
     fn get_internal(self) -> Vec<Primitive> {
         match self {
             Primitive::Sphere(sphere) => sphere.get_internal(),
@@ -154,54 +168,14 @@ impl PrimitiveTrait for Primitive {
     }
 }
 
+impl Intersection for Sphere {
+    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
+        crate::ray_tracing::intersection::sphere::sphere_intersection(self, ray, is_brdf)
+    }
+}
+
 #[allow(clippy::suspicious_operation_groupings)]
 impl PrimitiveTrait for Sphere {
-    fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
-        let oc = ray.origin - self.center;
-
-        let b_prime = -oc.dot(ray.direction);
-
-        let disc = self.radius * self.radius - (oc + b_prime * ray.direction).mag_sq();
-
-        let c = oc.dot(oc) - self.radius * self.radius;
-
-        if disc > 0.0 {
-            let q = b_prime + b_prime.signum() * disc.sqrt();
-            let mut t0 = q;
-            let mut t1 = c / q;
-            if t1 < t0 {
-                std::mem::swap(&mut t0, &mut t1)
-            }
-            let t = if t1 < 0.0 {
-                return None;
-            } else if t0 < 0.0 {
-                t1
-            } else {
-                t0
-            };
-
-            let mut point = oc + ray.direction * t;
-            point *= self.radius / point.mag();
-            let mut normal = point / self.radius;
-            let mut out = true;
-            if normal.dot(ray.direction) > 0.0 {
-                normal *= -1.0;
-                out = false;
-            }
-            let point_error = gamma(5) * point.abs();
-            let point = offset_ray(point, normal, point_error, is_brdf) + self.center;
-            Some(Hit {
-                t,
-                point,
-                normal,
-                uv: self.get_uv(point),
-                out,
-                material: self.material.clone(),
-            })
-        } else {
-            None
-        }
-    }
     fn get_internal(self) -> Vec<Primitive> {
         vec![Primitive::Sphere(self)]
     }
@@ -228,7 +202,7 @@ impl PrimitiveTrait for Sphere {
     }
 }
 
-impl PrimitiveTrait for AARect {
+impl Intersection for AARect {
     fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let t = (self.k - self.axis.get_axis_value(ray.origin))
             / self.axis.get_axis_value(ray.direction);
@@ -269,6 +243,9 @@ impl PrimitiveTrait for AARect {
             && point_2d.y > self.min.y
             && point_2d.y < self.max.y
     }
+}
+
+impl PrimitiveTrait for AARect {
     fn get_internal(self) -> Vec<Primitive> {
         vec![Primitive::AARect(self)]
     }
@@ -293,7 +270,7 @@ impl PrimitiveTrait for AARect {
     }
 }
 
-impl PrimitiveTrait for AACuboid {
+impl Intersection for AACuboid {
     fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let mut hit: Option<Hit> = None;
         for side in self.rects.iter() {
@@ -316,12 +293,6 @@ impl PrimitiveTrait for AACuboid {
         }
         hit
     }
-    fn get_internal(mut self) -> Vec<Primitive> {
-        self.rects
-            .iter_mut()
-            .map(|rect| Primitive::AARect(rect.clone()))
-            .collect()
-    }
 
     fn does_int(&self, ray: &Ray) -> bool {
         for side in self.rects.iter() {
@@ -331,6 +302,16 @@ impl PrimitiveTrait for AACuboid {
         }
         false
     }
+}
+
+impl PrimitiveTrait for AACuboid {
+    fn get_internal(mut self) -> Vec<Primitive> {
+        self.rects
+            .iter_mut()
+            .map(|rect| Primitive::AARect(rect.clone()))
+            .collect()
+    }
+
     fn get_aabb(&self) -> Option<Aabb> {
         None
     }
@@ -339,7 +320,7 @@ impl PrimitiveTrait for AACuboid {
     }
 }
 
-impl PrimitiveTrait for Triangle {
+impl Intersection for Triangle {
     fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let mut p0t = self.points[0] - ray.origin;
         let mut p1t = self.points[1] - ray.origin;
@@ -415,11 +396,7 @@ impl PrimitiveTrait for Triangle {
 
         let mut normal = b0 * self.normals[0] + b1 * self.normals[1] + b2 * self.normals[2];
 
-        let mut out = true;
-        if normal.dot(ray.direction) > 0.0 {
-            normal *= -1.0;
-            out = false;
-        }
+        let out = check_side(&mut normal, &ray.direction);
 
         let x_abs_sum = (b0 * self.points[0].x).abs() + (b1 * self.points[1].x).abs();
         let y_abs_sum = (b0 * self.points[0].y).abs() + (b1 * self.points[1].y).abs();
@@ -445,12 +422,13 @@ impl PrimitiveTrait for Triangle {
             material: self.material.clone(),
         })
     }
+}
+
+impl PrimitiveTrait for Triangle {
     fn get_internal(self) -> Vec<Primitive> {
         vec![Primitive::Triangle(self)]
     }
-    fn does_int(&self, ray: &Ray) -> bool {
-        self.get_int(ray, true).is_some()
-    }
+
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(
             self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
@@ -462,7 +440,7 @@ impl PrimitiveTrait for Triangle {
     }
 }
 
-impl PrimitiveTrait for MeshTriangle {
+impl Intersection for MeshTriangle {
     fn get_int(&self, ray: &Ray, is_brdf: bool) -> Option<Hit> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],
@@ -549,11 +527,7 @@ impl PrimitiveTrait for MeshTriangle {
 
         let mut normal = b0 * normals[0] + b1 * normals[1] + b2 * normals[2];
 
-        let mut out = true;
-        if normal.dot(ray.direction) > 0.0 {
-            normal *= -1.0;
-            out = false;
-        }
+        let out = check_side(&mut normal, &ray.direction);
 
         let x_abs_sum = (b0 * points[0].x).abs() + (b1 * points[1].x).abs();
         let y_abs_sum = (b0 * points[0].y).abs() + (b1 * points[1].y).abs();
@@ -574,12 +548,13 @@ impl PrimitiveTrait for MeshTriangle {
             material: self.material.clone(),
         })
     }
+}
+
+impl PrimitiveTrait for MeshTriangle {
     fn get_internal(self) -> Vec<Primitive> {
         vec![Primitive::MeshTriangle(self)]
     }
-    fn does_int(&self, ray: &Ray) -> bool {
-        self.get_int(ray, true).is_some()
-    }
+
     fn get_aabb(&self) -> Option<Aabb> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],

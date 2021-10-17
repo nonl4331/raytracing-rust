@@ -64,9 +64,9 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
     scene!(
         position!(13, 2, -3),
-        position!(0, 1, 0.1),
+        position!(0, 0, 0),
         position!(0, 1, 0),
-        34,
+        29,
         aspect_ratio,
         0.1,
         10,

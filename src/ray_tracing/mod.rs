@@ -1,3 +1,5 @@
+pub mod intersection;
+
 pub mod load_model;
 
 pub mod material;

@@ -7,7 +7,7 @@ use crate::ray_tracing::{
     material::MaterialTrait,
     primitives::Axis,
     sky::Sky,
-    tracing::{Hit, PrimitiveTrait},
+    tracing::{Hit, Intersection, PrimitiveTrait},
 };
 
 use std::sync::Arc;
