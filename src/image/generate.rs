@@ -6,7 +6,7 @@ use crate::{
 
 use crate::acceleration::split::SplitType;
 
-use crate::image::scene::{line_break, Scene};
+use crate::image::scene::Scene;
 
 use crate::utility::math::get_seed;
 
@@ -17,9 +17,6 @@ use rand_seeder::Seeder;
 
 pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
-
-    line_break();
-    println!("Scene Generation Started!");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -38,7 +35,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
         None => get_seed(32),
     };
 
-    println!("\tseed: {}\n", seed);
+    println!("\tseed: {}", seed);
     let mut rng: SmallRng = Seeder::from(seed.clone()).make_rng();
 
     for a in -11..11 {
@@ -90,9 +87,6 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
 pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
-    line_break();
-    println!("Scene Generation Started!\n");
-
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5)); //diffuse!(0.5, 0.5, 0.5, 0.5));
 
     let sphere_two = sphere!(-1.5, 0.5, 1.5, 0.5, &diffuse!(0, 1, 0, 0.5));
@@ -133,9 +127,6 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
 pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
-
-    line_break();
-    println!("Scene Generation Started!\n");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -215,9 +206,6 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
-    line_break();
-    println!("Scene Generation Started!\n");
-
     let ground = sphere!(
         0,
         -1000,
@@ -252,9 +240,6 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
 pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
-
-    line_break();
-    println!("Scene Generation Started!\n");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 

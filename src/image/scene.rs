@@ -53,7 +53,7 @@ impl Scene {
 
         let mut primitives: Vec<Primitive> = primitives;
 
-        println!("Bvh construction started.");
+        println!("\nBvh construction started.");
 
         let start = Instant::now();
         let bvh = Arc::new(Bvh::new(&mut primitives, split_type));

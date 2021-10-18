@@ -1,4 +1,5 @@
 use crate::acceleration::split::SplitType;
+use crate::image::scene::line_break;
 use crate::utility::math::Float;
 
 use crate::image::{generate, scene::Scene};
@@ -10,6 +11,19 @@ const WIDTH_DEFAULT: u32 = 800;
 const HEIGHT_DEFAULT: u32 = 600;
 const BVH_DEFAULT: SplitType = SplitType::Middle;
 const FILENAME_DEFAULT: &str = "out.png";
+
+macro_rules! scene {
+    ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr) => {{
+        line_break();
+        println!("Scene Generation Started!");
+        generate::$scene_name($bvh_type, $aspect_ratio)
+    }};
+    ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr, $seed:expr) => {{
+        line_break();
+        println!("Scene Generation Started!");
+        generate::$scene_name($bvh_type, $aspect_ratio, $seed)
+    }};
+}
 
 pub struct Parameters {
     pub samples: u32,
@@ -274,13 +288,26 @@ fn get_scene(
             println!("Do -H or --help for more information.");
             process::exit(0);
         }
+
         Some(string) => match &string[..] {
-            "1" => generate::scene_one(bvh_type, aspect_ratio, seed),
-            "2" => generate::scene_two(bvh_type, aspect_ratio),
-            "3" => generate::scene_three(bvh_type, aspect_ratio),
-            "4" => generate::scene_four(bvh_type, aspect_ratio),
-            "5" => generate::scene_five(bvh_type, aspect_ratio),
-            "6" => generate::scene_six(bvh_type, aspect_ratio),
+            "1" => {
+                scene!(scene_one, bvh_type, aspect_ratio, seed)
+            }
+            "2" => {
+                scene!(scene_two, bvh_type, aspect_ratio)
+            }
+            "3" => {
+                scene!(scene_three, bvh_type, aspect_ratio)
+            }
+            "4" => {
+                scene!(scene_four, bvh_type, aspect_ratio)
+            }
+            "5" => {
+                scene!(scene_five, bvh_type, aspect_ratio)
+            }
+            "6" => {
+                scene!(scene_six, bvh_type, aspect_ratio)
+            }
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");
