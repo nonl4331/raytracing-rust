@@ -6,14 +6,20 @@ use crate::{
 
 use crate::acceleration::split::SplitType;
 
-use crate::image::scene::Scene;
+use crate::image::scene::{line_break, Scene};
 
-use crate::utility::math;
+use crate::utility::math::get_seed;
 
 use crate::ray_tracing::primitives::Primitive;
 
-pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
+use rand::{rngs::SmallRng, Rng};
+use rand_seeder::Seeder;
+
+pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
+
+    line_break();
+    println!("Scene Generation Started!");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -27,20 +33,25 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     primitives.push(sphere_one);
     primitives.push(sphere_two);
     primitives.push(sphere_three);
+    let seed = match seed {
+        Some(seed) => seed,
+        None => get_seed(32),
+    };
 
-    use math::random_float;
+    println!("\tseed: {}\n", seed);
+    let mut rng: SmallRng = Seeder::from(seed.clone()).make_rng();
 
     for a in -11..11 {
         for b in -11..11 {
             let center = position!(
-                a as Float + 0.9 * random_float(),
+                a as Float + 0.9 * rng.gen::<Float>(),
                 0.2,
-                b as Float + 0.9 * random_float()
+                b as Float + 0.9 * rng.gen::<Float>()
             );
 
             if (center - position!(4.0, 0.2, 0.0)).mag() > 0.9 {
-                let choose_material = random_float();
-                let colour = colour!(random_float(), random_float(), random_float());
+                let choose_material: Float = rng.gen();
+                let colour = colour!(rng.gen::<Float>(), rng.gen::<Float>(), rng.gen::<Float>());
 
                 let sphere;
 
@@ -50,7 +61,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
                     sphere = sphere!(
                         center,
                         0.2,
-                        &reflect!(&solid_colour!(colour), random_float() / 2.0)
+                        &reflect!(&solid_colour!(colour), rng.gen::<Float>() / 2.0)
                     );
                 } else {
                     sphere = sphere!(center, 0.2, &refract!(&solid_colour!(colour!(1)), 1.5));
@@ -78,6 +89,9 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
 pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
+
+    line_break();
+    println!("Scene Generation Started!\n");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5)); //diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -119,6 +133,9 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
 pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
+
+    line_break();
+    println!("Scene Generation Started!\n");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -198,6 +215,9 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
+    line_break();
+    println!("Scene Generation Started!\n");
+
     let ground = sphere!(
         0,
         -1000,
@@ -232,6 +252,9 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
 pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
+
+    line_break();
+    println!("Scene Generation Started!\n");
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 

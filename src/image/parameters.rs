@@ -41,6 +41,7 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
     let mut height = None;
     let mut filename = None;
     let mut bvh_type = None;
+    let mut seed = None;
 
     if args.len() == 1 {
         println!("No arguments specified defaulting to help.");
@@ -107,6 +108,12 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
                 "--output" => {
                     filename = Some(get_filename(&args, arg_i + 1));
                 }
+                "-J" => {
+                    seed = Some(get_seed(&args, arg_i + 1));
+                }
+                "--seed" => {
+                    seed = Some(get_seed(&args, arg_i + 1));
+                }
                 _ => {}
             }
         }
@@ -116,7 +123,7 @@ pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
             let aspect_ratio =
                 width.unwrap_or(WIDTH_DEFAULT) as Float / height.unwrap_or(HEIGHT_DEFAULT) as Float;
             let bvh_type = bvh_type.unwrap_or(BVH_DEFAULT);
-            let scene = get_scene(&args, scene_index, bvh_type, aspect_ratio);
+            let scene = get_scene(&args, scene_index, bvh_type, aspect_ratio, seed);
 
             let parameters = Parameters::new(samples, width, height, filename);
             Some((scene, parameters))
@@ -149,6 +156,8 @@ fn display_help() {
     println!("-O [filename], --output [filename]");
     println!("\t filename of output with supported file extension.");
     println!("\t supported file extensions: \"png\", \"jpeg\"");
+    println!("-J [seed], --seed [seed]");
+    println!("Seed for scene generation (if supported).")
 }
 
 fn get_list() {
@@ -184,10 +193,10 @@ fn get_list() {
     println!("Motion Blur: No");
     println!("-------------------");
     println!("-------------------");
-    println!("5: Model Loading (WIP)");
+    println!("6: Glass Dragon");
     println!("-------------------");
-    println!("Objects: 2");
-    println!("Sky: Yes");
+    println!("Objects: 3");
+    println!("Sky: No");
     println!("Motion Blur: No");
     println!("-------------------");
 }
@@ -237,9 +246,9 @@ fn get_info(args: &[String], index: usize) {
                 println!("Motion Blur: No");
             }
             "6" => {
-                println!("6: Model Loading (WIP)");
-                println!("Objects: 2");
-                println!("Sky: Yes");
+                println!("6: Glass Dragon");
+                println!("Objects: 3");
+                println!("Sky: No");
                 println!("Motion Blur: No");
             }
             _ => {
@@ -252,7 +261,13 @@ fn get_info(args: &[String], index: usize) {
     }
 }
 
-fn get_scene(args: &[String], index: usize, bvh_type: SplitType, aspect_ratio: Float) -> Scene {
+fn get_scene(
+    args: &[String],
+    index: usize,
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+    seed: Option<String>,
+) -> Scene {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");
@@ -260,7 +275,7 @@ fn get_scene(args: &[String], index: usize, bvh_type: SplitType, aspect_ratio: F
             process::exit(0);
         }
         Some(string) => match &string[..] {
-            "1" => generate::scene_one(bvh_type, aspect_ratio),
+            "1" => generate::scene_one(bvh_type, aspect_ratio, seed),
             "2" => generate::scene_two(bvh_type, aspect_ratio),
             "3" => generate::scene_three(bvh_type, aspect_ratio),
             "4" => generate::scene_four(bvh_type, aspect_ratio),
@@ -273,6 +288,17 @@ fn get_scene(args: &[String], index: usize, bvh_type: SplitType, aspect_ratio: F
                 process::exit(0);
             }
         },
+    }
+}
+
+fn get_seed(args: &[String], index: usize) -> String {
+    match args.get(index) {
+        Some(string) => string.to_string(),
+        None => {
+            println!("Please specify a value for seed!");
+            println!("Do -H or --help for more information.");
+            process::exit(0);
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::utility::interval::Interval;
 use crate::utility::vec::Vec3;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 macro_rules! expr {
     ($e:expr) => {
@@ -59,7 +59,7 @@ impl IntervalVec3 {
     pub fn new(x: Interval, y: Interval, z: Interval) -> Self {
         IntervalVec3 { x, y, z }
     }
-    pub fn from_uv(vec: crate::utility::vec::Vec3) -> Self {
+    pub fn from_vec(vec: Vec3) -> Self {
         IntervalVec3 {
             x: Interval::from_float(vec.x),
             y: Interval::from_float(vec.y),
@@ -112,3 +112,11 @@ impl_operator_interval_assign!(MulAssign, mul_assign, *=);
 impl_operator!(Div, div, /);
 impl_operator_interval!(Div, div, /);
 impl_operator_interval_assign!(DivAssign, div_assign, /=);
+
+impl Neg for IntervalVec3 {
+    type Output = Self;
+    #[inline]
+    fn neg(self) -> Self {
+        IntervalVec3::new(-self.x, -self.y, -self.z)
+    }
+}

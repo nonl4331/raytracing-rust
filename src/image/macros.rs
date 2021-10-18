@@ -4,10 +4,17 @@
 #[macro_export]
 macro_rules! position {
     ($x:expr, $y:expr, $z:expr) => {
-        crate::utility::vec::Vec3::new($x as math::Float, $y as math::Float, $z as math::Float)
+        crate::utility::vec::Vec3::new(
+            $x as crate::utility::math::Float,
+            $y as crate::utility::math::Float,
+            $z as crate::utility::math::Float,
+        )
     };
     ($x:expr, $y:expr) => {
-        crate::utility::vec::Vec2::new($x as math::Float, $y as math::Float)
+        crate::utility::vec::Vec2::new(
+            $x as crate::utility::math::Float,
+            $y as crate::utility::math::Float,
+        )
     };
 }
 
@@ -15,16 +22,16 @@ macro_rules! position {
 macro_rules! colour {
     ($r:expr,$g:expr,$b:expr) => {
         crate::ray_tracing::ray::Colour::new(
-            $r as math::Float,
-            $g as math::Float,
-            $b as math::Float,
+            $r as crate::utility::math::Float,
+            $g as crate::utility::math::Float,
+            $b as crate::utility::math::Float,
         )
     };
     ($value:expr) => {
         crate::ray_tracing::ray::Colour::new(
-            $value as math::Float,
-            $value as math::Float,
-            $value as math::Float,
+            $value as crate::utility::math::Float,
+            $value as crate::utility::math::Float,
+            $value as crate::utility::math::Float,
         )
     };
 }
@@ -151,7 +158,10 @@ macro_rules! diffuse {
     };
     ($texture:expr,$absorption:expr) => {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Diffuse(
-            crate::ray_tracing::material::Diffuse::new($texture, $absorption as Float),
+            crate::ray_tracing::material::Diffuse::new(
+                $texture,
+                $absorption as crate::utility::math::Float,
+            ),
         ));
     };
 }
@@ -164,13 +174,16 @@ macro_rules! reflect {
                 &Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
-                $fuzz as Float,
+                $fuzz as crate::utility::math::Float,
             ),
         ));
     };
     ($texture:expr,$fuzz:expr) => {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Reflect(
-            crate::ray_tracing::material::Reflect::new($texture, $fuzz as Float),
+            crate::ray_tracing::material::Reflect::new(
+                $texture,
+                $fuzz as crate::utility::math::Float,
+            ),
         ));
     };
 }
@@ -183,13 +196,16 @@ macro_rules! refract {
                 &std::sync::Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
-                $eta as math::Float,
+                $eta as crate::utility::math::Float,
             ),
         ));
     };
     ($texture:expr,$eta:expr) => {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Refract(
-            crate::ray_tracing::material::Refract::new($texture, $eta as Float),
+            crate::ray_tracing::material::Refract::new(
+                $texture,
+                $eta as crate::utility::math::Float,
+            ),
         ));
     };
 }
@@ -200,13 +216,16 @@ macro_rules! emit {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Emit(
             crate::ray_tracing::material::Emit::new(
                 &std::sync::Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
-                $strength as Float,
+                $strength as crate::utility::math::Float,
             ),
         ));
     };
     ($texture:expr,$strength:expr) => {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Emit(
-            crate::ray_tracing::material::Emit::new($texture, $strength as Float),
+            crate::ray_tracing::material::Emit::new(
+                $texture,
+                $strength as crate::utility::math::Float,
+            ),
         ));
     };
 }
@@ -229,7 +248,7 @@ macro_rules! sphere {
         crate::ray_tracing::primitives::Primitive::Sphere(
             crate::ray_tracing::primitives::Sphere::new(
                 $position,
-                $radius as math::Float,
+                $radius as crate::utility::math::Float,
                 $material,
             ),
         )
@@ -243,7 +262,7 @@ macro_rules! aarect {
             crate::ray_tracing::primitives::AARect::new(
                 $point_one,
                 $point_two,
-                $axis_value as Float,
+                $axis_value as crate::utility::math::Float,
                 $axis,
                 $material,
             ),
@@ -348,10 +367,10 @@ macro_rules! scene {
             $origin,
             $lookat,
             $vup,
-            $fov as Float,
-            $aspect_ratio as Float,
-            $aperture as Float,
-            $focus_dist as Float,
+            $fov as crate::utility::math::Float,
+            $aspect_ratio as crate::utility::math::Float,
+            $aperture as crate::utility::math::Float,
+            $focus_dist as crate::utility::math::Float,
             $sky,
             $split_type,
             $primitives,

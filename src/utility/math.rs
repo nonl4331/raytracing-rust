@@ -1,4 +1,4 @@
-use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
+use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 use crate::utility::vec::Vec3;
 
@@ -30,6 +30,15 @@ pub fn random_in_unit_disk() -> Vec3 {
 pub fn random_float() -> Float {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     rng.gen()
+}
+
+pub fn get_seed(length: usize) -> String {
+    let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+    std::iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(length)
+        .collect()
 }
 
 pub fn near_zero(vec: Vec3) -> bool {

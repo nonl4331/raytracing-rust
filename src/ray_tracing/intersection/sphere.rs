@@ -6,11 +6,11 @@ use crate::ray_tracing::{
     tracing::{Hit, PrimitiveTrait},
 };
 
-use crate::utility::vec::Vec3;
+use crate::utility::{interval::Interval, interval_vec::IntervalVec3, vec::Vec3};
 
-const SPHERE_INTERSECTION: SphereIntersection = if cfg!(sphere_three) {
+const SPHERE_INTERSECTION: SphereIntersection = if cfg!(feature = "sphere_three") {
     SphereIntersection::Three
-} else if cfg!(sphere_two) {
+} else if cfg!(feature = "sphere_two") {
     SphereIntersection::Two
 } else {
     SphereIntersection::One
@@ -32,10 +32,15 @@ pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 
 // baseline algorithm
 pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
-    let oc = ray.origin - sphere.center;
-    let a = ray.direction.dot(ray.direction);
-    let h = ray.direction.dot(oc); // b / 2 ( becuase of slightly simplified quadratic formula)
-    let c = oc.dot(oc) - sphere.radius * sphere.radius;
+    let origin = IntervalVec3::from_vec(ray.origin);
+    let center = IntervalVec3::from_vec(sphere.center);
+    let direction = IntervalVec3::from_vec(ray.direction);
+    let radius = Interval::from_float(sphere.radius);
+
+    let oc = origin - center;
+    let a = direction.dot(direction);
+    let h = direction.dot(oc); // b / 2 ( becuase of slightly simplified quadratic formula)
+    let c = oc.dot(oc) - radius * radius;
     let disc = h * h - a * c;
 
     if disc > 0.0 {
@@ -49,23 +54,23 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         }
 
         // get point, normal (opposite ray direction) and check if ray is inside object
-        let point = ray.at(t);
-        let mut normal = (point - sphere.center) / sphere.radius;
+        let point = origin + direction * t;
+        let mut normal = (point - center) / radius;
         let mut out = true;
 
         // make sure normal is opposite ray direction and check if ray is inside object
-        if normal.dot(ray.direction) > 0.0 {
+        if normal.dot(direction) > 0.0 {
             normal = -normal;
             out = false;
         }
 
         // return hit
         Some(Hit {
-            t,
-            point: point,
-            error: Vec3::one() * 0.0001,
-            normal: normal,
-            uv: sphere.get_uv(point),
+            t: t.average(),
+            point: point.average(),
+            error: point.error(),
+            normal: normal.average(),
+            uv: sphere.get_uv(point.average()),
             out,
             material: sphere.material.clone(),
         })

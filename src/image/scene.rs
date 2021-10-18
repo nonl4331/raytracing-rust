@@ -53,8 +53,6 @@ impl Scene {
 
         let mut primitives: Vec<Primitive> = primitives;
 
-        line_break();
-
         println!("Bvh construction started.");
 
         let start = Instant::now();
@@ -62,10 +60,8 @@ impl Scene {
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 
-        line_break();
-
-        println!("Bvh construction finished in: {}ms", duration.as_millis());
-        println!("Number of BVH nodes: {}", bvh.number_nodes());
+        println!("\tBvh construction finished in: {}ms", duration.as_millis());
+        println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
 
         let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 
@@ -177,16 +173,16 @@ impl Scene {
             .map(|value| (value.sqrt() * 255.0) as u8)
             .collect();
 
-        line_break();
+        //line_break();
         println!("Finised rendering image!");
-        line_break();
-        println!("Width: {}", width);
-        println!("Height: {}", height);
-        println!("Samples per pixel: {}", pixel_samples);
-        println!("Render Time: {}", get_readable_duration(duration));
-        println!("Rays: {}", ray_count);
+        //line_break();
+        println!("\tWidth: {}", width);
+        println!("\tHeight: {}", height);
+        println!("\tSamples per pixel: {}", pixel_samples);
+        println!("\tRender Time: {}", get_readable_duration(duration));
+        println!("\tRays: {}", ray_count);
         println!(
-            "Mrays/s: {:.2}",
+            "\tMrays/s: {:.2}",
             (ray_count as Float / duration.as_secs_f32()) / 1000000.0
         );
         line_break();
@@ -206,7 +202,7 @@ impl Scene {
     }
 }
 
-fn line_break() {
+pub fn line_break() {
     println!("------------------------------");
 }
 
