@@ -1,9 +1,10 @@
 use crate::acceleration::aabb::Aabb;
 use crate::utility::math::Float;
 
-use crate::utility::math::{gamma, next_float, previous_float};
+use crate::utility::math::{next_float, previous_float};
 
 use crate::ray_tracing::{
+    intersection::{sphere::sphere_intersection, triangle::triangle_intersection},
     material::{Material, MaterialTrait},
     primitives::{AACuboid, AARect, Axis, MeshTriangle, Primitive, Sphere, Triangle},
     ray::Ray,
@@ -156,21 +157,11 @@ impl PrimitiveTrait for Primitive {
             Primitive::None => panic!("requires_uv called on PrimitiveNone"),
         }
     }
-    /*fn is_brdf(&self) -> bool {
-        match self {
-            Primitive::Sphere(sphere) => (*sphere.material).is_brdf(),
-            Primitive::AARect(rect) => rect.material.is_brdf(),
-            Primitive::AACuboid(aab) => aab.material.is_brdf(),
-            Primitive::Triangle(triangle) => triangle.material.is_brdf(),
-            Primitive::MeshTriangle(triangle) => triangle.material.is_brdf(),
-            Primitive::None => panic!("requires_uv called on PrimitiveNone"),
-        }
-    }*/
 }
 
 impl Intersection for Sphere {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        crate::ray_tracing::intersection::sphere::sphere_intersection(self, ray)
+        sphere_intersection(self, ray)
     }
 }
 
@@ -314,105 +305,7 @@ impl PrimitiveTrait for AACuboid {
 
 impl Intersection for Triangle {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        let mut p0t = self.points[0] - ray.origin;
-        let mut p1t = self.points[1] - ray.origin;
-        let mut p2t = self.points[2] - ray.origin;
-
-        let max_axis = Axis::get_max_abs_axis(&ray.direction);
-        Axis::swap_z(&mut p0t, &max_axis);
-        Axis::swap_z(&mut p1t, &max_axis);
-        Axis::swap_z(&mut p2t, &max_axis);
-
-        p0t.x += ray.shear.x * p0t.z;
-        p0t.y += ray.shear.y * p0t.z;
-        p1t.x += ray.shear.x * p1t.z;
-        p1t.y += ray.shear.y * p1t.z;
-        p2t.x += ray.shear.x * p2t.z;
-        p2t.y += ray.shear.y * p2t.z;
-
-        let mut e0 = p1t.x * p2t.y - p1t.y * p2t.x;
-        let mut e1 = p2t.x * p0t.y - p2t.y * p0t.x;
-        let mut e2 = p0t.x * p1t.y - p0t.y * p1t.x;
-        if e0 == 0.0 || e1 == 0.0 || e2 == 0.0 {
-            e0 = (p1t.x as f64 * p2t.y as f64 - p1t.y as f64 * p2t.x as f64) as Float;
-            e1 = (p2t.x as f64 * p0t.y as f64 - p2t.y as f64 * p0t.x as f64) as Float;
-            e2 = (p0t.x as f64 * p1t.y as f64 - p0t.y as f64 * p1t.x as f64) as Float;
-        }
-
-        if (e0 < 0.0 || e1 < 0.0 || e2 < 0.0) && (e0 > 0.0 || e1 > 0.0 || e2 > 0.0) {
-            return None;
-        }
-
-        let det = e0 + e1 + e2;
-        if det == 0.0 {
-            return None;
-        }
-
-        p0t *= ray.shear.z;
-        p1t *= ray.shear.z;
-        p2t *= ray.shear.z;
-
-        let t_scaled = e0 * p0t.z + e1 * p1t.z + e2 * p2t.z;
-        if (det < 0.0 && t_scaled >= 0.0) || (det > 0.0 && t_scaled <= 0.0) {
-            return None;
-        }
-
-        let inv_det = 1.0 / det;
-
-        let b0 = e0 * inv_det;
-        let b1 = e1 * inv_det;
-        let b2 = e2 * inv_det;
-
-        let t = inv_det * t_scaled;
-
-        let max_z_t = Vec3::new(p0t.z.abs(), p1t.z.abs(), p2t.z.abs()).component_max();
-        let delta_z = gamma(3) * max_z_t;
-
-        let max_x_t = Vec3::new(p0t.x.abs(), p1t.x.abs(), p2t.x.abs()).component_max();
-        let max_y_t = Vec3::new(p0t.y.abs(), p1t.y.abs(), p2t.y.abs()).component_max();
-        let delta_x = gamma(5) * (max_x_t + max_z_t);
-        let delta_y = gamma(5) * (max_y_t + max_z_t);
-
-        let delta_e = 2.0 * (gamma(2) * max_x_t * max_y_t + delta_y * max_x_t + delta_x + max_x_t);
-
-        let max_e = Vec3::new(e0.abs(), e1.abs(), e2.abs()).component_max();
-
-        let delta_t = 3.0
-            * (gamma(3) * max_e * max_z_t + delta_e * max_z_t + delta_z * max_e * inv_det.abs());
-
-        if t < delta_t {
-            return None;
-        }
-
-        let uv = b0 * Vec2::new(0.0, 0.0) + b1 * Vec2::new(1.0, 0.0) + b2 * Vec2::new(1.0, 1.0);
-
-        let mut normal = b0 * self.normals[0] + b1 * self.normals[1] + b2 * self.normals[2];
-
-        let out = check_side(&mut normal, &ray.direction);
-
-        let x_abs_sum = (b0 * self.points[0].x).abs() + (b1 * self.points[1].x).abs();
-        let y_abs_sum = (b0 * self.points[0].y).abs() + (b1 * self.points[1].y).abs();
-        let z_abs_sum = (b0 * self.points[0].z).abs() + (b1 * self.points[1].z).abs();
-
-        let point_error = gamma(7) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum)
-            + gamma(6)
-                * Vec3::new(
-                    b2 * self.points[2].x,
-                    b2 * self.points[2].y,
-                    b2 * self.points[2].z,
-                );
-
-        let point = b0 * self.points[0] + b1 * self.points[1] + b2 * self.points[2];
-
-        Some(Hit {
-            t,
-            point,
-            error: point_error,
-            normal,
-            uv: Some(uv),
-            out,
-            material: self.material.clone(),
-        })
+        triangle_intersection(self, ray)
     }
 }
 
@@ -431,111 +324,7 @@ impl PrimitiveTrait for Triangle {
 
 impl Intersection for MeshTriangle {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        let points = [
-            (*self.mesh).vertices[self.point_indices[0]],
-            (*self.mesh).vertices[self.point_indices[1]],
-            (*self.mesh).vertices[self.point_indices[2]],
-        ];
-        let normals = [
-            (*self.mesh).normals[self.normal_indices[0]],
-            (*self.mesh).normals[self.normal_indices[1]],
-            (*self.mesh).normals[self.normal_indices[2]],
-        ];
-
-        let mut p0t = points[0] - ray.origin;
-        let mut p1t = points[1] - ray.origin;
-        let mut p2t = points[2] - ray.origin;
-
-        let max_axis = Axis::get_max_abs_axis(&ray.direction);
-        Axis::swap_z(&mut p0t, &max_axis);
-        Axis::swap_z(&mut p1t, &max_axis);
-        Axis::swap_z(&mut p2t, &max_axis);
-
-        p0t.x += ray.shear.x * p0t.z;
-        p0t.y += ray.shear.y * p0t.z;
-        p1t.x += ray.shear.x * p1t.z;
-        p1t.y += ray.shear.y * p1t.z;
-        p2t.x += ray.shear.x * p2t.z;
-        p2t.y += ray.shear.y * p2t.z;
-
-        let mut e0 = p1t.x * p2t.y - p1t.y * p2t.x;
-        let mut e1 = p2t.x * p0t.y - p2t.y * p0t.x;
-        let mut e2 = p0t.x * p1t.y - p0t.y * p1t.x;
-        if e0 == 0.0 || e1 == 0.0 || e2 == 0.0 {
-            e0 = (p1t.x as f64 * p2t.y as f64 - p1t.y as f64 * p2t.x as f64) as Float;
-            e1 = (p2t.x as f64 * p0t.y as f64 - p2t.y as f64 * p0t.x as f64) as Float;
-            e2 = (p0t.x as f64 * p1t.y as f64 - p0t.y as f64 * p1t.x as f64) as Float;
-        }
-
-        if (e0 < 0.0 || e1 < 0.0 || e2 < 0.0) && (e0 > 0.0 || e1 > 0.0 || e2 > 0.0) {
-            return None;
-        }
-
-        let det = e0 + e1 + e2;
-        if det == 0.0 {
-            return None;
-        }
-
-        p0t *= ray.shear.z;
-        p1t *= ray.shear.z;
-        p2t *= ray.shear.z;
-
-        let t_scaled = e0 * p0t.z + e1 * p1t.z + e2 * p2t.z;
-        if (det < 0.0 && t_scaled >= 0.0) || (det > 0.0 && t_scaled <= 0.0) {
-            return None;
-        }
-
-        let inv_det = 1.0 / det;
-
-        let b0 = e0 * inv_det;
-        let b1 = e1 * inv_det;
-        let b2 = e2 * inv_det;
-
-        let t = inv_det * t_scaled;
-
-        let max_z_t = Vec3::new(p0t.z.abs(), p1t.z.abs(), p2t.z.abs()).component_max();
-        let delta_z = gamma(3) * max_z_t;
-
-        let max_x_t = Vec3::new(p0t.x.abs(), p1t.x.abs(), p2t.x.abs()).component_max();
-        let max_y_t = Vec3::new(p0t.y.abs(), p1t.y.abs(), p2t.y.abs()).component_max();
-        let delta_x = gamma(5) * (max_x_t + max_z_t);
-        let delta_y = gamma(5) * (max_y_t + max_z_t);
-
-        let delta_e = 2.0 * (gamma(2) * max_x_t * max_y_t + delta_y * max_x_t + delta_x + max_x_t);
-
-        let max_e = Vec3::new(e0.abs(), e1.abs(), e2.abs()).component_max();
-
-        let delta_t = 3.0
-            * (gamma(3) * max_e * max_z_t + delta_e * max_z_t + delta_z * max_e * inv_det.abs());
-
-        if t < delta_t {
-            return None;
-        }
-
-        let uv = b0 * Vec2::new(0.0, 0.0) + b1 * Vec2::new(1.0, 0.0) + b2 * Vec2::new(1.0, 1.0);
-
-        let mut normal = b0 * normals[0] + b1 * normals[1] + b2 * normals[2];
-
-        let out = check_side(&mut normal, &ray.direction);
-
-        let x_abs_sum = (b0 * points[0].x).abs() + (b1 * points[1].x).abs();
-        let y_abs_sum = (b0 * points[0].y).abs() + (b1 * points[1].y).abs();
-        let z_abs_sum = (b0 * points[0].z).abs() + (b1 * points[1].z).abs();
-
-        let point_error = gamma(7) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum)
-            + gamma(6) * Vec3::new(b2 * points[2].x, b2 * points[2].y, b2 * points[2].z);
-
-        let point = b0 * points[0] + b1 * points[1] + b2 * points[2];
-
-        Some(Hit {
-            t,
-            point,
-            error: point_error,
-            normal,
-            uv: Some(uv),
-            out,
-            material: self.material.clone(),
-        })
+        triangle_intersection(self, ray)
     }
 }
 
