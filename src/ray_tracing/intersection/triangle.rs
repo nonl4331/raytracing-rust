@@ -1,23 +1,16 @@
-use crate::ray_tracing::material::Material;
-use crate::ray_tracing::ray::Ray;
+use crate::ray_tracing::{
+    material::Material,
+    primitives::{Axis, MeshTriangle, Triangle},
+    ray::Ray,
+    tracing::{check_side, Hit},
+};
 
-use crate::utility::vec::Vec2;
-use crate::utility::vec::Vec3;
+use crate::utility::{
+    math::{gamma, Float},
+    vec::{Vec2, Vec3},
+};
+
 use std::sync::Arc;
-
-use crate::ray_tracing::primitives::Triangle;
-
-use crate::ray_tracing::primitives::MeshTriangle;
-
-use crate::ray_tracing::primitives::Axis;
-
-use crate::ray_tracing::tracing::Hit;
-
-use crate::utility::math::Float;
-
-use crate::utility::math::gamma;
-
-use crate::ray_tracing::tracing::check_side;
 
 const TRIANGLE_INTERSECTION: TriangleIntersection = TriangleIntersection::One;
 

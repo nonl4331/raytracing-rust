@@ -4,7 +4,10 @@ use crate::utility::math::Float;
 use crate::utility::math::{next_float, previous_float};
 
 use crate::ray_tracing::{
-    intersection::{sphere::sphere_intersection, triangle::triangle_intersection},
+    intersection::{
+        aacuboid::aacuboid_intersection, aarect::aarect_intersection, sphere::sphere_intersection,
+        triangle::triangle_intersection,
+    },
     material::{Material, MaterialTrait},
     primitives::{AACuboid, AARect, Axis, MeshTriangle, Primitive, Sphere, Triangle},
     ray::Ray,
@@ -192,32 +195,7 @@ impl PrimitiveTrait for Sphere {
 
 impl Intersection for AARect {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        let t = (self.k - self.axis.get_axis_value(ray.origin))
-            / self.axis.get_axis_value(ray.direction);
-        let point = ray.at(t);
-        let point_2d = self.axis.point_without_axis(point);
-
-        // x & y are not the x & y axis but rather the two axis that are not self.axis
-        if point_2d.x > self.min.x
-            && point_2d.x < self.max.x
-            && point_2d.y > self.min.y
-            && point_2d.y < self.max.y
-        {
-            Some(Hit {
-                t,
-                point: point + EPSILON * self.axis.return_point_with_axis(Vec3::one()),
-                error: Vec3::zero(),
-                normal: self
-                    .axis
-                    .return_point_with_axis(-1.0 * ray.direction)
-                    .normalised(),
-                uv: self.get_uv(point),
-                out: true,
-                material: self.material.clone(),
-            })
-        } else {
-            None
-        }
+        aarect_intersection(self, ray)
     }
 
     fn does_int(&self, ray: &Ray) -> bool {
@@ -258,26 +236,7 @@ impl PrimitiveTrait for AARect {
 
 impl Intersection for AACuboid {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
-        let mut hit: Option<Hit> = None;
-        for side in self.rects.iter() {
-            if let Some(current_hit) = side.get_int(ray) {
-                // make sure ray is going forwards
-                if current_hit.t > 0.0 {
-                    // check if hit already exists
-                    if hit.is_some() {
-                        // check if t value is close to 0 than previous hit
-                        if current_hit.t < hit.as_ref().unwrap().t {
-                            hit = Some(current_hit);
-                        }
-                        continue;
-                    }
-
-                    // if hit doesn't exist set current hit to hit
-                    hit = Some(current_hit);
-                }
-            }
-        }
-        hit
+        aacuboid_intersection(self, ray)
     }
 
     fn does_int(&self, ray: &Ray) -> bool {

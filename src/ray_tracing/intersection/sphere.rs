@@ -1,12 +1,10 @@
-use crate::utility::math::gamma;
-
 use crate::ray_tracing::{
     primitives::Sphere,
     ray::Ray,
     tracing::{Hit, PrimitiveTrait},
 };
 
-use crate::utility::{interval::Interval, interval_vec::IntervalVec3, vec::Vec3};
+use crate::utility::{interval::Interval, interval_vec::IntervalVec3, math::gamma, vec::Vec3};
 
 const SPHERE_INTERSECTION: SphereIntersection = if cfg!(feature = "sphere_three") {
     SphereIntersection::Three
