@@ -15,5 +15,6 @@ rayon = "1.5.0"
 wavefront_obj = "10.0.0"
 
 [features]
+f64 = []
 sphere_two = []
 sphere_three = []

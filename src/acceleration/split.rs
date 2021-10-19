@@ -136,7 +136,7 @@ impl Split for SplitType {
                     }
                 }
 
-                if len > MAX_IN_NODE || min_cost < len as f32 {
+                if len > MAX_IN_NODE || min_cost < len as Float {
                     let closure = |primitive_info: &PrimitiveInfo| -> bool {
                         calculate_b(&axis, &primitive_info, min_val, centroid_extent)
                             <= min_cost_index

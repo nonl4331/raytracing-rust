@@ -2,6 +2,10 @@ use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, Seedabl
 
 use crate::utility::vec::Vec3;
 
+#[cfg(all(feature = "f64"))]
+pub type Float = f64;
+
+#[cfg(not(feature = "f64"))]
 pub type Float = f32;
 
 pub fn random_unit_vector() -> Vec3 {

@@ -183,7 +183,7 @@ impl Scene {
         println!("\tRays: {}", ray_count);
         println!(
             "\tMrays/s: {:.2}",
-            (ray_count as Float / duration.as_secs_f32()) / 1000000.0
+            (ray_count as f64 / duration.as_secs_f64()) / 1000000.0
         );
         line_break();
         image::save_buffer(filename, &image, width, height, image::ColorType::Rgb8).unwrap();

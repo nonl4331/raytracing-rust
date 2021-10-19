@@ -2,6 +2,12 @@ use crate::utility::math::{next_float, previous_float, Float};
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+#[cfg(all(feature = "f64"))]
+use std::f64::{INFINITY, NEG_INFINITY};
+
+#[cfg(not(feature = "f64"))]
+use std::f32::{INFINITY, NEG_INFINITY};
+
 #[derive(Debug, Copy, Clone)]
 pub struct Interval {
     min: Float,
@@ -124,7 +130,7 @@ impl Div for Interval {
     type Output = Self;
     fn div(self, rhs: Self) -> Self {
         if rhs.contains(0.0) {
-            return Interval::new(f32::NEG_INFINITY, f32::INFINITY);
+            return Interval::new(NEG_INFINITY, INFINITY);
         }
 
         let res = [
@@ -147,7 +153,7 @@ impl Div for Interval {
 impl DivAssign for Interval {
     fn div_assign(&mut self, rhs: Self) {
         if rhs.contains(0.0) {
-            *self = Interval::new(f32::NEG_INFINITY, f32::INFINITY);
+            *self = Interval::new(NEG_INFINITY, INFINITY);
         }
 
         let res = [

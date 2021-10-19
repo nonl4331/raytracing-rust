@@ -156,7 +156,7 @@ impl Perlin {
             let i = index / 4;
             let j = (index / 2) % 2;
             let k = index % 2;
-            let weight = Vec3::new(u - i as f32, v - j as f32, w - k as f32);
+            let weight = Vec3::new(u - i as Float, v - j as Float, w - k as Float);
             value += (i as Float * uu + (1.0 - i as Float) * (1.0 - uu))
                 * (j as Float * vv + (1.0 - j as Float) * (1.0 - vv))
                 * (k as Float * ww + (1.0 - k as Float) * (1.0 - ww))

@@ -1,7 +1,4 @@
 use crate::acceleration::aabb::Aabb;
-use crate::utility::math::Float;
-
-use crate::utility::math::{next_float, previous_float};
 
 use crate::ray_tracing::{
     intersection::{
@@ -13,13 +10,18 @@ use crate::ray_tracing::{
     ray::Ray,
 };
 
-use std::f32::consts::PI;
+use crate::utility::{
+    math::{next_float, previous_float, Float},
+    vec::{Vec2, Vec3},
+};
 
 use std::sync::Arc;
 
-use crate::utility::vec::{Vec2, Vec3};
+#[cfg(all(feature = "f64"))]
+use std::f64::consts::PI;
 
-pub const EPSILON: Float = 0.00000003;
+#[cfg(not(feature = "f64"))]
+use std::f32::consts::PI;
 
 pub struct Hit {
     pub t: Float,

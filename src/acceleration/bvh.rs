@@ -13,6 +13,12 @@ use std::collections::VecDeque;
 
 use crate::utility::vec::Vec3;
 
+#[cfg(all(feature = "f64"))]
+use std::f64::EPSILON;
+
+#[cfg(not(feature = "f64"))]
+use std::f32::EPSILON;
+
 #[derive(Debug, Clone, Copy)]
 pub struct PrimitiveInfo {
     pub index: usize,
@@ -95,7 +101,7 @@ impl Bvh {
 
             if (axis.get_axis_value(center_bounds.min) - axis.get_axis_value(center_bounds.max))
                 .abs()
-                < 100.0 * f32::EPSILON
+                < 100.0 * EPSILON
             {
                 for primitive in primitives_info {
                     ordered_primitives.push(primitive.index);

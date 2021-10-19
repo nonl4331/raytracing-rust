@@ -1,10 +1,12 @@
 use crate::ray_tracing::{
     primitives::AARect,
     ray::Ray,
-    tracing::{Hit, PrimitiveTrait, EPSILON},
+    tracing::{Hit, PrimitiveTrait},
 };
 
-use crate::utility::vec::Vec3;
+use crate::utility::{math::Float, vec::Vec3};
+
+const EPSILON: Float = 0.00000003;
 
 const AARECT_INTERSECTION: AARectIntersection = AARectIntersection::One;
 
