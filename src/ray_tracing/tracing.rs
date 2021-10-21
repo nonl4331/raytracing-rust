@@ -103,7 +103,6 @@ impl Intersection for Primitive {
             Primitive::AACuboid(aab) => aab.get_int(ray),
             Primitive::Triangle(triangle) => triangle.get_int(ray),
             Primitive::MeshTriangle(triangle) => triangle.get_int(ray),
-            Primitive::None => panic!("get_int called on PrimitiveNone"),
         }
     }
 
@@ -114,7 +113,6 @@ impl Intersection for Primitive {
             Primitive::AACuboid(aab) => aab.does_int(ray),
             Primitive::Triangle(triangle) => triangle.does_int(ray),
             Primitive::MeshTriangle(triangle) => triangle.does_int(ray),
-            Primitive::None => panic!("does_int called on PrimitiveNone"),
         }
     }
 }
@@ -127,7 +125,6 @@ impl PrimitiveTrait for Primitive {
             Primitive::AACuboid(aab) => aab.get_internal(),
             Primitive::Triangle(triangle) => triangle.get_internal(),
             Primitive::MeshTriangle(triangle) => triangle.get_internal(),
-            Primitive::None => panic!("get_internal called on PrimitiveNone"),
         }
     }
 
@@ -138,7 +135,6 @@ impl PrimitiveTrait for Primitive {
             Primitive::AACuboid(aab) => aab.get_aabb(),
             Primitive::Triangle(triangle) => triangle.get_aabb(),
             Primitive::MeshTriangle(triangle) => triangle.get_aabb(),
-            Primitive::None => panic!("get_aabb called on PrimitiveNone"),
         }
     }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
@@ -148,7 +144,6 @@ impl PrimitiveTrait for Primitive {
             Primitive::AACuboid(aab) => aab.get_uv(point),
             Primitive::Triangle(triangle) => triangle.get_uv(point),
             Primitive::MeshTriangle(triangle) => triangle.get_uv(point),
-            Primitive::None => panic!("get_uv called on PrimitiveNone"),
         };
         None
     }
@@ -159,7 +154,6 @@ impl PrimitiveTrait for Primitive {
             Primitive::AACuboid(aab) => aab.material.requires_uv(),
             Primitive::Triangle(triangle) => triangle.material.requires_uv(),
             Primitive::MeshTriangle(triangle) => triangle.material.requires_uv(),
-            Primitive::None => panic!("requires_uv called on PrimitiveNone"),
         }
     }
 }

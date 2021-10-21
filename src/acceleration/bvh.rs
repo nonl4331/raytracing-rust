@@ -11,6 +11,8 @@ use crate::ray_tracing::{
 
 use std::collections::VecDeque;
 
+use std::mem;
+
 use crate::utility::vec::Vec3;
 
 #[cfg(all(feature = "f64"))]
@@ -60,10 +62,15 @@ impl Bvh {
 
         bvh.build_bvh(&mut Vec::new(), 0, &mut primitives_info);
 
-        *primitives = primitives_info
-            .iter()
-            .map(|&info| std::mem::replace(&mut primitives[info.index], Primitive::None))
-            .collect();
+        let mut temp_vec = Vec::with_capacity(primitives.len());
+
+        for index in primitives_info.iter().map(|&info| info.index) {
+            temp_vec.push(unsafe { mem::transmute_copy(&primitives[index]) });
+        }
+
+        mem::swap(primitives, &mut temp_vec);
+        mem::forget(temp_vec);
+
         bvh
     }
 

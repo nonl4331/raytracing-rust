@@ -11,7 +11,6 @@ pub enum Primitive {
     AACuboid(AACuboid),
     Triangle(Triangle),
     MeshTriangle(MeshTriangle),
-    None,
 }
 
 #[derive(Clone, Debug)]
