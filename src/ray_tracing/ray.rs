@@ -100,10 +100,9 @@ impl Ray {
             if ray.hit.is_some() {
                 let hit = ray.hit.take().unwrap();
 
-                // scatter_ray can only change ray direction, multiply colour by a factor or exit
-                let (multiplier, exit) = hit.material.scatter_ray(ray, &hit);
+                let (colour_multiplier, exit) = hit.material.scatter_ray(ray, &hit);
 
-                colour *= hit.material.colour(hit.uv, hit.point) * multiplier;
+                colour *= colour_multiplier;
 
                 if exit {
                     return (colour, ray_count);

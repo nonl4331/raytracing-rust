@@ -1,14 +1,14 @@
 use crate::utility::math::Float;
 use crate::{
-    aacuboid, aarect, axis, checkered, colour, diffuse, emit, image, model, perlin, position,
-    reflect, refract, scene, sky, solid_colour, sphere, texture_lerp,
+    aacuboid, aarect, axis, checkered, colour, cook_torrence, diffuse, emit, image, model, perlin,
+    position, reflect, refract, scene, sky, solid_colour, sphere, texture_lerp,
 };
 
 use crate::acceleration::split::SplitType;
 
 use crate::image::scene::Scene;
 
-use crate::utility::math::get_seed;
+use crate::utility::{math::get_seed, vec::Vec3};
 
 use crate::ray_tracing::primitives::Primitive;
 
@@ -87,13 +87,15 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
 pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
-    let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5)); //diffuse!(0.5, 0.5, 0.5, 0.5));
+    let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5));
 
-    let sphere_two = sphere!(-1.5, 0.5, 1.5, 0.5, &diffuse!(0, 1, 0, 0.5));
-
-    let sphere_three = sphere!(0, 1.5, 0, 0.5, &diffuse!(1, 1, 0, 0.5));
-
-    let sphere_four = sphere!(-1, 1.5, 0, 0.5, &diffuse!(0, 1, 1, 0.5));
+    let sphere_one = sphere!(
+        -4,
+        1,
+        0,
+        1,
+        &cook_torrence!(1.0, 0.41, 0.71, 0.0, 0.1, 0.9, Vec3::new(1.0, 0.41, 0.71))
+    );
 
     let rect_one = aarect!(
         position!(-2.5, 0.5),
@@ -105,9 +107,7 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
 
     primitives.push(ground);
     primitives.push(rect_one);
-    primitives.push(sphere_two);
-    primitives.push(sphere_three);
-    primitives.push(sphere_four);
+    primitives.push(sphere_one);
 
     let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 

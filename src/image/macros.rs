@@ -152,7 +152,7 @@ macro_rules! diffuse {
                 &std::sync::Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
-                $absorption as Float,
+                $absorption as crate::utility::math::Float,
             ),
         ));
     };
@@ -225,6 +225,23 @@ macro_rules! emit {
             crate::ray_tracing::material::Emit::new(
                 $texture,
                 $strength as crate::utility::math::Float,
+            ),
+        ));
+    };
+}
+
+#[macro_export]
+macro_rules! cook_torrence {
+    ($r:expr,$g:expr,$b:expr, $alpha:expr, $absorption:expr, $specular_chance:expr, $f0:expr) => {
+        std::sync::Arc::new(crate::ray_tracing::material::Material::CookTorrence(
+            crate::ray_tracing::material::CookTorrence::new(
+                &std::sync::Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
+                    crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
+                )),
+                $alpha as crate::utility::math::Float,
+                $absorption as crate::utility::math::Float,
+                $specular_chance as crate::utility::math::Float,
+                $f0,
             ),
         ));
     };

@@ -1,10 +1,10 @@
 use crate::ray_tracing::{
     material::{offset_ray, Hit, MaterialTrait},
-    ray::{Colour, Ray},
+    ray::Ray,
     texture::{Texture, TextureTrait},
 };
 
-use crate::utility::{math, math::Float, vec::Vec2, vec::Vec3};
+use crate::utility::{math, math::Float, vec::Vec3};
 
 use std::sync::Arc;
 
@@ -23,16 +23,16 @@ impl Lambertian {
 }
 
 impl MaterialTrait for Lambertian {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
+    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         let mut direction = math::random_unit_vector() + hit.normal;
         if math::near_zero(direction) {
             direction = hit.normal;
         }
         let point = offset_ray(hit.point, hit.normal, hit.error, true);
         *ray = Ray::new(point, direction, ray.time);
-        (self.absorption, false)
-    }
-    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
-        self.texture.colour_value(uv, point)
+        (
+            self.absorption * self.texture.colour_value(hit.uv, point),
+            false,
+        )
     }
 }
