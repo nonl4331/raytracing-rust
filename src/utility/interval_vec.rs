@@ -1,5 +1,4 @@
-use crate::utility::interval::Interval;
-use crate::utility::vec::Vec3;
+use crate::utility::{interval::Interval, vec::Vec3};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 macro_rules! expr {

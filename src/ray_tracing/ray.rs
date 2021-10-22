@@ -4,10 +4,10 @@ use crate::utility::math::Float;
 use crate::image::scene::PrimitivesType;
 
 use crate::ray_tracing::{
+    intersection::{Hit, Intersection},
     material::MaterialTrait,
     primitives::Axis,
     sky::Sky,
-    tracing::{Hit, Intersection},
 };
 
 use std::sync::Arc;

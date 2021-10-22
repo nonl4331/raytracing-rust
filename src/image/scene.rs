@@ -8,10 +8,10 @@ use crate::utility::math::{random_float, random_in_unit_disk};
 use crate::parameters::Parameters;
 
 use crate::ray_tracing::{
+    intersection::PrimitiveTrait,
     primitives::Primitive,
     ray::{Colour, Ray},
     sky::Sky,
-    tracing::PrimitiveTrait,
 };
 
 use rand::Rng;

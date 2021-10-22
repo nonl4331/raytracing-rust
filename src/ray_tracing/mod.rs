@@ -11,5 +11,3 @@ pub mod ray;
 pub mod sky;
 
 pub mod texture;
-
-pub mod tracing;

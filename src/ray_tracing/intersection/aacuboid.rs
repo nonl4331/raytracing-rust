@@ -1,7 +1,7 @@
 use crate::ray_tracing::{
+    intersection::{Hit, Intersection},
     primitives::AACuboid,
     ray::Ray,
-    tracing::{Hit, Intersection},
 };
 
 const AACUBOID_INTERSECTION: AACuboidIntersection = AACuboidIntersection::One;

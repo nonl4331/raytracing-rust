@@ -4,9 +4,9 @@ use crate::acceleration::{
 };
 
 use crate::ray_tracing::{
+    intersection::PrimitiveTrait,
     primitives::{Axis, Primitive},
     ray::Ray,
-    tracing::PrimitiveTrait,
 };
 
 use std::collections::VecDeque;

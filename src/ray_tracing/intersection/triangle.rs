@@ -1,8 +1,8 @@
 use crate::ray_tracing::{
+    intersection::{check_side, Hit},
     material::Material,
     primitives::{Axis, MeshTriangle, Triangle},
     ray::Ray,
-    tracing::{check_side, Hit},
 };
 
 use crate::utility::{

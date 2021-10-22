@@ -1,5 +1,4 @@
-use crate::utility::math::Float;
-use crate::utility::vec::Vec3;
+use crate::utility::{math::Float, vec::Vec3};
 
 pub struct Camera {
     pub viewport_width: Float,

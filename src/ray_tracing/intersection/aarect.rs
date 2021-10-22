@@ -1,7 +1,7 @@
 use crate::ray_tracing::{
+    intersection::{Hit, PrimitiveTrait},
     primitives::AARect,
     ray::Ray,
-    tracing::{Hit, PrimitiveTrait},
 };
 
 use crate::utility::{math::Float, vec::Vec3};

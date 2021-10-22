@@ -1,9 +1,11 @@
 use crate::ray_tracing::material::Material;
-use crate::utility::math::Float;
 
 use std::sync::Arc;
 
-use crate::utility::vec::{Vec2, Vec3};
+use crate::utility::{
+    math::Float,
+    vec::{Vec2, Vec3},
+};
 
 pub enum Primitive {
     Sphere(Sphere),

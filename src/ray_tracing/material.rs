@@ -1,9 +1,9 @@
 use crate::utility::{math, math::Float};
 
 use crate::ray_tracing::{
+    intersection::{offset_ray, Hit},
     ray::{Colour, Ray},
     texture::{Texture, TextureTrait},
-    tracing::{offset_ray, Hit},
 };
 
 use std::sync::Arc;

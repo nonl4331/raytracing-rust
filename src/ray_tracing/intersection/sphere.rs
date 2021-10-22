@@ -1,7 +1,7 @@
 use crate::ray_tracing::{
+    intersection::{Hit, PrimitiveTrait},
     primitives::Sphere,
     ray::Ray,
-    tracing::{Hit, PrimitiveTrait},
 };
 
 use crate::utility::{interval::Interval, interval_vec::IntervalVec3, math::gamma, vec::Vec3};
