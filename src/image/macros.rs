@@ -147,8 +147,8 @@ macro_rules! perlin {
 #[macro_export]
 macro_rules! diffuse {
     ($r:expr,$g:expr,$b:expr, $absorption:expr) => {
-        std::sync::Arc::new(crate::ray_tracing::material::Material::Diffuse(
-            crate::ray_tracing::material::Diffuse::new(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Lambertian(
+            crate::ray_tracing::material::Lambertian::new(
                 &std::sync::Arc::new(crate::ray_tracing::texture::Texture::SolidColour(
                     crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
                 )),
@@ -157,8 +157,8 @@ macro_rules! diffuse {
         ));
     };
     ($texture:expr,$absorption:expr) => {
-        std::sync::Arc::new(crate::ray_tracing::material::Material::Diffuse(
-            crate::ray_tracing::material::Diffuse::new(
+        std::sync::Arc::new(crate::ray_tracing::material::Material::Lambertian(
+            crate::ray_tracing::material::Lambertian::new(
                 $texture,
                 $absorption as crate::utility::math::Float,
             ),

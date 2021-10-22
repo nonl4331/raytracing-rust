@@ -1,3 +1,5 @@
+pub mod lambertian;
+
 use crate::utility::{math, math::Float};
 
 use crate::ray_tracing::{
@@ -10,8 +12,10 @@ use std::sync::Arc;
 
 use crate::utility::vec::{Vec2, Vec3};
 
+pub use lambertian::Lambertian;
+
 pub enum Material {
-    Diffuse(Diffuse),
+    Lambertian(Lambertian),
     Reflect(Reflect),
     Refract(Refract),
     Emit(Emit),
@@ -20,7 +24,7 @@ pub enum Material {
 impl MaterialTrait for Material {
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
         match self {
-            Material::Diffuse(diffuse) => diffuse.scatter_ray(ray, hit),
+            Material::Lambertian(diffuse) => diffuse.scatter_ray(ray, hit),
             Material::Reflect(reflect) => reflect.scatter_ray(ray, hit),
             Material::Refract(refract) => refract.scatter_ray(ray, hit),
             Material::Emit(emit) => emit.scatter_ray(ray, hit),
@@ -28,7 +32,7 @@ impl MaterialTrait for Material {
     }
     fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         match self {
-            Material::Diffuse(diffuse) => diffuse.colour(uv, point),
+            Material::Lambertian(diffuse) => diffuse.colour(uv, point),
             Material::Reflect(reflect) => reflect.colour(uv, point),
             Material::Refract(refract) => refract.colour(uv, point),
             Material::Emit(emit) => emit.colour(uv, point),
@@ -36,7 +40,7 @@ impl MaterialTrait for Material {
     }
     fn requires_uv(&self) -> bool {
         match self {
-            Material::Diffuse(diffuse) => diffuse.texture.requires_uv(),
+            Material::Lambertian(diffuse) => diffuse.texture.requires_uv(),
             Material::Reflect(_) => false,
             Material::Refract(_) => false,
             Material::Emit(emit) => emit.texture.requires_uv(),
@@ -53,20 +57,6 @@ pub trait MaterialTrait {
     }
     fn requires_uv(&self) -> bool {
         false
-    }
-}
-
-pub struct Diffuse {
-    texture: Arc<Texture>,
-    absorption: Float,
-}
-
-impl Diffuse {
-    pub fn new(texture: &Arc<Texture>, absorption: Float) -> Self {
-        Diffuse {
-            texture: texture.clone(),
-            absorption,
-        }
     }
 }
 
@@ -109,21 +99,6 @@ impl Emit {
             texture: texture.clone(),
             strength,
         }
-    }
-}
-
-impl MaterialTrait for Diffuse {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
-        let mut direction = math::random_unit_vector() + hit.normal;
-        if math::near_zero(direction) {
-            direction = hit.normal;
-        }
-        let point = offset_ray(hit.point, hit.normal, hit.error, true);
-        *ray = Ray::new(point, direction, ray.time);
-        (self.absorption, false)
-    }
-    fn colour(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
-        self.texture.colour_value(uv, point)
     }
 }
 
