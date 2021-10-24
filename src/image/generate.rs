@@ -87,27 +87,42 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
 pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();
 
+    println!("\tCook Torrence currently has a low convergence rate!");
+
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5));
 
     let sphere_one = sphere!(
-        -4,
+        0,
         1,
         0,
         1,
-        &cook_torrence!(1.0, 0.41, 0.71, 0.0, 0.1, 0.9, Vec3::new(1.0, 0.41, 0.71))
+        //R, G, B, alpha, absorbtion, spec_chance, f0
+        &cook_torrence!(1.0, 0.86, 0.57, 0.2, 0.0, 1.0, Vec3::new(1.0, 0.86, 0.57))
     );
 
+    let sphere_two = sphere!(2, 2, -1.5, 0.5, &emit!(&solid_colour!(colour!(1)), 100));
+
     let rect_one = aarect!(
-        position!(-2.5, 0.5),
-        position!(2.5, 2.5),
-        2,
+        position!(-5, 0),
+        position!(5, 8),
+        5,
         axis!(Z),
-        &reflect!(&solid_colour!(1, 0.9, 0.9), 0.001)
+        &diffuse!(1.0, 1.0, 1.0, 0.8)
+    );
+
+    let rect_two = aarect!(
+        position!(0, -10),
+        position!(8, 5),
+        -2,
+        axis!(X),
+        &diffuse!(1.0, 0.25, 0.25, 0.8)
     );
 
     primitives.push(ground);
     primitives.push(rect_one);
+    primitives.push(rect_two);
     primitives.push(sphere_one);
+    primitives.push(sphere_two);
 
     let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 

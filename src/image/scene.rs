@@ -1,3 +1,5 @@
+use chrono::Local;
+
 use crate::acceleration::{bvh::Bvh, split::SplitType};
 use crate::utility::math::Float;
 
@@ -53,7 +55,9 @@ impl Scene {
 
         let mut primitives: Vec<Primitive> = primitives;
 
-        println!("\nBvh construction started.");
+        let time = Local::now();
+
+        println!("\n{} - Bvh construction started at", time.format("%X"));
 
         let start = Instant::now();
         let bvh = Arc::new(Bvh::new(&mut primitives, split_type));
@@ -137,6 +141,10 @@ impl Scene {
 
         let mut chunk_sizes: Vec<u32>;
 
+        let time = Local::now();
+
+        println!("{} - Render started\n", time.format("%X"));
+
         if (threads as u32) < pixel_samples {
             chunk_sizes = vec![1; pixel_samples as usize];
         } else if last_chunk_size == sample_chunk_size {
@@ -173,9 +181,9 @@ impl Scene {
             .map(|value| (value.sqrt() * 255.0) as u8)
             .collect();
 
-        //line_break();
-        println!("Finised rendering image!");
-        //line_break();
+        let time = Local::now();
+
+        println!("{} - Finised rendering image", time.format("%X"));
         println!("\tWidth: {}", width);
         println!("\tHeight: {}", height);
         println!("\tSamples per pixel: {}", pixel_samples);

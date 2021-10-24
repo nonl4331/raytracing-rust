@@ -1,3 +1,5 @@
+use chrono::Local;
+
 use crate::acceleration::split::SplitType;
 use crate::image::scene::line_break;
 use crate::utility::math::Float;
@@ -15,12 +17,14 @@ const FILENAME_DEFAULT: &str = "out.png";
 macro_rules! scene {
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr) => {{
         line_break();
-        println!("Scene Generation Started!");
+        let time = Local::now();
+        println!("{} - Scene Generation started", time.format("%X"));
         generate::$scene_name($bvh_type, $aspect_ratio)
     }};
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr, $seed:expr) => {{
         line_break();
-        println!("Scene Generation Started!");
+        let time = Local::now();
+        println!("{} - Scene Generation started", time.format("%X"));
         generate::$scene_name($bvh_type, $aspect_ratio, $seed)
     }};
 }
