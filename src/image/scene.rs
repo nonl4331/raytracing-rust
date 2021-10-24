@@ -143,7 +143,10 @@ impl Scene {
 
         let time = Local::now();
 
-        println!("{} - Render started\n", time.format("%X"));
+        println!("{} - Render started", time.format("%X"));
+        println!("\tWidth: {}", width);
+        println!("\tHeight: {}", height);
+        println!("\tSamples per pixel: {}\n", pixel_samples);
 
         if (threads as u32) < pixel_samples {
             chunk_sizes = vec![1; pixel_samples as usize];
@@ -184,9 +187,6 @@ impl Scene {
         let time = Local::now();
 
         println!("{} - Finised rendering image", time.format("%X"));
-        println!("\tWidth: {}", width);
-        println!("\tHeight: {}", height);
-        println!("\tSamples per pixel: {}", pixel_samples);
         println!("\tRender Time: {}", get_readable_duration(duration));
         println!("\tRays: {}", ray_count);
         println!(
