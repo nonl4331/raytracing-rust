@@ -154,7 +154,7 @@ macro_rules! diffuse {
                 )),
                 $absorption as crate::utility::math::Float,
             ),
-        ));
+        ))
     };
     ($texture:expr,$absorption:expr) => {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Lambertian(
@@ -162,7 +162,7 @@ macro_rules! diffuse {
                 $texture,
                 $absorption as crate::utility::math::Float,
             ),
-        ));
+        ))
     };
 }
 
@@ -184,7 +184,7 @@ macro_rules! reflect {
                 $texture,
                 $fuzz as crate::utility::math::Float,
             ),
-        ));
+        ))
     };
 }
 
@@ -198,7 +198,7 @@ macro_rules! refract {
                 )),
                 $eta as crate::utility::math::Float,
             ),
-        ));
+        ))
     };
     ($texture:expr,$eta:expr) => {
         std::sync::Arc::new(crate::ray_tracing::material::Material::Refract(
@@ -206,7 +206,7 @@ macro_rules! refract {
                 $texture,
                 $eta as crate::utility::math::Float,
             ),
-        ));
+        ))
     };
 }
 
@@ -226,7 +226,7 @@ macro_rules! emit {
                 $texture,
                 $strength as crate::utility::math::Float,
             ),
-        ));
+        ))
     };
 }
 
@@ -243,7 +243,7 @@ macro_rules! cook_torrence {
                 $specular_chance as crate::utility::math::Float,
                 $f0,
             ),
-        ));
+        ))
     };
 }
 

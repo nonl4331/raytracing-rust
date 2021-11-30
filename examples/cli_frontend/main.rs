@@ -1,14 +1,8 @@
-use crate::image::parameters;
+extern crate cpu_raytracer;
+
+use cpu_raytracer::*;
 
 use std::env;
-
-mod acceleration;
-
-mod image;
-
-mod ray_tracing;
-
-mod utility;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

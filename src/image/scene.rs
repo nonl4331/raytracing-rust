@@ -7,7 +7,7 @@ use crate::image::camera::Camera;
 
 use crate::utility::math::{random_float, random_in_unit_disk};
 
-use crate::parameters::Parameters;
+use crate::image::parameters::Parameters;
 
 use crate::ray_tracing::{
     intersection::PrimitiveTrait,
