@@ -1,6 +1,5 @@
-extern crate cpu_raytracer;
-
-use cpu_raytracer::*;
+mod generate;
+mod parameters;
 
 use std::env;
 

@@ -1,13 +1,9 @@
 pub mod aacuboid;
-
 pub mod aarect;
-
 pub mod sphere;
-
 pub mod triangle;
 
 use crate::acceleration::aabb::Aabb;
-
 use crate::ray_tracing::{
     intersection::{
         aacuboid::aacuboid_intersection, aarect::aarect_intersection, sphere::sphere_intersection,
@@ -17,12 +13,10 @@ use crate::ray_tracing::{
     primitives::{AACuboid, AARect, Axis, MeshTriangle, Primitive, Sphere, Triangle},
     ray::Ray,
 };
-
 use crate::utility::{
     math::{next_float, previous_float, Float},
     vec::{Vec2, Vec3},
 };
-
 use std::sync::Arc;
 
 #[cfg(all(feature = "f64"))]

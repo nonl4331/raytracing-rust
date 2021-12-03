@@ -2,18 +2,13 @@ use crate::acceleration::{
     aabb::Aabb,
     split::{Split, SplitType},
 };
-
 use crate::ray_tracing::{
     intersection::PrimitiveTrait,
     primitives::{Axis, Primitive},
     ray::Ray,
 };
-
-use std::collections::VecDeque;
-
-use std::mem;
-
 use crate::utility::vec::Vec3;
+use std::{collections::VecDeque, mem};
 
 #[cfg(all(feature = "f64"))]
 use std::f64::EPSILON;
@@ -207,7 +202,9 @@ impl Node {
 #[cfg(test)]
 mod tests {
 
-    use crate::*;
+    use crate::{utility::math::Float, *};
+    use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
+    use rand_seeder::Seeder;
 
     use super::*;
 
@@ -225,7 +222,78 @@ mod tests {
 
     #[test]
     fn node_containment() {
-        let scene = crate::image::generate::scene_one(SplitType::EqualCounts, 16.0 / 9.0, None);
+        let mut primitives: Vec<Primitive> = Vec::new();
+
+        let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
+
+        let sphere_one = sphere!(0, 1, 0, 1, &refract!(&solid_colour!(colour!(1)), 1.5));
+
+        let sphere_two = sphere!(-4, 1, 0, 1, &diffuse!(0.4, 0.2, 0.1, 0.5));
+
+        let sphere_three = sphere!(4, 1, 0, 1, &reflect!(&solid_colour!(0.7, 0.6, 0.5), 0));
+
+        primitives.push(ground);
+        primitives.push(sphere_one);
+        primitives.push(sphere_two);
+        primitives.push(sphere_three);
+
+        let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+
+        let seed: String = std::iter::repeat(())
+            .map(|()| rng.sample(Alphanumeric))
+            .map(char::from)
+            .take(32)
+            .collect();
+
+        println!("\tseed: {}", seed);
+        let mut rng: SmallRng = Seeder::from(seed.clone()).make_rng();
+
+        for a in -11..11 {
+            for b in -11..11 {
+                let center = position!(
+                    a as Float + 0.9 * rng.gen::<Float>(),
+                    0.2,
+                    b as Float + 0.9 * rng.gen::<Float>()
+                );
+
+                if (center - position!(4.0, 0.2, 0.0)).mag() > 0.9 {
+                    let choose_material: Float = rng.gen();
+                    let colour =
+                        colour!(rng.gen::<Float>(), rng.gen::<Float>(), rng.gen::<Float>());
+
+                    let sphere;
+
+                    if choose_material < 0.8 {
+                        sphere = sphere!(center, 0.2, &diffuse!(&solid_colour!(colour), 0.5));
+                    } else if choose_material < 0.95 {
+                        sphere = sphere!(
+                            center,
+                            0.2,
+                            &reflect!(&solid_colour!(colour), rng.gen::<Float>() / 2.0)
+                        );
+                    } else {
+                        sphere = sphere!(center, 0.2, &refract!(&solid_colour!(colour!(1)), 1.5));
+                    }
+                    primitives.push(sphere);
+                }
+            }
+        }
+
+        let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+
+        let scene = scene!(
+            position!(13, 2, -3),
+            position!(0, 0, 0),
+            position!(0, 1, 0),
+            29,
+            16.0 / 9.0,
+            0.1,
+            10,
+            sky,
+            SplitType::Sah,
+            primitives
+        );
+
         let bvh = scene.bvh;
 
         for node in &bvh.nodes {

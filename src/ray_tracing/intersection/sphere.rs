@@ -3,7 +3,6 @@ use crate::ray_tracing::{
     primitives::Sphere,
     ray::Ray,
 };
-
 use crate::utility::{interval::Interval, interval_vec::IntervalVec3, math::gamma, vec::Vec3};
 
 const SPHERE_INTERSECTION: SphereIntersection = if cfg!(feature = "sphere_three") {
@@ -121,9 +120,9 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 
         Some(Hit {
             t,
-            point: point,
+            point,
             error: point_error,
-            normal: normal,
+            normal,
             uv: sphere.get_uv(point),
             out,
             material: sphere.material.clone(),
@@ -194,9 +193,9 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         // fill in details about intersection point
         Some(Hit {
             t,
-            point: point,
+            point,
             error: 0.000001 * Vec3::one(),
-            normal: normal,
+            normal,
             uv: sphere.get_uv(point),
             out,
             material: sphere.material.clone(),

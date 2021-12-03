@@ -2,11 +2,8 @@ use crate::ray_tracing::{
     material::Material,
     primitives::{MeshData, MeshTriangle, Primitive},
 };
-use crate::utility::math::Float;
-
+use crate::utility::{math::Float, vec::Vec3};
 use std::sync::Arc;
-
-use crate::utility::vec::Vec3;
 
 pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<Primitive> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());

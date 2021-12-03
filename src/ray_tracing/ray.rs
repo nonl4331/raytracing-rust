@@ -1,18 +1,13 @@
 use crate::acceleration::bvh::Bvh;
-use crate::utility::math::Float;
-
 use crate::image::scene::PrimitivesType;
-
 use crate::ray_tracing::{
     intersection::{Hit, Intersection},
     material::MaterialTrait,
     primitives::Axis,
     sky::Sky,
 };
-
+use crate::utility::{math::Float, vec::Vec3};
 use std::sync::Arc;
-
-use crate::utility::vec::Vec3;
 
 pub type Colour = Vec3;
 

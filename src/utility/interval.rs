@@ -1,6 +1,8 @@
 use crate::utility::math::{next_float, previous_float, Float};
-use std::cmp::{Ordering, PartialEq, PartialOrd};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::{
+    cmp::{Ordering, PartialEq, PartialOrd},
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
 #[cfg(all(feature = "f64"))]
 use std::f64::{INFINITY, NEG_INFINITY};

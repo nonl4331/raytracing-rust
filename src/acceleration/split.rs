@@ -1,8 +1,7 @@
 use crate::acceleration::{aabb::Aabb, bvh::PrimitiveInfo};
 use crate::partition;
-use crate::utility::math::Float;
-
 use crate::ray_tracing::primitives::Axis;
+use crate::utility::math::Float;
 
 const NUM_BUCKETS: usize = 12;
 const MAX_IN_NODE: usize = 255;

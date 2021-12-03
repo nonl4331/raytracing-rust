@@ -3,11 +3,9 @@ use crate::ray_tracing::{
     primitives::AARect,
     ray::Ray,
 };
-
 use crate::utility::{math::Float, vec::Vec3};
 
 const EPSILON: Float = 0.00000003;
-
 const AARECT_INTERSECTION: AARectIntersection = AARectIntersection::One;
 
 enum AARectIntersection {

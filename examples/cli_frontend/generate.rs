@@ -1,19 +1,17 @@
-use crate::utility::math::Float;
-use crate::{
-    aacuboid, aarect, axis, checkered, colour, cook_torrence, diffuse, emit, image, model, perlin,
-    position, reflect, refract, scene, sky, solid_colour, sphere, texture_lerp,
-};
+extern crate cpu_raytracer;
 
-use crate::acceleration::split::SplitType;
-
-use crate::image::scene::Scene;
-
-use crate::utility::{math::get_seed, vec::Vec3};
-
-use crate::ray_tracing::primitives::Primitive;
-
-use rand::{rngs::SmallRng, Rng};
+use cpu_raytracer::*;
+use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
+
+pub fn get_seed(length: usize) -> String {
+    let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+    std::iter::repeat(())
+        .map(|()| rng.sample(Alphanumeric))
+        .map(char::from)
+        .take(length)
+        .collect()
+}
 
 pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> Scene {
     let mut primitives: Vec<Primitive> = Vec::new();

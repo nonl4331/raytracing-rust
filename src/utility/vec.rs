@@ -1,5 +1,4 @@
 use crate::utility::math::Float;
-
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 macro_rules! expr {

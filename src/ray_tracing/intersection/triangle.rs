@@ -4,12 +4,10 @@ use crate::ray_tracing::{
     primitives::{Axis, MeshTriangle, Triangle},
     ray::Ray,
 };
-
 use crate::utility::{
     math::{gamma, Float},
     vec::{Vec2, Vec3},
 };
-
 use std::sync::Arc;
 
 const TRIANGLE_INTERSECTION: TriangleIntersection = TriangleIntersection::One;

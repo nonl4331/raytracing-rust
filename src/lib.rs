@@ -1,6 +1,12 @@
-mod acceleration;
-mod image;
-mod ray_tracing;
-mod utility;
+pub mod acceleration;
+pub mod image;
+pub mod ray_tracing;
+pub mod utility;
 
-pub use crate::image::{macros::*, parameters};
+pub use self::acceleration::split::SplitType;
+pub use self::image::{
+    macros::*,
+    scene::{Parameters, Scene},
+};
+pub use self::ray_tracing::{material, primitives::Primitive, ray, texture};
+pub use self::utility::{math::Float, vec::Vec3};

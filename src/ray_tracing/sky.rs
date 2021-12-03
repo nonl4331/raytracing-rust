@@ -2,6 +2,7 @@ use crate::ray_tracing::{
     ray::{Colour, Ray},
     texture::{Texture, TextureTrait},
 };
+use crate::utility::vec::{Vec2, Vec3};
 use std::sync::Arc;
 
 #[cfg(all(feature = "f64"))]
@@ -9,8 +10,6 @@ use std::f64::consts::PI;
 
 #[cfg(not(feature = "f64"))]
 use std::f32::consts::PI;
-
-use crate::utility::vec::{Vec2, Vec3};
 
 pub struct Sky {
     texture: Option<Arc<Texture>>,

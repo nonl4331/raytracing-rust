@@ -1,56 +1,27 @@
+extern crate cpu_raytracer;
+
 use chrono::Local;
-
-use crate::acceleration::split::SplitType;
-use crate::image::scene::line_break;
-use crate::utility::math::Float;
-
-use crate::image::{generate, scene::Scene};
-
+use cpu_raytracer::{Float, Parameters, Scene, SplitType};
 use std::process;
-
-const SAMPLES_DEFAULT: u32 = 30;
-const WIDTH_DEFAULT: u32 = 800;
-const HEIGHT_DEFAULT: u32 = 600;
-const BVH_DEFAULT: SplitType = SplitType::Middle;
-const FILENAME_DEFAULT: &str = "out.png";
 
 macro_rules! scene {
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr) => {{
-        line_break();
+        println!("------------------------------");
         let time = Local::now();
         println!("{} - Scene Generation started", time.format("%X"));
-        generate::$scene_name($bvh_type, $aspect_ratio)
+        super::generate::$scene_name($bvh_type, $aspect_ratio)
     }};
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr, $seed:expr) => {{
-        line_break();
+        println!("------------------------------");
         let time = Local::now();
         println!("{} - Scene Generation started", time.format("%X"));
-        generate::$scene_name($bvh_type, $aspect_ratio, $seed)
+        super::generate::$scene_name($bvh_type, $aspect_ratio, $seed)
     }};
 }
 
-pub struct Parameters {
-    pub samples: u32,
-    pub width: u32,
-    pub height: u32,
-    pub filename: String,
-}
-
-impl Parameters {
-    pub fn new(
-        samples: Option<u32>,
-        width: Option<u32>,
-        height: Option<u32>,
-        filename: Option<String>,
-    ) -> Self {
-        Parameters {
-            samples: samples.unwrap_or(SAMPLES_DEFAULT),
-            width: width.unwrap_or(WIDTH_DEFAULT),
-            height: height.unwrap_or(HEIGHT_DEFAULT),
-            filename: filename.unwrap_or_else(|| FILENAME_DEFAULT.to_string()),
-        }
-    }
-}
+const WIDTH_DEFAULT: u32 = 800;
+const HEIGHT_DEFAULT: u32 = 600;
+const BVH_DEFAULT: SplitType = SplitType::Middle;
 
 pub fn process_args(args: Vec<String>) -> Option<(Scene, Parameters)> {
     let mut scene_index = None;

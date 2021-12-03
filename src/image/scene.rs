@@ -1,32 +1,52 @@
-use chrono::Local;
-
 use crate::acceleration::{bvh::Bvh, split::SplitType};
-use crate::utility::math::Float;
-
 use crate::image::camera::Camera;
-
-use crate::utility::math::{random_float, random_in_unit_disk};
-
-use crate::image::parameters::Parameters;
-
 use crate::ray_tracing::{
     intersection::PrimitiveTrait,
     primitives::Primitive,
     ray::{Colour, Ray},
     sky::Sky,
 };
-
+use crate::utility::{
+    math::{random_float, random_in_unit_disk, Float},
+    vec::Vec3,
+};
+use chrono::Local;
 use rand::Rng;
-
 use rayon::prelude::*;
+use std::{
+    sync::{mpsc::channel, Arc, Mutex},
+    time::{Duration, Instant},
+};
 
-use std::sync::{mpsc::channel, Arc, Mutex};
-
-use std::time::{Duration, Instant};
-
-use crate::utility::vec::Vec3;
+const SAMPLES_DEFAULT: u32 = 30;
+const WIDTH_DEFAULT: u32 = 800;
+const HEIGHT_DEFAULT: u32 = 600;
+const FILENAME_DEFAULT: &str = "out.png";
 
 pub type PrimitivesType = Arc<Vec<Primitive>>;
+
+pub struct Parameters {
+    pub samples: u32,
+    pub width: u32,
+    pub height: u32,
+    pub filename: String,
+}
+
+impl Parameters {
+    pub fn new(
+        samples: Option<u32>,
+        width: Option<u32>,
+        height: Option<u32>,
+        filename: Option<String>,
+    ) -> Self {
+        Parameters {
+            samples: samples.unwrap_or(SAMPLES_DEFAULT),
+            width: width.unwrap_or(WIDTH_DEFAULT),
+            height: height.unwrap_or(HEIGHT_DEFAULT),
+            filename: filename.unwrap_or_else(|| FILENAME_DEFAULT.to_string()),
+        }
+    }
+}
 
 pub struct Scene {
     pub primitives: PrimitivesType,

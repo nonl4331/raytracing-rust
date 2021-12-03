@@ -1,10 +1,9 @@
 use crate::ray_tracing::ray::Colour;
-use crate::utility::math::Float;
-
+use crate::utility::{
+    math::Float,
+    vec::{Vec2, Vec3},
+};
 use image::GenericImageView;
-
-use crate::utility::vec::{Vec2, Vec3};
-
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 const PERLIN_RVECS: usize = 256;

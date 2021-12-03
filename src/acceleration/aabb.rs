@@ -1,8 +1,5 @@
-use crate::utility::math::Float;
-
 use crate::ray_tracing::ray::Ray;
-
-use crate::utility::vec::Vec3;
+use crate::utility::{math::Float, vec::Vec3};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Aabb {
