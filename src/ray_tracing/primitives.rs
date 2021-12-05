@@ -5,7 +5,7 @@ use crate::utility::{
 };
 use std::sync::Arc;
 
-pub enum Primitive {
+pub enum PrimitiveEnum {
     Sphere(Sphere),
     AARect(AARect),
     AACuboid(AACuboid),

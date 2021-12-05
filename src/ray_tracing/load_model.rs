@@ -1,11 +1,11 @@
 use crate::ray_tracing::{
     material::Material,
-    primitives::{MeshData, MeshTriangle, Primitive},
+    primitives::{MeshData, MeshTriangle, PrimitiveEnum},
 };
 use crate::utility::{math::Float, vec::Vec3};
 use std::sync::Arc;
 
-pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<Primitive> {
+pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<PrimitiveEnum> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());
 
     let model = model.unwrap();
@@ -36,7 +36,7 @@ pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<Primitive> {
                         panic!("Please export obj file with vertex normals!");
                     }
 
-                    let triangle = Primitive::MeshTriangle(MeshTriangle::new(
+                    let triangle = PrimitiveEnum::MeshTriangle(MeshTriangle::new(
                         [i1.0, i2.0, i3.0],
                         [i1.2.unwrap(), i2.2.unwrap(), i3.2.unwrap()],
                         &material,

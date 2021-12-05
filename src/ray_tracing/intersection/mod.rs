@@ -10,7 +10,7 @@ use crate::ray_tracing::{
         triangle::triangle_intersection,
     },
     material::{Material, MaterialTrait},
-    primitives::{AACuboid, AARect, Axis, MeshTriangle, Primitive, Sphere, Triangle},
+    primitives::{AACuboid, AARect, Axis, MeshTriangle, PrimitiveEnum, Sphere, Triangle},
     ray::Ray,
 };
 use crate::utility::{
@@ -37,7 +37,7 @@ pub struct Hit {
 
 pub trait Intersection {
     fn get_int(&self, _: &Ray) -> Option<Hit> {
-        None
+        unimplemented!()
     }
     fn does_int(&self, ray: &Ray) -> bool {
         self.get_int(ray).is_some()
@@ -45,9 +45,8 @@ pub trait Intersection {
 }
 
 pub trait PrimitiveTrait: Intersection {
-    fn get_internal(self) -> Vec<Primitive>;
     fn get_aabb(&self) -> Option<Aabb> {
-        None
+        unimplemented!()
     }
     fn requires_uv(&self) -> bool {
         false
@@ -97,65 +96,55 @@ pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
     }
 }
 
-impl Intersection for Primitive {
+impl Intersection for PrimitiveEnum {
     fn get_int(&self, ray: &Ray) -> Option<Hit> {
         match self {
-            Primitive::Sphere(sphere) => sphere.get_int(ray),
-            Primitive::AARect(rect) => rect.get_int(ray),
-            Primitive::AACuboid(aab) => aab.get_int(ray),
-            Primitive::Triangle(triangle) => triangle.get_int(ray),
-            Primitive::MeshTriangle(triangle) => triangle.get_int(ray),
+            PrimitiveEnum::Sphere(sphere) => sphere.get_int(ray),
+            PrimitiveEnum::AARect(rect) => rect.get_int(ray),
+            PrimitiveEnum::AACuboid(aab) => aab.get_int(ray),
+            PrimitiveEnum::Triangle(triangle) => triangle.get_int(ray),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.get_int(ray),
         }
     }
 
     fn does_int(&self, ray: &Ray) -> bool {
         match self {
-            Primitive::Sphere(sphere) => sphere.does_int(ray),
-            Primitive::AARect(rect) => rect.does_int(ray),
-            Primitive::AACuboid(aab) => aab.does_int(ray),
-            Primitive::Triangle(triangle) => triangle.does_int(ray),
-            Primitive::MeshTriangle(triangle) => triangle.does_int(ray),
+            PrimitiveEnum::Sphere(sphere) => sphere.does_int(ray),
+            PrimitiveEnum::AARect(rect) => rect.does_int(ray),
+            PrimitiveEnum::AACuboid(aab) => aab.does_int(ray),
+            PrimitiveEnum::Triangle(triangle) => triangle.does_int(ray),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.does_int(ray),
         }
     }
 }
 
-impl PrimitiveTrait for Primitive {
-    fn get_internal(self) -> Vec<Primitive> {
-        match self {
-            Primitive::Sphere(sphere) => sphere.get_internal(),
-            Primitive::AARect(rect) => rect.get_internal(),
-            Primitive::AACuboid(aab) => aab.get_internal(),
-            Primitive::Triangle(triangle) => triangle.get_internal(),
-            Primitive::MeshTriangle(triangle) => triangle.get_internal(),
-        }
-    }
-
+impl PrimitiveTrait for PrimitiveEnum {
     fn get_aabb(&self) -> Option<Aabb> {
         match self {
-            Primitive::Sphere(sphere) => sphere.get_aabb(),
-            Primitive::AARect(rect) => rect.get_aabb(),
-            Primitive::AACuboid(aab) => aab.get_aabb(),
-            Primitive::Triangle(triangle) => triangle.get_aabb(),
-            Primitive::MeshTriangle(triangle) => triangle.get_aabb(),
+            PrimitiveEnum::Sphere(sphere) => sphere.get_aabb(),
+            PrimitiveEnum::AARect(rect) => rect.get_aabb(),
+            PrimitiveEnum::AACuboid(aab) => aab.get_aabb(),
+            PrimitiveEnum::Triangle(triangle) => triangle.get_aabb(),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.get_aabb(),
         }
     }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         match self {
-            Primitive::Sphere(sphere) => sphere.get_uv(point),
-            Primitive::AARect(rect) => rect.get_uv(point),
-            Primitive::AACuboid(aab) => aab.get_uv(point),
-            Primitive::Triangle(triangle) => triangle.get_uv(point),
-            Primitive::MeshTriangle(triangle) => triangle.get_uv(point),
+            PrimitiveEnum::Sphere(sphere) => sphere.get_uv(point),
+            PrimitiveEnum::AARect(rect) => rect.get_uv(point),
+            PrimitiveEnum::AACuboid(aab) => aab.get_uv(point),
+            PrimitiveEnum::Triangle(triangle) => triangle.get_uv(point),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.get_uv(point),
         };
         None
     }
     fn requires_uv(&self) -> bool {
         match self {
-            Primitive::Sphere(sphere) => (*sphere.material).requires_uv(),
-            Primitive::AARect(rect) => rect.material.requires_uv(),
-            Primitive::AACuboid(aab) => aab.material.requires_uv(),
-            Primitive::Triangle(triangle) => triangle.material.requires_uv(),
-            Primitive::MeshTriangle(triangle) => triangle.material.requires_uv(),
+            PrimitiveEnum::Sphere(sphere) => (*sphere.material).requires_uv(),
+            PrimitiveEnum::AARect(rect) => rect.material.requires_uv(),
+            PrimitiveEnum::AACuboid(aab) => aab.material.requires_uv(),
+            PrimitiveEnum::Triangle(triangle) => triangle.material.requires_uv(),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.material.requires_uv(),
         }
     }
 }
@@ -168,9 +157,6 @@ impl Intersection for Sphere {
 
 #[allow(clippy::suspicious_operation_groupings)]
 impl PrimitiveTrait for Sphere {
-    fn get_internal(self) -> Vec<Primitive> {
-        vec![Primitive::Sphere(self)]
-    }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let x = (self.center.x - point.x) / self.radius;
@@ -211,9 +197,6 @@ impl Intersection for AARect {
 }
 
 impl PrimitiveTrait for AARect {
-    fn get_internal(self) -> Vec<Primitive> {
-        vec![Primitive::AARect(self)]
-    }
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let pwa = self.axis.point_without_axis(point);
@@ -248,15 +231,8 @@ impl Intersection for AACuboid {
 }
 
 impl PrimitiveTrait for AACuboid {
-    fn get_internal(mut self) -> Vec<Primitive> {
-        self.rects
-            .iter_mut()
-            .map(|rect| Primitive::AARect(rect.clone()))
-            .collect()
-    }
-
     fn get_aabb(&self) -> Option<Aabb> {
-        None
+        Some(Aabb::new(self.min, self.max))
     }
 }
 
@@ -267,10 +243,6 @@ impl Intersection for Triangle {
 }
 
 impl PrimitiveTrait for Triangle {
-    fn get_internal(self) -> Vec<Primitive> {
-        vec![Primitive::Triangle(self)]
-    }
-
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(
             self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
@@ -286,10 +258,6 @@ impl Intersection for MeshTriangle {
 }
 
 impl PrimitiveTrait for MeshTriangle {
-    fn get_internal(self) -> Vec<Primitive> {
-        vec![Primitive::MeshTriangle(self)]
-    }
-
     fn get_aabb(&self) -> Option<Aabb> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],

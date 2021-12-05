@@ -1,7 +1,7 @@
 use crate::acceleration::bvh::Bvh;
-use crate::image::scene::PrimitivesType;
+
 use crate::ray_tracing::{
-    intersection::{Hit, Intersection},
+    intersection::{Hit, PrimitiveTrait},
     material::MaterialTrait,
     primitives::Axis,
     sky::Sky,
@@ -47,7 +47,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn check_hit(&mut self, bvh: &Arc<Bvh>, primitives: &PrimitivesType) {
+    fn check_hit<P: PrimitiveTrait>(&mut self, bvh: &Arc<Bvh>, primitives: &Arc<Vec<P>>) {
         let offset_lens = bvh.get_intersection_candidates(self);
 
         for offset_len in offset_lens {
@@ -75,11 +75,11 @@ impl Ray {
         }
     }
 
-    pub fn get_colour(
+    pub fn get_colour<P: PrimitiveTrait>(
         ray: &mut Ray,
         sky: Arc<Sky>,
         bvh: Arc<Bvh>,
-        primitives: PrimitivesType,
+        primitives: Arc<Vec<P>>,
     ) -> (Colour, u64) {
         let mut colour = Colour::one();
         let mut depth = 0;

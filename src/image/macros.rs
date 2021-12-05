@@ -237,7 +237,7 @@ macro_rules! cook_torrence {
 #[macro_export]
 macro_rules! sphere {
     ($x:expr, $y:expr, $z:expr, $radius:expr, $material:expr) => {
-        $crate::ray_tracing::primitives::Primitive::Sphere(
+        $crate::ray_tracing::primitives::PrimitiveEnum::Sphere(
             $crate::ray_tracing::primitives::Sphere::new(
                 position!($x, $y, $z),
                 $radius as Float,
@@ -246,7 +246,7 @@ macro_rules! sphere {
         )
     };
     ($position:expr, $radius:expr, $material:expr) => {
-        $crate::ray_tracing::primitives::Primitive::Sphere(
+        $crate::ray_tracing::primitives::PrimitiveEnum::Sphere(
             $crate::ray_tracing::primitives::Sphere::new(
                 $position,
                 $radius as $crate::utility::math::Float,
@@ -259,7 +259,7 @@ macro_rules! sphere {
 #[macro_export]
 macro_rules! aarect {
     ($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr,  $material:expr) => {
-        $crate::ray_tracing::primitives::Primitive::AARect(
+        $crate::ray_tracing::primitives::PrimitiveEnum::AARect(
             $crate::ray_tracing::primitives::AARect::new(
                 $point_one,
                 $point_two,
@@ -270,7 +270,7 @@ macro_rules! aarect {
         )
     };
     ($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr) => {
-        $crate::ray_tracing::primitives::Primitive::AARect(
+        $crate::ray_tracing::primitives::PrimitiveEnum::AARect(
             $crate::ray_tracing::primitives::AARect::new(
                 position!($x1, $y1),
                 position!($x2, $y2),
@@ -285,12 +285,12 @@ macro_rules! aarect {
 #[macro_export]
 macro_rules! aacuboid {
     ($point_one:expr, $point_two:expr, $material:expr) => {
-        $crate::ray_tracing::primitives::Primitive::AACubiod(
+        $crate::ray_tracing::primitives::PrimitiveEnum::AACubiod(
             $crate::ray_tracing::primitives::AACuboid::new($point_one, $point_two, $material),
         )
     };
     ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $material:expr) => {
-        $crate::ray_tracing::primitives::Primitive::AACuboid(
+        $crate::ray_tracing::primitives::PrimitiveEnum::AACuboid(
             $crate::ray_tracing::primitives::AACuboid::new(
                 position!($x1, $y1, $z1),
                 position!($x2, $y2, $z2),
@@ -318,7 +318,7 @@ macro_rules! triangle {
         }
         .normalized();
 
-        $crate::ray_tracing::primitives::Primitive::Triangle(
+        $crate::ray_tracing::primitives::PrimitiveEnum::Triangle(
             $crate::ray_tracing::primitives::Triangle::new_from_arc(
                 [$point_one, $point_two, $point_two],
                 [normal; 3],
@@ -338,7 +338,7 @@ macro_rules! triangle {
         }
         .normalized();
 
-        $crate::ray_tracing::primitives::Primitive::Triangle(
+        $crate::ray_tracing::primitives::PrimitiveEnum::Triangle(
             $crate::ray_tracing::primitives::Triangle::new_from_arc(
                 [point_one, point_two, point_two],
                 [normal; 3],

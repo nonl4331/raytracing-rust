@@ -2,11 +2,7 @@ use crate::acceleration::{
     aabb::Aabb,
     split::{Split, SplitType},
 };
-use crate::ray_tracing::{
-    intersection::PrimitiveTrait,
-    primitives::{Axis, Primitive},
-    ray::Ray,
-};
+use crate::ray_tracing::{intersection::PrimitiveTrait, primitives::Axis, ray::Ray};
 use crate::utility::vec::Vec3;
 use std::{collections::VecDeque, mem};
 
@@ -25,7 +21,7 @@ pub struct PrimitiveInfo {
 }
 
 impl PrimitiveInfo {
-    fn new(index: usize, primitive: &Primitive) -> PrimitiveInfo {
+    fn new<P: PrimitiveTrait>(index: usize, primitive: &P) -> PrimitiveInfo {
         let aabb = primitive.get_aabb().unwrap();
         let min = aabb.min;
         let max = aabb.max;
@@ -44,7 +40,7 @@ pub struct Bvh {
 }
 
 impl Bvh {
-    pub fn new(primitives: &mut Vec<Primitive>, split_type: SplitType) -> Self {
+    pub fn new<P: PrimitiveTrait>(primitives: &mut Vec<P>, split_type: SplitType) -> Self {
         let mut bvh = Self {
             split_type,
             nodes: Vec::new(),
@@ -202,11 +198,12 @@ impl Node {
 #[cfg(test)]
 mod tests {
 
-    use crate::{utility::math::Float, *};
+    use crate::acceleration::bvh::PrimitiveInfo;
+    use crate::ray_tracing::{intersection::PrimitiveTrait, primitives::PrimitiveEnum};
+    use crate::utility::{math::Float, vec::Vec3};
+    use crate::*;
     use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
     use rand_seeder::Seeder;
-
-    use super::*;
 
     #[test]
     fn primitive_info_new() {
@@ -222,7 +219,7 @@ mod tests {
 
     #[test]
     fn node_containment() {
-        let mut primitives: Vec<Primitive> = Vec::new();
+        let mut primitives: Vec<PrimitiveEnum> = Vec::new();
 
         let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 

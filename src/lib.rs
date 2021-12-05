@@ -8,5 +8,5 @@ pub use self::image::{
     macros::*,
     scene::{Parameters, Scene},
 };
-pub use self::ray_tracing::{material, primitives::Primitive, ray, texture};
+pub use self::ray_tracing::{material, primitives::PrimitiveEnum, ray, texture};
 pub use self::utility::{math::Float, vec::Vec3};

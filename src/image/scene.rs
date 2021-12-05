@@ -2,7 +2,6 @@ use crate::acceleration::{bvh::Bvh, split::SplitType};
 use crate::image::camera::Camera;
 use crate::ray_tracing::{
     intersection::PrimitiveTrait,
-    primitives::Primitive,
     ray::{Colour, Ray},
     sky::Sky,
 };
@@ -14,6 +13,8 @@ use chrono::Local;
 use rand::Rng;
 use rayon::prelude::*;
 use std::{
+    iter::FromIterator,
+    marker::{Send, Sync},
     sync::{mpsc::channel, Arc, Mutex},
     time::{Duration, Instant},
 };
@@ -22,8 +23,6 @@ const SAMPLES_DEFAULT: u32 = 30;
 const WIDTH_DEFAULT: u32 = 800;
 const HEIGHT_DEFAULT: u32 = 600;
 const FILENAME_DEFAULT: &str = "out.png";
-
-pub type PrimitivesType = Arc<Vec<Primitive>>;
 
 pub struct Parameters {
     pub samples: u32,
@@ -48,14 +47,18 @@ impl Parameters {
     }
 }
 
-pub struct Scene {
-    pub primitives: PrimitivesType,
+pub struct Scene<P: PrimitiveTrait> {
+    pub primitives: Arc<Vec<P>>,
     pub bvh: Arc<Bvh>,
     pub camera: Camera,
     pub sky: Arc<Sky>,
 }
 
-impl Scene {
+impl<P> Scene<P>
+where
+    P: PrimitiveTrait + Sync + Send,
+    Vec<P>: FromIterator<P>,
+{
     pub fn new(
         origin: Vec3,
         lookat: Vec3,
@@ -66,14 +69,9 @@ impl Scene {
         focus_dist: Float,
         sky: Sky,
         split_type: SplitType,
-        mut primitives: Vec<Primitive>,
+        primitives: Vec<P>,
     ) -> Self {
-        let primitives: Vec<Primitive> = primitives
-            .drain(..)
-            .flat_map(|primitive| primitive.get_internal())
-            .collect();
-
-        let mut primitives: Vec<Primitive> = primitives;
+        let mut primitives: Vec<P> = primitives;
 
         let time = Local::now();
 
