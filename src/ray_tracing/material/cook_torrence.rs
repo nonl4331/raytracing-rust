@@ -1,7 +1,7 @@
 use crate::ray_tracing::{
     material::{fresnel, offset_ray, Hit, MaterialTrait},
     ray::Ray,
-    texture::{TextureEnum, TextureTrait},
+    texture::TextureTrait,
 };
 
 use crate::utility::{math, math::Float, vec::Vec3};
@@ -14,17 +14,20 @@ use std::f64::consts::PI;
 #[cfg(not(feature = "f64"))]
 use std::f32::consts::PI;
 
-pub struct CookTorrence {
-    pub texture: Arc<TextureEnum>,
+pub struct CookTorrence<T: TextureTrait> {
+    pub texture: Arc<T>,
     pub alpha: Float,
     pub absorbtion: Float,
     pub specular_chance: Float,
     pub f0: Vec3,
 }
 
-impl CookTorrence {
+impl<T> CookTorrence<T>
+where
+    T: TextureTrait,
+{
     pub fn new(
-        texture: &Arc<TextureEnum>,
+        texture: &Arc<T>,
         alpha: Float,
         absorbtion: Float,
         specular_chance: Float,
@@ -52,7 +55,10 @@ impl CookTorrence {
     }
 }
 
-impl MaterialTrait for CookTorrence {
+impl<T> MaterialTrait for CookTorrence<T>
+where
+    T: TextureTrait,
+{
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         let random_dir = (math::random_unit_vector() + hit.normal).normalised();
         if math::random_float() < self.specular_chance {

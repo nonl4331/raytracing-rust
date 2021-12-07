@@ -7,7 +7,7 @@ use crate::utility::{math, math::Float};
 use crate::ray_tracing::{
     intersection::{offset_ray, Hit},
     ray::Ray,
-    texture::{TextureEnum, TextureTrait},
+    texture::TextureTrait,
 };
 
 use std::sync::Arc;
@@ -18,15 +18,18 @@ pub use lambertian::Lambertian;
 
 pub use cook_torrence::CookTorrence;
 
-pub enum MaterialEnum {
-    Lambertian(Lambertian),
-    Reflect(Reflect),
-    Refract(Refract),
-    Emit(Emit),
-    CookTorrence(CookTorrence),
+pub enum MaterialEnum<T: TextureTrait> {
+    Lambertian(Lambertian<T>),
+    Reflect(Reflect<T>),
+    Refract(Refract<T>),
+    Emit(Emit<T>),
+    CookTorrence(CookTorrence<T>),
 }
 
-impl MaterialTrait for MaterialEnum {
+impl<T> MaterialTrait for MaterialEnum<T>
+where
+    T: TextureTrait,
+{
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         match self {
             MaterialEnum::Reflect(reflect) => reflect.scatter_ray(ray, hit),
@@ -56,13 +59,16 @@ pub trait MaterialTrait {
     }
 }
 
-pub struct Reflect {
-    pub texture: Arc<TextureEnum>,
+pub struct Reflect<T: TextureTrait> {
+    pub texture: Arc<T>,
     pub fuzz: Float,
 }
 
-impl Reflect {
-    pub fn new(texture: &Arc<TextureEnum>, fuzz: Float) -> Self {
+impl<T> Reflect<T>
+where
+    T: TextureTrait,
+{
+    pub fn new(texture: &Arc<T>, fuzz: Float) -> Self {
         Reflect {
             texture: texture.clone(),
             fuzz,
@@ -70,13 +76,16 @@ impl Reflect {
     }
 }
 
-pub struct Refract {
-    pub texture: Arc<TextureEnum>,
+pub struct Refract<T: TextureTrait> {
+    pub texture: Arc<T>,
     pub eta: Float,
 }
 
-impl Refract {
-    pub fn new(texture: &Arc<TextureEnum>, eta: Float) -> Self {
+impl<T> Refract<T>
+where
+    T: TextureTrait,
+{
+    pub fn new(texture: &Arc<T>, eta: Float) -> Self {
         Refract {
             texture: texture.clone(),
             eta,
@@ -84,13 +93,16 @@ impl Refract {
     }
 }
 
-pub struct Emit {
-    pub texture: Arc<TextureEnum>,
+pub struct Emit<T> {
+    pub texture: Arc<T>,
     pub strength: Float,
 }
 
-impl Emit {
-    pub fn new(texture: &Arc<TextureEnum>, strength: Float) -> Self {
+impl<T> Emit<T>
+where
+    T: TextureTrait,
+{
+    pub fn new(texture: &Arc<T>, strength: Float) -> Self {
         Emit {
             texture: texture.clone(),
             strength,
@@ -98,7 +110,10 @@ impl Emit {
     }
 }
 
-impl MaterialTrait for Reflect {
+impl<T> MaterialTrait for Reflect<T>
+where
+    T: TextureTrait,
+{
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         let mut direction = ray.direction;
         direction.reflect(hit.normal);
@@ -112,7 +127,10 @@ impl MaterialTrait for Reflect {
     }
 }
 
-impl MaterialTrait for Refract {
+impl<T> MaterialTrait for Refract<T>
+where
+    T: TextureTrait,
+{
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         let mut eta_fraction = 1.0 / self.eta;
         if !hit.out {
@@ -139,7 +157,10 @@ impl MaterialTrait for Refract {
     }
 }
 
-impl MaterialTrait for Emit {
+impl<T> MaterialTrait for Emit<T>
+where
+    T: TextureTrait,
+{
     fn scatter_ray(&self, _: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         let point = offset_ray(hit.point, hit.normal, hit.error, true);
         (

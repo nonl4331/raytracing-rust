@@ -206,6 +206,7 @@ mod tests {
     use crate::acceleration::bvh::PrimitiveInfo;
     use crate::material::MaterialEnum;
     use crate::ray_tracing::{intersection::PrimitiveTrait, primitives::PrimitiveEnum};
+    use crate::texture::TextureEnum;
     use crate::utility::{math::Float, vec::Vec3};
     use crate::*;
     use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
@@ -225,7 +226,7 @@ mod tests {
 
     #[test]
     fn node_containment() {
-        let mut primitives: Vec<PrimitiveEnum<MaterialEnum>> = Vec::new();
+        let mut primitives: Vec<PrimitiveEnum<MaterialEnum<TextureEnum>>> = Vec::new();
 
         let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 

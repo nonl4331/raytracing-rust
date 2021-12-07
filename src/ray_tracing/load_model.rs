@@ -2,23 +2,24 @@ use crate::utility::{math::Float, vec::Vec3};
 use crate::{
     material::MaterialEnum,
     ray_tracing::primitives::{MeshData, MeshTriangle, PrimitiveEnum},
+    texture::TextureEnum,
 };
 use std::sync::Arc;
 
 pub fn load_model(
     filepath: &str,
-    material: &Arc<MaterialEnum>,
-) -> Vec<PrimitiveEnum<MaterialEnum>> {
+    material: &Arc<MaterialEnum<TextureEnum>>,
+) -> Vec<PrimitiveEnum<MaterialEnum<TextureEnum>>> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());
 
     let model = model.unwrap();
 
     let material = Arc::new(material);
 
-    let mut primitives: Vec<PrimitiveEnum<MaterialEnum>> = Vec::new();
+    let mut primitives: Vec<PrimitiveEnum<MaterialEnum<TextureEnum>>> = Vec::new();
 
     for object in model.objects {
-        let mesh_data: Arc<MeshData<MaterialEnum>> = Arc::new(MeshData::new(
+        let mesh_data: Arc<MeshData<MaterialEnum<TextureEnum>>> = Arc::new(MeshData::new(
             object
                 .vertices
                 .iter()
@@ -39,7 +40,7 @@ pub fn load_model(
                         panic!("Please export obj file with vertex normals!");
                     }
 
-                    let triangle: PrimitiveEnum<MaterialEnum> =
+                    let triangle: PrimitiveEnum<MaterialEnum<TextureEnum>> =
                         PrimitiveEnum::MeshTriangle(MeshTriangle::new(
                             [i1.0, i2.0, i3.0],
                             [i1.2.unwrap(), i2.2.unwrap(), i3.2.unwrap()],

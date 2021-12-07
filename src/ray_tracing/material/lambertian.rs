@@ -1,20 +1,23 @@
 use crate::ray_tracing::{
     material::{offset_ray, Hit, MaterialTrait},
     ray::Ray,
-    texture::{TextureEnum, TextureTrait},
+    texture::TextureTrait,
 };
 
 use crate::utility::{math, math::Float, vec::Vec3};
 
 use std::sync::Arc;
 
-pub struct Lambertian {
-    pub texture: Arc<TextureEnum>,
+pub struct Lambertian<T: TextureTrait> {
+    pub texture: Arc<T>,
     pub absorption: Float,
 }
 
-impl Lambertian {
-    pub fn new(texture: &Arc<TextureEnum>, absorption: Float) -> Self {
+impl<T> Lambertian<T>
+where
+    T: TextureTrait,
+{
+    pub fn new(texture: &Arc<T>, absorption: Float) -> Self {
         Lambertian {
             texture: texture.clone(),
             absorption,
@@ -22,7 +25,10 @@ impl Lambertian {
     }
 }
 
-impl MaterialTrait for Lambertian {
+impl<T> MaterialTrait for Lambertian<T>
+where
+    T: TextureTrait,
+{
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         let mut direction = math::random_unit_vector() + hit.normal;
         if math::near_zero(direction) {
