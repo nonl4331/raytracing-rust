@@ -16,7 +16,6 @@ pub struct Ray {
     pub direction: Vec3,
     pub d_inverse: Vec3,
     pub shear: Vec3,
-    pub hit: Option<Hit>,
     pub time: Float,
 }
 
@@ -39,7 +38,6 @@ impl Ray {
             d_inverse: Vec3::new(1.0 / direction.x, 1.0 / direction.y, 1.0 / direction.z),
             shear: Vec3::new(shear_x, shear_y, shear_z),
             time,
-            hit: None,
         }
     }
 
@@ -47,8 +45,14 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn check_hit<P: PrimitiveTrait>(&mut self, bvh: &Arc<Bvh>, primitives: &Arc<Vec<P>>) {
+    fn check_hit<P: PrimitiveTrait>(
+        &mut self,
+        bvh: &Arc<Bvh>,
+        primitives: &Arc<Vec<P>>,
+    ) -> Option<Hit> {
         let offset_lens = bvh.get_intersection_candidates(self);
+
+        let mut hit: Option<Hit> = None;
 
         for offset_len in offset_lens {
             let offset = offset_len.0;
@@ -59,20 +63,21 @@ impl Ray {
                     // make sure ray is going forwards
                     if current_hit.t > 0.0 {
                         // check if hit already exists
-                        if let Some(last_hit) = &self.hit {
+                        if let Some(last_hit) = &hit {
                             // check if t value is close to 0 than previous hit
                             if current_hit.t < last_hit.t {
-                                self.hit = Some(current_hit);
+                                hit = Some(current_hit);
                             }
                             continue;
                         }
 
                         // if hit doesn't exist set current hit to hit
-                        self.hit = Some(current_hit);
+                        hit = Some(current_hit);
                     }
                 }
             }
         }
+        hit
     }
 
     pub fn get_colour<P: PrimitiveTrait>(
@@ -88,12 +93,12 @@ impl Ray {
         // stop generating new bounce rays after MAX_DEPTH
         while depth < MAX_DEPTH {
             // check for intersection with any of the objects in the scene
-            ray.check_hit(&bvh, &primitives);
+            let hit = ray.check_hit(&bvh, &primitives);
 
             ray_count += 1;
 
-            if ray.hit.is_some() {
-                let hit = ray.hit.take().unwrap();
+            if hit.is_some() {
+                let hit = hit.unwrap();
 
                 let (colour_multiplier, exit) = hit.material.scatter_ray(ray, &hit);
 
