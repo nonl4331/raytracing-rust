@@ -9,7 +9,7 @@ use crate::ray_tracing::{
         aacuboid::aacuboid_intersection, aarect::aarect_intersection, sphere::sphere_intersection,
         triangle::triangle_intersection,
     },
-    material::{Material, MaterialTrait},
+    material::{MaterialEnum, MaterialTrait},
     primitives::{AACuboid, AARect, Axis, MeshTriangle, PrimitiveEnum, Sphere, Triangle},
     ray::Ray,
 };
@@ -36,7 +36,7 @@ pub struct Hit {
 
 pub struct SurfaceIntersection {
     pub hit: Hit,
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
 }
 
 impl SurfaceIntersection {
@@ -47,7 +47,7 @@ impl SurfaceIntersection {
         normal: Vec3,
         uv: Option<Vec2>,
         out: bool,
-        material: Arc<Material>,
+        material: Arc<MaterialEnum>,
     ) -> Self {
         SurfaceIntersection {
             hit: Hit {

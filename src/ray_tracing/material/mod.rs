@@ -7,7 +7,7 @@ use crate::utility::{math, math::Float};
 use crate::ray_tracing::{
     intersection::{offset_ray, Hit},
     ray::Ray,
-    texture::{Texture, TextureTrait},
+    texture::{TextureEnum, TextureTrait},
 };
 
 use std::sync::Arc;
@@ -18,7 +18,7 @@ pub use lambertian::Lambertian;
 
 pub use cook_torrence::CookTorrence;
 
-pub enum Material {
+pub enum MaterialEnum {
     Lambertian(Lambertian),
     Reflect(Reflect),
     Refract(Refract),
@@ -26,23 +26,23 @@ pub enum Material {
     CookTorrence(CookTorrence),
 }
 
-impl MaterialTrait for Material {
+impl MaterialTrait for MaterialEnum {
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
         match self {
-            Material::Lambertian(diffuse) => diffuse.scatter_ray(ray, hit),
-            Material::Reflect(reflect) => reflect.scatter_ray(ray, hit),
-            Material::Refract(refract) => refract.scatter_ray(ray, hit),
-            Material::Emit(emit) => emit.scatter_ray(ray, hit),
-            Material::CookTorrence(cook_torrence) => cook_torrence.scatter_ray(ray, hit),
+            MaterialEnum::Reflect(reflect) => reflect.scatter_ray(ray, hit),
+            MaterialEnum::Lambertian(diffuse) => diffuse.scatter_ray(ray, hit),
+            MaterialEnum::Refract(refract) => refract.scatter_ray(ray, hit),
+            MaterialEnum::Emit(emit) => emit.scatter_ray(ray, hit),
+            MaterialEnum::CookTorrence(cook_torrence) => cook_torrence.scatter_ray(ray, hit),
         }
     }
     fn requires_uv(&self) -> bool {
         match self {
-            Material::Lambertian(diffuse) => diffuse.texture.requires_uv(),
-            Material::Reflect(reflect) => reflect.texture.requires_uv(),
-            Material::Refract(refract) => refract.texture.requires_uv(),
-            Material::Emit(emit) => emit.texture.requires_uv(),
-            Material::CookTorrence(cook_torrence) => cook_torrence.texture.requires_uv(),
+            MaterialEnum::Lambertian(diffuse) => diffuse.texture.requires_uv(),
+            MaterialEnum::Reflect(reflect) => reflect.texture.requires_uv(),
+            MaterialEnum::Refract(refract) => refract.texture.requires_uv(),
+            MaterialEnum::Emit(emit) => emit.texture.requires_uv(),
+            MaterialEnum::CookTorrence(cook_torrence) => cook_torrence.texture.requires_uv(),
         }
     }
 }
@@ -57,12 +57,12 @@ pub trait MaterialTrait {
 }
 
 pub struct Reflect {
-    pub texture: Arc<Texture>,
+    pub texture: Arc<TextureEnum>,
     pub fuzz: Float,
 }
 
 impl Reflect {
-    pub fn new(texture: &Arc<Texture>, fuzz: Float) -> Self {
+    pub fn new(texture: &Arc<TextureEnum>, fuzz: Float) -> Self {
         Reflect {
             texture: texture.clone(),
             fuzz,
@@ -71,12 +71,12 @@ impl Reflect {
 }
 
 pub struct Refract {
-    pub texture: Arc<Texture>,
+    pub texture: Arc<TextureEnum>,
     pub eta: Float,
 }
 
 impl Refract {
-    pub fn new(texture: &Arc<Texture>, eta: Float) -> Self {
+    pub fn new(texture: &Arc<TextureEnum>, eta: Float) -> Self {
         Refract {
             texture: texture.clone(),
             eta,
@@ -85,12 +85,12 @@ impl Refract {
 }
 
 pub struct Emit {
-    pub texture: Arc<Texture>,
+    pub texture: Arc<TextureEnum>,
     pub strength: Float,
 }
 
 impl Emit {
-    pub fn new(texture: &Arc<Texture>, strength: Float) -> Self {
+    pub fn new(texture: &Arc<TextureEnum>, strength: Float) -> Self {
         Emit {
             texture: texture.clone(),
             strength,

@@ -1,11 +1,11 @@
 use crate::ray_tracing::{
-    material::Material,
+    material::MaterialEnum,
     primitives::{MeshData, MeshTriangle, PrimitiveEnum},
 };
 use crate::utility::{math::Float, vec::Vec3};
 use std::sync::Arc;
 
-pub fn load_model(filepath: &str, material: &Arc<Material>) -> Vec<PrimitiveEnum> {
+pub fn load_model(filepath: &str, material: &Arc<MaterialEnum>) -> Vec<PrimitiveEnum> {
     let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap());
 
     let model = model.unwrap();

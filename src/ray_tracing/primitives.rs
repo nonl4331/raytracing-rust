@@ -1,4 +1,4 @@
-use crate::ray_tracing::material::Material;
+use crate::ray_tracing::material::MaterialEnum;
 use crate::utility::{
     math::Float,
     vec::{Vec2, Vec3},
@@ -91,7 +91,7 @@ pub struct AARect {
     pub max: Vec2,
     pub k: Float,
     pub axis: Axis,
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
 }
 
 impl AARect {
@@ -100,7 +100,7 @@ impl AARect {
         point_two: Vec2,
         k: Float,
         axis: Axis,
-        material: &Arc<Material>,
+        material: &Arc<MaterialEnum>,
     ) -> Self {
         if point_one == point_two {
             panic!("AARect called with two of the same point!");
@@ -121,11 +121,11 @@ pub struct AACuboid {
     pub min: Vec3,
     pub max: Vec3,
     pub rects: [AARect; 6],
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
 }
 
 impl AACuboid {
-    pub fn new(point_one: Vec3, point_two: Vec3, material: &Arc<Material>) -> Self {
+    pub fn new(point_one: Vec3, point_two: Vec3, material: &Arc<MaterialEnum>) -> Self {
         if point_one == point_two {
             panic!("AACuboid called with two of the same point!");
         }
@@ -188,11 +188,11 @@ impl AACuboid {
 pub struct Sphere {
     pub center: Vec3,
     pub radius: Float,
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: Float, material: &Arc<Material>) -> Self {
+    pub fn new(center: Vec3, radius: Float, material: &Arc<MaterialEnum>) -> Self {
         Sphere {
             center,
             radius,
@@ -205,11 +205,11 @@ impl Sphere {
 pub struct Triangle {
     pub points: [Vec3; 3],
     pub normals: [Vec3; 3],
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
 }
 
 impl Triangle {
-    pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<Material>) -> Self {
+    pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<MaterialEnum>) -> Self {
         Triangle {
             points,
             normals,
@@ -221,7 +221,7 @@ impl Triangle {
 pub struct MeshTriangle {
     pub point_indices: [usize; 3],
     pub normal_indices: [usize; 3],
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
     pub mesh: Arc<MeshData>,
 }
 
@@ -229,7 +229,7 @@ impl MeshTriangle {
     pub fn new(
         point_indices: [usize; 3],
         normal_indices: [usize; 3],
-        material: &Arc<Material>,
+        material: &Arc<MaterialEnum>,
         mesh: &Arc<MeshData>,
     ) -> Self {
         MeshTriangle {
@@ -244,11 +244,11 @@ impl MeshTriangle {
 pub struct MeshData {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
-    pub material: Arc<Material>,
+    pub material: Arc<MaterialEnum>,
 }
 
 impl MeshData {
-    pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<Material>) -> Self {
+    pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<MaterialEnum>) -> Self {
         MeshData {
             vertices,
             normals,

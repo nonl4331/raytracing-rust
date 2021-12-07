@@ -1,6 +1,6 @@
 use crate::ray_tracing::{
     ray::{Colour, Ray},
-    texture::{Texture, TextureTrait},
+    texture::{TextureEnum, TextureTrait},
 };
 use crate::utility::vec::{Vec2, Vec3};
 use std::sync::Arc;
@@ -12,11 +12,11 @@ use std::f64::consts::PI;
 use std::f32::consts::PI;
 
 pub struct Sky {
-    texture: Option<Arc<Texture>>,
+    texture: Option<Arc<TextureEnum>>,
 }
 
 impl Sky {
-    pub fn new(texture: Option<&Arc<Texture>>) -> Self {
+    pub fn new(texture: Option<&Arc<TextureEnum>>) -> Self {
         let texture = texture.cloned();
         Sky { texture }
     }

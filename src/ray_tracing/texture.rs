@@ -8,7 +8,7 @@ use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 const PERLIN_RVECS: usize = 256;
 
-pub enum Texture {
+pub enum TextureEnum {
     CheckeredTexture(CheckeredTexture),
     SolidColour(SolidColour),
     ImageTexture(ImageTexture),
@@ -25,23 +25,23 @@ pub trait TextureTrait {
     }
 }
 
-impl TextureTrait for Texture {
+impl TextureTrait for TextureEnum {
     fn colour_value(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
         match self {
-            Texture::CheckeredTexture(texture) => texture.colour_value(uv, point),
-            Texture::SolidColour(texture) => texture.colour_value(uv, point),
-            Texture::ImageTexture(texture) => texture.colour_value(uv, point),
-            Texture::Lerp(texture) => texture.colour_value(uv, point),
-            Texture::Perlin(texture) => texture.colour_value(uv, point),
+            TextureEnum::CheckeredTexture(texture) => texture.colour_value(uv, point),
+            TextureEnum::SolidColour(texture) => texture.colour_value(uv, point),
+            TextureEnum::ImageTexture(texture) => texture.colour_value(uv, point),
+            TextureEnum::Lerp(texture) => texture.colour_value(uv, point),
+            TextureEnum::Perlin(texture) => texture.colour_value(uv, point),
         }
     }
     fn requires_uv(&self) -> bool {
         match self {
-            Texture::CheckeredTexture(_) => false,
-            Texture::SolidColour(_) => false,
-            Texture::ImageTexture(_) => true,
-            Texture::Lerp(_) => true,
-            Texture::Perlin(_) => false,
+            TextureEnum::CheckeredTexture(_) => false,
+            TextureEnum::SolidColour(_) => false,
+            TextureEnum::ImageTexture(_) => true,
+            TextureEnum::Lerp(_) => true,
+            TextureEnum::Perlin(_) => false,
         }
     }
 }

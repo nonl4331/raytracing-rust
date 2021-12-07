@@ -1,7 +1,7 @@
 use crate::ray_tracing::{
     material::{fresnel, offset_ray, Hit, MaterialTrait},
     ray::Ray,
-    texture::{Texture, TextureTrait},
+    texture::{TextureEnum, TextureTrait},
 };
 
 use crate::utility::{math, math::Float, vec::Vec3};
@@ -15,7 +15,7 @@ use std::f64::consts::PI;
 use std::f32::consts::PI;
 
 pub struct CookTorrence {
-    pub texture: Arc<Texture>,
+    pub texture: Arc<TextureEnum>,
     pub alpha: Float,
     pub absorbtion: Float,
     pub specular_chance: Float,
@@ -24,7 +24,7 @@ pub struct CookTorrence {
 
 impl CookTorrence {
     pub fn new(
-        texture: &Arc<Texture>,
+        texture: &Arc<TextureEnum>,
         alpha: Float,
         absorbtion: Float,
         specular_chance: Float,
