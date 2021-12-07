@@ -1,9 +1,11 @@
 use crate::ray_tracing::{
     intersection::{Hit, PrimitiveTrait},
+    material::Material,
     primitives::Sphere,
     ray::Ray,
 };
 use crate::utility::{interval::Interval, interval_vec::IntervalVec3, math::gamma, vec::Vec3};
+use std::sync::Arc;
 
 const SPHERE_INTERSECTION: SphereIntersection = if cfg!(feature = "sphere_three") {
     SphereIntersection::Three
@@ -19,7 +21,7 @@ enum SphereIntersection {
     Three,
 }
 
-pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
+pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
     match SPHERE_INTERSECTION {
         SphereIntersection::One => sphere_intersection_one(sphere, ray),
         SphereIntersection::Two => sphere_intersection_two(sphere, ray),
@@ -28,7 +30,7 @@ pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 }
 
 // baseline algorithm
-pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
+pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
     let origin = IntervalVec3::from_vec(ray.origin);
     let center = IntervalVec3::from_vec(sphere.center);
     let direction = IntervalVec3::from_vec(ray.direction);
@@ -62,21 +64,23 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         }
 
         // return hit
-        Some(Hit {
-            t: t.average(),
-            point: point.average(),
-            error: point.error(),
-            normal: normal.average(),
-            uv: sphere.get_uv(point.average()),
-            out,
-            material: sphere.material.clone(),
-        })
+        Some((
+            Hit {
+                t: t.average(),
+                point: point.average(),
+                error: point.error(),
+                normal: normal.average(),
+                uv: sphere.get_uv(point.average()),
+                out,
+            },
+            sphere.material.clone(),
+        ))
     } else {
         None
     }
 }
 
-pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
+pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
     let center = sphere.center;
     let radius = sphere.radius;
     let direction = ray.direction;
@@ -118,21 +122,23 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
 
         let point = point + center;
 
-        Some(Hit {
-            t,
-            point,
-            error: point_error,
-            normal,
-            uv: sphere.get_uv(point),
-            out,
-            material: sphere.material.clone(),
-        })
+        Some((
+            Hit {
+                t,
+                point,
+                error: point_error,
+                normal,
+                uv: sphere.get_uv(point),
+                out,
+            },
+            sphere.material.clone(),
+        ))
     } else {
         None
     }
 }
 
-pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
+pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
     let dir = ray.direction;
     let center = sphere.center;
     let radius = sphere.radius;
@@ -191,15 +197,17 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<Hit> {
         }
 
         // fill in details about intersection point
-        Some(Hit {
-            t,
-            point,
-            error: 0.000001 * Vec3::one(),
-            normal,
-            uv: sphere.get_uv(point),
-            out,
-            material: sphere.material.clone(),
-        })
+        Some((
+            Hit {
+                t,
+                point,
+                error: 0.000001 * Vec3::one(),
+                normal,
+                uv: sphere.get_uv(point),
+                out,
+            },
+            sphere.material.clone(),
+        ))
     } else {
         None
     }

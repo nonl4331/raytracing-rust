@@ -46,13 +46,19 @@ impl TriangleTrait for MeshTriangle {
     }
 }
 
-pub fn triangle_intersection<T: TriangleTrait>(triangle: &T, ray: &Ray) -> Option<Hit> {
+pub fn triangle_intersection<T: TriangleTrait>(
+    triangle: &T,
+    ray: &Ray,
+) -> Option<(Hit, Arc<Material>)> {
     match TRIANGLE_INTERSECTION {
         TriangleIntersection::One => triangle_intersection_one::<T>(triangle, ray),
     }
 }
 
-fn triangle_intersection_one<T: TriangleTrait>(triangle: &T, ray: &Ray) -> Option<Hit> {
+fn triangle_intersection_one<T: TriangleTrait>(
+    triangle: &T,
+    ray: &Ray,
+) -> Option<(Hit, Arc<Material>)> {
     let mut p0t = triangle.get_point(0) - ray.origin;
     let mut p1t = triangle.get_point(1) - ray.origin;
     let mut p2t = triangle.get_point(2) - ray.origin;
@@ -145,13 +151,15 @@ fn triangle_intersection_one<T: TriangleTrait>(triangle: &T, ray: &Ray) -> Optio
     let point =
         b0 * triangle.get_point(0) + b1 * triangle.get_point(1) + b2 * triangle.get_point(2);
 
-    Some(Hit {
-        t,
-        point,
-        error: point_error,
-        normal,
-        uv: Some(uv),
-        out,
-        material: triangle.get_material(),
-    })
+    Some((
+        Hit {
+            t,
+            point,
+            error: point_error,
+            normal,
+            uv: Some(uv),
+            out,
+        },
+        triangle.get_material(),
+    ))
 }

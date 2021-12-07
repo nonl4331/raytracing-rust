@@ -32,11 +32,10 @@ pub struct Hit {
     pub normal: Vec3,
     pub uv: Option<Vec2>,
     pub out: bool,
-    pub material: Arc<Material>,
 }
 
 pub trait Intersection {
-    fn get_int(&self, _: &Ray) -> Option<Hit> {
+    fn get_int(&self, _: &Ray) -> Option<(Hit, Arc<Material>)> {
         unimplemented!()
     }
     fn does_int(&self, ray: &Ray) -> bool {
@@ -97,7 +96,7 @@ pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
 }
 
 impl Intersection for PrimitiveEnum {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_int(ray),
             PrimitiveEnum::AARect(rect) => rect.get_int(ray),
@@ -150,7 +149,7 @@ impl PrimitiveTrait for PrimitiveEnum {
 }
 
 impl Intersection for Sphere {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
         sphere_intersection(self, ray)
     }
 }
@@ -178,7 +177,7 @@ impl PrimitiveTrait for Sphere {
 }
 
 impl Intersection for AARect {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
         aarect_intersection(self, ray)
     }
 
@@ -216,7 +215,7 @@ impl PrimitiveTrait for AARect {
 }
 
 impl Intersection for AACuboid {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
         aacuboid_intersection(self, ray)
     }
 
@@ -237,7 +236,7 @@ impl PrimitiveTrait for AACuboid {
 }
 
 impl Intersection for Triangle {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
         triangle_intersection(self, ray)
     }
 }
@@ -252,7 +251,7 @@ impl PrimitiveTrait for Triangle {
 }
 
 impl Intersection for MeshTriangle {
-    fn get_int(&self, ray: &Ray) -> Option<Hit> {
+    fn get_int(&self, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
         triangle_intersection(self, ray)
     }
 }
