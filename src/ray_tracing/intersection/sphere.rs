@@ -69,7 +69,7 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<SurfaceInte
             normal.average(),
             sphere.get_uv(point.average()),
             out,
-            sphere.material.clone(),
+            &sphere.material,
         ))
     } else {
         None
@@ -125,7 +125,7 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<SurfaceInte
             normal,
             sphere.get_uv(point),
             out,
-            sphere.material.clone(),
+            &sphere.material,
         ))
     } else {
         None
@@ -198,7 +198,7 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIn
             normal,
             sphere.get_uv(point),
             out,
-            sphere.material.clone(),
+            &sphere.material,
         ))
     } else {
         None

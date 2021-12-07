@@ -19,7 +19,7 @@ enum TriangleIntersection {
 pub trait TriangleTrait {
     fn get_point(&self, index: usize) -> Vec3;
     fn get_normal(&self, index: usize) -> Vec3;
-    fn get_material(&self) -> Arc<MaterialEnum>;
+    fn get_material(&self) -> &Arc<MaterialEnum>;
 }
 
 impl TriangleTrait for Triangle {
@@ -29,8 +29,8 @@ impl TriangleTrait for Triangle {
     fn get_normal(&self, index: usize) -> Vec3 {
         self.normals[index]
     }
-    fn get_material(&self) -> Arc<MaterialEnum> {
-        self.material.clone()
+    fn get_material(&self) -> &Arc<MaterialEnum> {
+        &self.material
     }
 }
 
@@ -41,8 +41,8 @@ impl TriangleTrait for MeshTriangle {
     fn get_normal(&self, index: usize) -> Vec3 {
         (*self.mesh).normals[self.normal_indices[index]]
     }
-    fn get_material(&self) -> Arc<MaterialEnum> {
-        self.material.clone()
+    fn get_material(&self) -> &Arc<MaterialEnum> {
+        &self.material
     }
 }
 

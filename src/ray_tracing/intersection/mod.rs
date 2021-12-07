@@ -47,7 +47,7 @@ impl SurfaceIntersection {
         normal: Vec3,
         uv: Option<Vec2>,
         out: bool,
-        material: Arc<MaterialEnum>,
+        material: &Arc<MaterialEnum>,
     ) -> Self {
         SurfaceIntersection {
             hit: Hit {
@@ -58,7 +58,7 @@ impl SurfaceIntersection {
                 uv,
                 out,
             },
-            material,
+            material: material.clone(),
         }
     }
 }

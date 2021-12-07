@@ -40,7 +40,7 @@ fn aarect_intersection_one(aarect: &AARect, ray: &Ray) -> Option<SurfaceIntersec
                 .normalised(),
             aarect.get_uv(point),
             true,
-            aarect.material.clone(),
+            &aarect.material,
         ))
     } else {
         None
