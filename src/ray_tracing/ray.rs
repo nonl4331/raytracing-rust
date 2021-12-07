@@ -1,8 +1,8 @@
 use crate::acceleration::bvh::Bvh;
 
 use crate::ray_tracing::{
-    intersection::{Hit, PrimitiveTrait},
-    material::{Material, MaterialTrait},
+    intersection::{PrimitiveTrait, SurfaceIntersection},
+    material::MaterialTrait,
     primitives::Axis,
     sky::Sky,
 };
@@ -49,10 +49,10 @@ impl Ray {
         &mut self,
         bvh: &Arc<Bvh>,
         primitives: &Arc<Vec<P>>,
-    ) -> Option<(Hit, Arc<Material>)> {
+    ) -> Option<SurfaceIntersection> {
         let offset_lens = bvh.get_intersection_candidates(self);
 
-        let mut hit: Option<(Hit, Arc<Material>)> = None;
+        let mut hit: Option<SurfaceIntersection> = None;
 
         for offset_len in offset_lens {
             let offset = offset_len.0;
@@ -61,11 +61,11 @@ impl Ray {
                 // check for hit
                 if let Some(current_hit) = object.get_int(self) {
                     // make sure ray is going forwards
-                    if current_hit.0.t > 0.0 {
+                    if current_hit.hit.t > 0.0 {
                         // check if hit already exists
                         if let Some(last_hit) = &hit {
                             // check if t value is close to 0 than previous hit
-                            if current_hit.0.t < last_hit.0.t {
+                            if current_hit.hit.t < last_hit.hit.t {
                                 hit = Some(current_hit);
                             }
                             continue;
@@ -98,7 +98,8 @@ impl Ray {
             ray_count += 1;
 
             if hit.is_some() {
-                let (hit, mat) = hit.unwrap();
+                let surface_intersection = hit.unwrap();
+                let (hit, mat) = (surface_intersection.hit, surface_intersection.material);
 
                 let (colour_multiplier, exit) = mat.scatter_ray(ray, &hit);
 

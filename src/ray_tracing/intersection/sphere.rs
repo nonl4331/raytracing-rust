@@ -1,11 +1,9 @@
 use crate::ray_tracing::{
-    intersection::{Hit, PrimitiveTrait},
-    material::Material,
+    intersection::{PrimitiveTrait, SurfaceIntersection},
     primitives::Sphere,
     ray::Ray,
 };
 use crate::utility::{interval::Interval, interval_vec::IntervalVec3, math::gamma, vec::Vec3};
-use std::sync::Arc;
 
 const SPHERE_INTERSECTION: SphereIntersection = if cfg!(feature = "sphere_three") {
     SphereIntersection::Three
@@ -21,7 +19,7 @@ enum SphereIntersection {
     Three,
 }
 
-pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
+pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
     match SPHERE_INTERSECTION {
         SphereIntersection::One => sphere_intersection_one(sphere, ray),
         SphereIntersection::Two => sphere_intersection_two(sphere, ray),
@@ -30,7 +28,7 @@ pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Mater
 }
 
 // baseline algorithm
-pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
+pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
     let origin = IntervalVec3::from_vec(ray.origin);
     let center = IntervalVec3::from_vec(sphere.center);
     let direction = IntervalVec3::from_vec(ray.direction);
@@ -64,15 +62,13 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<M
         }
 
         // return hit
-        Some((
-            Hit {
-                t: t.average(),
-                point: point.average(),
-                error: point.error(),
-                normal: normal.average(),
-                uv: sphere.get_uv(point.average()),
-                out,
-            },
+        Some(SurfaceIntersection::new(
+            t.average(),
+            point.average(),
+            point.error(),
+            normal.average(),
+            sphere.get_uv(point.average()),
+            out,
             sphere.material.clone(),
         ))
     } else {
@@ -80,7 +76,7 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<M
     }
 }
 
-pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
+pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
     let center = sphere.center;
     let radius = sphere.radius;
     let direction = ray.direction;
@@ -122,15 +118,13 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<M
 
         let point = point + center;
 
-        Some((
-            Hit {
-                t,
-                point,
-                error: point_error,
-                normal,
-                uv: sphere.get_uv(point),
-                out,
-            },
+        Some(SurfaceIntersection::new(
+            t,
+            point,
+            point_error,
+            normal,
+            sphere.get_uv(point),
+            out,
             sphere.material.clone(),
         ))
     } else {
@@ -138,7 +132,7 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<M
     }
 }
 
-pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc<Material>)> {
+pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
     let dir = ray.direction;
     let center = sphere.center;
     let radius = sphere.radius;
@@ -197,15 +191,13 @@ pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<(Hit, Arc
         }
 
         // fill in details about intersection point
-        Some((
-            Hit {
-                t,
-                point,
-                error: 0.000001 * Vec3::one(),
-                normal,
-                uv: sphere.get_uv(point),
-                out,
-            },
+        Some(SurfaceIntersection::new(
+            t,
+            point,
+            0.000001 * Vec3::one(),
+            normal,
+            sphere.get_uv(point),
+            out,
             sphere.material.clone(),
         ))
     } else {
