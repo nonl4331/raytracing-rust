@@ -1,6 +1,6 @@
 use crate::ray_tracing::{
     intersection::{check_side, SurfaceIntersection},
-    material::MaterialEnum,
+    material::MaterialTrait,
     primitives::{Axis, MeshTriangle, Triangle},
     ray::Ray,
 };
@@ -16,49 +16,55 @@ enum TriangleIntersection {
     One,
 }
 
-pub trait TriangleTrait {
+pub trait TriangleTrait<M: MaterialTrait> {
     fn get_point(&self, index: usize) -> Vec3;
     fn get_normal(&self, index: usize) -> Vec3;
-    fn get_material(&self) -> &Arc<MaterialEnum>;
+    fn get_material(&self) -> &Arc<M>;
 }
 
-impl TriangleTrait for Triangle {
+impl<M> TriangleTrait<M> for Triangle<M>
+where
+    M: MaterialTrait,
+{
     fn get_point(&self, index: usize) -> Vec3 {
         self.points[index]
     }
     fn get_normal(&self, index: usize) -> Vec3 {
         self.normals[index]
     }
-    fn get_material(&self) -> &Arc<MaterialEnum> {
+    fn get_material(&self) -> &Arc<M> {
         &self.material
     }
 }
 
-impl TriangleTrait for MeshTriangle {
+impl<M> TriangleTrait<M> for MeshTriangle<M>
+where
+    M: MaterialTrait,
+{
     fn get_point(&self, index: usize) -> Vec3 {
         (*self.mesh).vertices[self.point_indices[index]]
     }
     fn get_normal(&self, index: usize) -> Vec3 {
         (*self.mesh).normals[self.normal_indices[index]]
     }
-    fn get_material(&self) -> &Arc<MaterialEnum> {
+    fn get_material(&self) -> &Arc<M> {
         &self.material
     }
 }
 
-pub fn triangle_intersection<T: TriangleTrait>(
+pub fn triangle_intersection<T: TriangleTrait<M>, M: MaterialTrait>(
     triangle: &T,
     ray: &Ray,
-) -> Option<SurfaceIntersection> {
+) -> Option<SurfaceIntersection<M>> {
     match TRIANGLE_INTERSECTION {
-        TriangleIntersection::One => triangle_intersection_one::<T>(triangle, ray),
+        TriangleIntersection::One => triangle_intersection_one::<T, M>(triangle, ray),
     }
 }
 
-fn triangle_intersection_one<T: TriangleTrait>(
+fn triangle_intersection_one<T: TriangleTrait<M>, M: MaterialTrait>(
     triangle: &T,
     ray: &Ray,
-) -> Option<SurfaceIntersection> {
+) -> Option<SurfaceIntersection<M>> {
     let mut p0t = triangle.get_point(0) - ray.origin;
     let mut p1t = triangle.get_point(1) - ray.origin;
     let mut p2t = triangle.get_point(2) - ray.origin;

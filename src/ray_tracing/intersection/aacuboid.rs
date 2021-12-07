@@ -1,5 +1,6 @@
 use crate::ray_tracing::{
     intersection::{Intersection, SurfaceIntersection},
+    material::MaterialTrait,
     primitives::AACuboid,
     ray::Ray,
 };
@@ -10,14 +11,20 @@ enum AACuboidIntersection {
     One,
 }
 
-pub fn aacuboid_intersection(aacuboid: &AACuboid, ray: &Ray) -> Option<SurfaceIntersection> {
+pub fn aacuboid_intersection<M: MaterialTrait>(
+    aacuboid: &AACuboid<M>,
+    ray: &Ray,
+) -> Option<SurfaceIntersection<M>> {
     match AACUBOID_INTERSECTION {
         AACuboidIntersection::One => aacuboid_intersection_one(aacuboid, ray),
     }
 }
 
-fn aacuboid_intersection_one(aacuboid: &AACuboid, ray: &Ray) -> Option<SurfaceIntersection> {
-    let mut hit: Option<SurfaceIntersection> = None;
+fn aacuboid_intersection_one<M: MaterialTrait>(
+    aacuboid: &AACuboid<M>,
+    ray: &Ray,
+) -> Option<SurfaceIntersection<M>> {
+    let mut hit: Option<SurfaceIntersection<M>> = None;
     for side in aacuboid.rects.iter() {
         if let Some(current_hit) = side.get_int(ray) {
             // make sure ray is going forwards

@@ -1,16 +1,16 @@
-use crate::ray_tracing::material::MaterialEnum;
+use crate::ray_tracing::material::MaterialTrait;
 use crate::utility::{
     math::Float,
     vec::{Vec2, Vec3},
 };
 use std::sync::Arc;
 
-pub enum PrimitiveEnum {
-    Sphere(Sphere),
-    AARect(AARect),
-    AACuboid(AACuboid),
-    Triangle(Triangle),
-    MeshTriangle(MeshTriangle),
+pub enum PrimitiveEnum<M: MaterialTrait> {
+    Sphere(Sphere<M>),
+    AARect(AARect<M>),
+    AACuboid(AACuboid<M>),
+    Triangle(Triangle<M>),
+    MeshTriangle(MeshTriangle<M>),
 }
 
 #[derive(Clone, Debug)]
@@ -86,22 +86,19 @@ impl Axis {
 }
 
 #[derive(Clone)]
-pub struct AARect {
+pub struct AARect<M: MaterialTrait> {
     pub min: Vec2,
     pub max: Vec2,
     pub k: Float,
     pub axis: Axis,
-    pub material: Arc<MaterialEnum>,
+    pub material: Arc<M>,
 }
 
-impl AARect {
-    pub fn new(
-        point_one: Vec2,
-        point_two: Vec2,
-        k: Float,
-        axis: Axis,
-        material: &Arc<MaterialEnum>,
-    ) -> Self {
+impl<M> AARect<M>
+where
+    M: MaterialTrait,
+{
+    pub fn new(point_one: Vec2, point_two: Vec2, k: Float, axis: Axis, material: &Arc<M>) -> Self {
         if point_one == point_two {
             panic!("AARect called with two of the same point!");
         }
@@ -117,15 +114,18 @@ impl AARect {
     }
 }
 
-pub struct AACuboid {
+pub struct AACuboid<M: MaterialTrait> {
     pub min: Vec3,
     pub max: Vec3,
-    pub rects: [AARect; 6],
-    pub material: Arc<MaterialEnum>,
+    pub rects: [AARect<M>; 6],
+    pub material: Arc<M>,
 }
 
-impl AACuboid {
-    pub fn new(point_one: Vec3, point_two: Vec3, material: &Arc<MaterialEnum>) -> Self {
+impl<M> AACuboid<M>
+where
+    M: MaterialTrait,
+{
+    pub fn new(point_one: Vec3, point_two: Vec3, material: &Arc<M>) -> Self {
         if point_one == point_two {
             panic!("AACuboid called with two of the same point!");
         }
@@ -185,14 +185,17 @@ impl AACuboid {
     }
 }
 
-pub struct Sphere {
+pub struct Sphere<M: MaterialTrait> {
     pub center: Vec3,
     pub radius: Float,
-    pub material: Arc<MaterialEnum>,
+    pub material: Arc<M>,
 }
 
-impl Sphere {
-    pub fn new(center: Vec3, radius: Float, material: &Arc<MaterialEnum>) -> Self {
+impl<M> Sphere<M>
+where
+    M: MaterialTrait,
+{
+    pub fn new(center: Vec3, radius: Float, material: &Arc<M>) -> Self {
         Sphere {
             center,
             radius,
@@ -202,14 +205,17 @@ impl Sphere {
 }
 
 #[derive(Clone)]
-pub struct Triangle {
+pub struct Triangle<M: MaterialTrait> {
     pub points: [Vec3; 3],
     pub normals: [Vec3; 3],
-    pub material: Arc<MaterialEnum>,
+    pub material: Arc<M>,
 }
 
-impl Triangle {
-    pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<MaterialEnum>) -> Self {
+impl<M> Triangle<M>
+where
+    M: MaterialTrait,
+{
+    pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<M>) -> Self {
         Triangle {
             points,
             normals,
@@ -218,19 +224,22 @@ impl Triangle {
     }
 }
 
-pub struct MeshTriangle {
+pub struct MeshTriangle<M: MaterialTrait> {
     pub point_indices: [usize; 3],
     pub normal_indices: [usize; 3],
-    pub material: Arc<MaterialEnum>,
-    pub mesh: Arc<MeshData>,
+    pub material: Arc<M>,
+    pub mesh: Arc<MeshData<M>>,
 }
 
-impl MeshTriangle {
+impl<M> MeshTriangle<M>
+where
+    M: MaterialTrait,
+{
     pub fn new(
         point_indices: [usize; 3],
         normal_indices: [usize; 3],
-        material: &Arc<MaterialEnum>,
-        mesh: &Arc<MeshData>,
+        material: &Arc<M>,
+        mesh: &Arc<MeshData<M>>,
     ) -> Self {
         MeshTriangle {
             point_indices,
@@ -241,14 +250,17 @@ impl MeshTriangle {
     }
 }
 
-pub struct MeshData {
+pub struct MeshData<M: MaterialTrait> {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
-    pub material: Arc<MaterialEnum>,
+    pub material: Arc<M>,
 }
 
-impl MeshData {
-    pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<MaterialEnum>) -> Self {
+impl<M> MeshData<M>
+where
+    M: MaterialTrait,
+{
+    pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<M>) -> Self {
         MeshData {
             vertices,
             normals,

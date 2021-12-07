@@ -1,7 +1,7 @@
 extern crate cpu_raytracer;
 
 use chrono::Local;
-use cpu_raytracer::{Float, Parameters, PrimitiveEnum, Scene, SplitType};
+use cpu_raytracer::{material::MaterialEnum, Float, Parameters, PrimitiveEnum, Scene, SplitType};
 use std::process;
 
 macro_rules! scene {
@@ -23,7 +23,9 @@ const WIDTH_DEFAULT: u32 = 800;
 const HEIGHT_DEFAULT: u32 = 600;
 const BVH_DEFAULT: SplitType = SplitType::Middle;
 
-pub fn process_args(args: Vec<String>) -> Option<(Scene<PrimitiveEnum>, Parameters)> {
+pub fn process_args(
+    args: Vec<String>,
+) -> Option<(Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum>, Parameters)> {
     let mut scene_index = None;
     let mut samples = None;
     let mut width = None;
@@ -256,7 +258,7 @@ fn get_scene(
     bvh_type: SplitType,
     aspect_ratio: Float,
     seed: Option<String>,
-) -> Scene<PrimitiveEnum> {
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");

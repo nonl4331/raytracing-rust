@@ -1,6 +1,6 @@
 extern crate cpu_raytracer;
 
-use cpu_raytracer::*;
+use cpu_raytracer::{material::MaterialEnum, *};
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
 
@@ -17,8 +17,8 @@ pub fn scene_one(
     bvh_type: SplitType,
     aspect_ratio: Float,
     seed: Option<String>,
-) -> Scene<PrimitiveEnum> {
-    let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
+    let mut primitives = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -86,8 +86,11 @@ pub fn scene_one(
     )
 }
 
-pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEnum> {
-    let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+pub fn scene_two(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
+    let mut primitives = Vec::new();
 
     println!("\tCook Torrence currently has a low convergence rate!");
 
@@ -142,8 +145,11 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEnu
     )
 }
 
-pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEnum> {
-    let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+pub fn scene_three(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
+    let mut primitives = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -185,8 +191,11 @@ pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveE
     )
 }
 
-pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEnum> {
-    let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+pub fn scene_four(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
+    let mut primitives = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
@@ -220,8 +229,11 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEn
     )
 }
 
-pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEnum> {
-    let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+pub fn scene_five(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
+    let mut primitives = Vec::new();
 
     let ground = sphere!(
         0,
@@ -255,8 +267,11 @@ pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEn
     )
 }
 
-pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> Scene<PrimitiveEnum> {
-    let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+pub fn scene_six(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum>, MaterialEnum> {
+    let mut primitives = Vec::new();
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 

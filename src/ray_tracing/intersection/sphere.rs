@@ -1,5 +1,6 @@
 use crate::ray_tracing::{
     intersection::{PrimitiveTrait, SurfaceIntersection},
+    material::MaterialTrait,
     primitives::Sphere,
     ray::Ray,
 };
@@ -19,7 +20,10 @@ enum SphereIntersection {
     Three,
 }
 
-pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
+pub fn sphere_intersection<M: MaterialTrait>(
+    sphere: &Sphere<M>,
+    ray: &Ray,
+) -> Option<SurfaceIntersection<M>> {
     match SPHERE_INTERSECTION {
         SphereIntersection::One => sphere_intersection_one(sphere, ray),
         SphereIntersection::Two => sphere_intersection_two(sphere, ray),
@@ -28,7 +32,10 @@ pub fn sphere_intersection(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersec
 }
 
 // baseline algorithm
-pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
+pub fn sphere_intersection_one<M: MaterialTrait>(
+    sphere: &Sphere<M>,
+    ray: &Ray,
+) -> Option<SurfaceIntersection<M>> {
     let origin = IntervalVec3::from_vec(ray.origin);
     let center = IntervalVec3::from_vec(sphere.center);
     let direction = IntervalVec3::from_vec(ray.direction);
@@ -76,7 +83,10 @@ pub fn sphere_intersection_one(sphere: &Sphere, ray: &Ray) -> Option<SurfaceInte
     }
 }
 
-pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
+pub fn sphere_intersection_two<M: MaterialTrait>(
+    sphere: &Sphere<M>,
+    ray: &Ray,
+) -> Option<SurfaceIntersection<M>> {
     let center = sphere.center;
     let radius = sphere.radius;
     let direction = ray.direction;
@@ -132,7 +142,10 @@ pub fn sphere_intersection_two(sphere: &Sphere, ray: &Ray) -> Option<SurfaceInte
     }
 }
 
-pub fn sphere_intersection_three(sphere: &Sphere, ray: &Ray) -> Option<SurfaceIntersection> {
+pub fn sphere_intersection_three<M: MaterialTrait>(
+    sphere: &Sphere<M>,
+    ray: &Ray,
+) -> Option<SurfaceIntersection<M>> {
     let dir = ray.direction;
     let center = sphere.center;
     let radius = sphere.radius;

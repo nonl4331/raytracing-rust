@@ -2,6 +2,7 @@ use crate::acceleration::{bvh::Bvh, split::SplitType};
 use crate::image::camera::Camera;
 use crate::ray_tracing::{
     intersection::PrimitiveTrait,
+    material::MaterialTrait,
     ray::{Colour, Ray},
     sky::Sky,
 };
@@ -14,6 +15,7 @@ use rand::Rng;
 use rayon::prelude::*;
 use std::{
     iter::FromIterator,
+    marker::PhantomData,
     marker::{Send, Sync},
     sync::{mpsc::channel, Arc, Mutex},
     time::{Duration, Instant},
@@ -47,16 +49,18 @@ impl Parameters {
     }
 }
 
-pub struct Scene<P: PrimitiveTrait> {
+pub struct Scene<P: PrimitiveTrait<M>, M: MaterialTrait> {
     pub primitives: Arc<Vec<P>>,
     pub bvh: Arc<Bvh>,
     pub camera: Camera,
     pub sky: Arc<Sky>,
+    phantom: PhantomData<M>,
 }
 
-impl<P> Scene<P>
+impl<P, M> Scene<P, M>
 where
-    P: PrimitiveTrait + Sync + Send,
+    P: PrimitiveTrait<M> + Sync + Send,
+    M: MaterialTrait + Send + Sync,
     Vec<P>: FromIterator<P>,
 {
     pub fn new(
@@ -92,6 +96,7 @@ where
             bvh,
             camera,
             sky: Arc::new(sky),
+            phantom: PhantomData,
         }
     }
 

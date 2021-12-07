@@ -45,14 +45,14 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn check_hit<P: PrimitiveTrait>(
+    fn check_hit<P: PrimitiveTrait<M>, M: MaterialTrait>(
         &mut self,
         bvh: &Arc<Bvh>,
         primitives: &Arc<Vec<P>>,
-    ) -> Option<SurfaceIntersection> {
+    ) -> Option<SurfaceIntersection<M>> {
         let offset_lens = bvh.get_intersection_candidates(self);
 
-        let mut hit: Option<SurfaceIntersection> = None;
+        let mut hit: Option<SurfaceIntersection<M>> = None;
 
         for offset_len in offset_lens {
             let offset = offset_len.0;
@@ -80,7 +80,7 @@ impl Ray {
         hit
     }
 
-    pub fn get_colour<P: PrimitiveTrait>(
+    pub fn get_colour<P: PrimitiveTrait<M>, M: MaterialTrait>(
         ray: &mut Ray,
         sky: Arc<Sky>,
         bvh: Arc<Bvh>,

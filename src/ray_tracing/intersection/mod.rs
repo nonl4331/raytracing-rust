@@ -9,7 +9,7 @@ use crate::ray_tracing::{
         aacuboid::aacuboid_intersection, aarect::aarect_intersection, sphere::sphere_intersection,
         triangle::triangle_intersection,
     },
-    material::{MaterialEnum, MaterialTrait},
+    material::MaterialTrait,
     primitives::{AACuboid, AARect, Axis, MeshTriangle, PrimitiveEnum, Sphere, Triangle},
     ray::Ray,
 };
@@ -34,12 +34,15 @@ pub struct Hit {
     pub out: bool,
 }
 
-pub struct SurfaceIntersection {
+pub struct SurfaceIntersection<M: MaterialTrait> {
     pub hit: Hit,
-    pub material: Arc<MaterialEnum>,
+    pub material: Arc<M>,
 }
 
-impl SurfaceIntersection {
+impl<M> SurfaceIntersection<M>
+where
+    M: MaterialTrait,
+{
     pub fn new(
         t: Float,
         point: Vec3,
@@ -47,7 +50,7 @@ impl SurfaceIntersection {
         normal: Vec3,
         uv: Option<Vec2>,
         out: bool,
-        material: &Arc<MaterialEnum>,
+        material: &Arc<M>,
     ) -> Self {
         SurfaceIntersection {
             hit: Hit {
@@ -63,8 +66,8 @@ impl SurfaceIntersection {
     }
 }
 
-pub trait Intersection {
-    fn get_int(&self, _: &Ray) -> Option<SurfaceIntersection> {
+pub trait Intersection<M: MaterialTrait> {
+    fn get_int(&self, _: &Ray) -> Option<SurfaceIntersection<M>> {
         unimplemented!()
     }
     fn does_int(&self, ray: &Ray) -> bool {
@@ -72,7 +75,10 @@ pub trait Intersection {
     }
 }
 
-pub trait PrimitiveTrait: Intersection {
+pub trait PrimitiveTrait<M>: Intersection<M>
+where
+    M: MaterialTrait,
+{
     fn get_aabb(&self) -> Option<Aabb> {
         unimplemented!()
     }
@@ -124,8 +130,11 @@ pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
     }
 }
 
-impl Intersection for PrimitiveEnum {
-    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+impl<M> Intersection<M> for PrimitiveEnum<M>
+where
+    M: MaterialTrait,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_int(ray),
             PrimitiveEnum::AARect(rect) => rect.get_int(ray),
@@ -146,7 +155,10 @@ impl Intersection for PrimitiveEnum {
     }
 }
 
-impl PrimitiveTrait for PrimitiveEnum {
+impl<M> PrimitiveTrait<M> for PrimitiveEnum<M>
+where
+    M: MaterialTrait,
+{
     fn get_aabb(&self) -> Option<Aabb> {
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_aabb(),
@@ -177,14 +189,20 @@ impl PrimitiveTrait for PrimitiveEnum {
     }
 }
 
-impl Intersection for Sphere {
-    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+impl<M> Intersection<M> for Sphere<M>
+where
+    M: MaterialTrait,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         sphere_intersection(self, ray)
     }
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
-impl PrimitiveTrait for Sphere {
+impl<M> PrimitiveTrait<M> for Sphere<M>
+where
+    M: MaterialTrait,
+{
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let x = (self.center.x - point.x) / self.radius;
@@ -205,8 +223,11 @@ impl PrimitiveTrait for Sphere {
     }
 }
 
-impl Intersection for AARect {
-    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+impl<M> Intersection<M> for AARect<M>
+where
+    M: MaterialTrait,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         aarect_intersection(self, ray)
     }
 
@@ -224,7 +245,10 @@ impl Intersection for AARect {
     }
 }
 
-impl PrimitiveTrait for AARect {
+impl<M> PrimitiveTrait<M> for AARect<M>
+where
+    M: MaterialTrait,
+{
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
             let pwa = self.axis.point_without_axis(point);
@@ -243,8 +267,11 @@ impl PrimitiveTrait for AARect {
     }
 }
 
-impl Intersection for AACuboid {
-    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+impl<M> Intersection<M> for AACuboid<M>
+where
+    M: MaterialTrait,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         aacuboid_intersection(self, ray)
     }
 
@@ -258,19 +285,28 @@ impl Intersection for AACuboid {
     }
 }
 
-impl PrimitiveTrait for AACuboid {
+impl<M> PrimitiveTrait<M> for AACuboid<M>
+where
+    M: MaterialTrait,
+{
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(self.min, self.max))
     }
 }
 
-impl Intersection for Triangle {
-    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+impl<M> Intersection<M> for Triangle<M>
+where
+    M: MaterialTrait,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         triangle_intersection(self, ray)
     }
 }
 
-impl PrimitiveTrait for Triangle {
+impl<M> PrimitiveTrait<M> for Triangle<M>
+where
+    M: MaterialTrait,
+{
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(
             self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
@@ -279,13 +315,19 @@ impl PrimitiveTrait for Triangle {
     }
 }
 
-impl Intersection for MeshTriangle {
-    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection> {
+impl<M> Intersection<M> for MeshTriangle<M>
+where
+    M: MaterialTrait,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         triangle_intersection(self, ray)
     }
 }
 
-impl PrimitiveTrait for MeshTriangle {
+impl<M> PrimitiveTrait<M> for MeshTriangle<M>
+where
+    M: MaterialTrait,
+{
     fn get_aabb(&self) -> Option<Aabb> {
         let points = [
             (*self.mesh).vertices[self.point_indices[0]],

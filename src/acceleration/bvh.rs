@@ -2,7 +2,9 @@ use crate::acceleration::{
     aabb::Aabb,
     split::{Split, SplitType},
 };
-use crate::ray_tracing::{intersection::PrimitiveTrait, primitives::Axis, ray::Ray};
+use crate::ray_tracing::{
+    intersection::PrimitiveTrait, material::MaterialTrait, primitives::Axis, ray::Ray,
+};
 use crate::utility::vec::Vec3;
 use std::{collections::VecDeque, mem};
 
@@ -21,7 +23,7 @@ pub struct PrimitiveInfo {
 }
 
 impl PrimitiveInfo {
-    fn new<P: PrimitiveTrait>(index: usize, primitive: &P) -> PrimitiveInfo {
+    fn new<P: PrimitiveTrait<M>, M: MaterialTrait>(index: usize, primitive: &P) -> PrimitiveInfo {
         let aabb = primitive.get_aabb().unwrap();
         let min = aabb.min;
         let max = aabb.max;
@@ -40,7 +42,10 @@ pub struct Bvh {
 }
 
 impl Bvh {
-    pub fn new<P: PrimitiveTrait>(primitives: &mut Vec<P>, split_type: SplitType) -> Self {
+    pub fn new<P: PrimitiveTrait<M>, M: MaterialTrait>(
+        primitives: &mut Vec<P>,
+        split_type: SplitType,
+    ) -> Self {
         let mut bvh = Self {
             split_type,
             nodes: Vec::new(),
@@ -199,6 +204,7 @@ impl Node {
 mod tests {
 
     use crate::acceleration::bvh::PrimitiveInfo;
+    use crate::material::MaterialEnum;
     use crate::ray_tracing::{intersection::PrimitiveTrait, primitives::PrimitiveEnum};
     use crate::utility::{math::Float, vec::Vec3};
     use crate::*;
@@ -219,7 +225,7 @@ mod tests {
 
     #[test]
     fn node_containment() {
-        let mut primitives: Vec<PrimitiveEnum> = Vec::new();
+        let mut primitives: Vec<PrimitiveEnum<MaterialEnum>> = Vec::new();
 
         let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
