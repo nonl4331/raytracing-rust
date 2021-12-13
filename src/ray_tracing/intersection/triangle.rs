@@ -1,6 +1,6 @@
 use crate::ray_tracing::{
     intersection::{check_side, SurfaceIntersection},
-    material::MaterialTrait,
+    material::Scatter,
     primitives::{Axis, MeshTriangle, Triangle},
     ray::Ray,
 };
@@ -16,7 +16,7 @@ enum TriangleIntersection {
     One,
 }
 
-pub trait TriangleTrait<M: MaterialTrait> {
+pub trait TriangleTrait<M: Scatter> {
     fn get_point(&self, index: usize) -> Vec3;
     fn get_normal(&self, index: usize) -> Vec3;
     fn get_material(&self) -> &Arc<M>;
@@ -24,7 +24,7 @@ pub trait TriangleTrait<M: MaterialTrait> {
 
 impl<M> TriangleTrait<M> for Triangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_point(&self, index: usize) -> Vec3 {
         self.points[index]
@@ -39,7 +39,7 @@ where
 
 impl<M> TriangleTrait<M> for MeshTriangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_point(&self, index: usize) -> Vec3 {
         (*self.mesh).vertices[self.point_indices[index]]
@@ -52,7 +52,7 @@ where
     }
 }
 
-pub fn triangle_intersection<T: TriangleTrait<M>, M: MaterialTrait>(
+pub fn triangle_intersection<T: TriangleTrait<M>, M: Scatter>(
     triangle: &T,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
@@ -61,7 +61,7 @@ pub fn triangle_intersection<T: TriangleTrait<M>, M: MaterialTrait>(
     }
 }
 
-fn triangle_intersection_one<T: TriangleTrait<M>, M: MaterialTrait>(
+fn triangle_intersection_one<T: TriangleTrait<M>, M: Scatter>(
     triangle: &T,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {

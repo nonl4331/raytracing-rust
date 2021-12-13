@@ -1,6 +1,6 @@
 use crate::ray_tracing::{
-    intersection::{Intersection, SurfaceIntersection},
-    material::MaterialTrait,
+    intersection::{Intersect, SurfaceIntersection},
+    material::Scatter,
     primitives::AACuboid,
     ray::Ray,
 };
@@ -11,7 +11,7 @@ enum AACuboidIntersection {
     One,
 }
 
-pub fn aacuboid_intersection<M: MaterialTrait>(
+pub fn aacuboid_intersection<M: Scatter>(
     aacuboid: &AACuboid<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
@@ -20,7 +20,7 @@ pub fn aacuboid_intersection<M: MaterialTrait>(
     }
 }
 
-fn aacuboid_intersection_one<M: MaterialTrait>(
+fn aacuboid_intersection_one<M: Scatter>(
     aacuboid: &AACuboid<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {

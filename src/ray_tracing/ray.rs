@@ -1,8 +1,8 @@
 use crate::acceleration::bvh::Bvh;
 
 use crate::ray_tracing::{
-    intersection::{PrimitiveTrait, SurfaceIntersection},
-    material::MaterialTrait,
+    intersection::{Primitive, SurfaceIntersection},
+    material::Scatter,
     primitives::Axis,
     sky::Sky,
 };
@@ -45,7 +45,7 @@ impl Ray {
         self.origin + self.direction * t
     }
 
-    fn check_hit<P: PrimitiveTrait<M>, M: MaterialTrait>(
+    fn check_hit<P: Primitive<M>, M: Scatter>(
         &mut self,
         bvh: &Arc<Bvh>,
         primitives: &Arc<Vec<P>>,
@@ -80,7 +80,7 @@ impl Ray {
         hit
     }
 
-    pub fn get_colour<P: PrimitiveTrait<M>, M: MaterialTrait>(
+    pub fn get_colour<P: Primitive<M>, M: Scatter>(
         ray: &mut Ray,
         sky: Arc<Sky>,
         bvh: Arc<Bvh>,

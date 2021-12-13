@@ -1,5 +1,5 @@
 use crate::ray_tracing::{
-    material::{fresnel, offset_ray, Hit, MaterialTrait},
+    material::{fresnel, offset_ray, Hit, Scatter},
     ray::Ray,
     texture::TextureTrait,
 };
@@ -55,7 +55,7 @@ where
     }
 }
 
-impl<T> MaterialTrait for CookTorrence<T>
+impl<T> Scatter for CookTorrence<T>
 where
     T: TextureTrait,
 {

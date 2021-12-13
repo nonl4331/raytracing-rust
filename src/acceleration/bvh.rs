@@ -2,9 +2,7 @@ use crate::acceleration::{
     aabb::Aabb,
     split::{Split, SplitType},
 };
-use crate::ray_tracing::{
-    intersection::PrimitiveTrait, material::MaterialTrait, primitives::Axis, ray::Ray,
-};
+use crate::ray_tracing::{intersection::Primitive, material::Scatter, primitives::Axis, ray::Ray};
 use crate::utility::vec::Vec3;
 use std::{collections::VecDeque, mem};
 
@@ -23,7 +21,7 @@ pub struct PrimitiveInfo {
 }
 
 impl PrimitiveInfo {
-    fn new<P: PrimitiveTrait<M>, M: MaterialTrait>(index: usize, primitive: &P) -> PrimitiveInfo {
+    fn new<P: Primitive<M>, M: Scatter>(index: usize, primitive: &P) -> PrimitiveInfo {
         let aabb = primitive.get_aabb().unwrap();
         let min = aabb.min;
         let max = aabb.max;
@@ -42,7 +40,7 @@ pub struct Bvh {
 }
 
 impl Bvh {
-    pub fn new<P: PrimitiveTrait<M>, M: MaterialTrait>(
+    pub fn new<P: Primitive<M>, M: Scatter>(
         primitives: &mut Vec<P>,
         split_type: SplitType,
     ) -> Self {
@@ -205,7 +203,7 @@ mod tests {
 
     use crate::acceleration::bvh::PrimitiveInfo;
     use crate::material::MaterialEnum;
-    use crate::ray_tracing::{intersection::PrimitiveTrait, primitives::PrimitiveEnum};
+    use crate::ray_tracing::{intersection::Primitive, primitives::PrimitiveEnum};
     use crate::texture::TextureEnum;
     use crate::utility::{math::Float, vec::Vec3};
     use crate::*;

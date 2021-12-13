@@ -299,3 +299,42 @@ pub fn scene_six(
         primitives
     )
 }
+
+pub fn scene_seven(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>> {
+    let mut primitives = Vec::new();
+
+    let ground_mat = &diffuse!(
+        &checkered!(
+            242.0 / 256.0,
+            242.0 / 256.0,
+            242.0 / 256.0,
+            109.0 / 256.0,
+            112.0 / 256.0,
+            117.0 / 256.0
+        ),
+        0.5
+    );
+
+    let ground = aarect!(-10, -10, 10, 10, -0.3, axis!(Y), ground_mat);
+
+    primitives.push(ground);
+    primitives.extend(model!("res/bunny.obj", &diffuse!(0.5, 0.5, 0.5, 0.5)));
+
+    let sky = sky!(&image!("res/sky.png"));
+
+    scene!(
+        position!(-7, 1.5, -7),
+        position!(0, 1.5, 0),
+        position!(0, 1, 0),
+        34,
+        aspect_ratio,
+        0,
+        10,
+        sky,
+        bvh_type,
+        primitives
+    )
+}

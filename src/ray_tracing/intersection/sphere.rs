@@ -1,6 +1,6 @@
 use crate::ray_tracing::{
-    intersection::{PrimitiveTrait, SurfaceIntersection},
-    material::MaterialTrait,
+    intersection::{Primitive, SurfaceIntersection},
+    material::Scatter,
     primitives::Sphere,
     ray::Ray,
 };
@@ -20,7 +20,7 @@ enum SphereIntersection {
     Three,
 }
 
-pub fn sphere_intersection<M: MaterialTrait>(
+pub fn sphere_intersection<M: Scatter>(
     sphere: &Sphere<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
@@ -32,7 +32,7 @@ pub fn sphere_intersection<M: MaterialTrait>(
 }
 
 // baseline algorithm
-pub fn sphere_intersection_one<M: MaterialTrait>(
+pub fn sphere_intersection_one<M: Scatter>(
     sphere: &Sphere<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
@@ -83,7 +83,7 @@ pub fn sphere_intersection_one<M: MaterialTrait>(
     }
 }
 
-pub fn sphere_intersection_two<M: MaterialTrait>(
+pub fn sphere_intersection_two<M: Scatter>(
     sphere: &Sphere<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
@@ -142,7 +142,7 @@ pub fn sphere_intersection_two<M: MaterialTrait>(
     }
 }
 
-pub fn sphere_intersection_three<M: MaterialTrait>(
+pub fn sphere_intersection_three<M: Scatter>(
     sphere: &Sphere<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {

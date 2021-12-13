@@ -26,7 +26,7 @@ pub enum MaterialEnum<T: TextureTrait> {
     CookTorrence(CookTorrence<T>),
 }
 
-impl<T> MaterialTrait for MaterialEnum<T>
+impl<T> Scatter for MaterialEnum<T>
 where
     T: TextureTrait,
 {
@@ -50,7 +50,7 @@ where
     }
 }
 
-pub trait MaterialTrait {
+pub trait Scatter {
     fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (Vec3, bool) {
         (Vec3::one(), true)
     }
@@ -110,7 +110,7 @@ where
     }
 }
 
-impl<T> MaterialTrait for Reflect<T>
+impl<T> Scatter for Reflect<T>
 where
     T: TextureTrait,
 {
@@ -127,7 +127,7 @@ where
     }
 }
 
-impl<T> MaterialTrait for Refract<T>
+impl<T> Scatter for Refract<T>
 where
     T: TextureTrait,
 {
@@ -157,7 +157,7 @@ where
     }
 }
 
-impl<T> MaterialTrait for Emit<T>
+impl<T> Scatter for Emit<T>
 where
     T: TextureTrait,
 {

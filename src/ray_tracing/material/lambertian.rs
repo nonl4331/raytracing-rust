@@ -1,5 +1,5 @@
 use crate::ray_tracing::{
-    material::{offset_ray, Hit, MaterialTrait},
+    material::{offset_ray, Hit, Scatter},
     ray::Ray,
     texture::TextureTrait,
 };
@@ -25,7 +25,7 @@ where
     }
 }
 
-impl<T> MaterialTrait for Lambertian<T>
+impl<T> Scatter for Lambertian<T>
 where
     T: TextureTrait,
 {

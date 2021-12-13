@@ -1,8 +1,8 @@
 use crate::acceleration::{bvh::Bvh, split::SplitType};
 use crate::image::camera::Camera;
 use crate::ray_tracing::{
-    intersection::PrimitiveTrait,
-    material::MaterialTrait,
+    intersection::Primitive,
+    material::Scatter,
     ray::{Colour, Ray},
     sky::Sky,
 };
@@ -49,7 +49,7 @@ impl Parameters {
     }
 }
 
-pub struct Scene<P: PrimitiveTrait<M>, M: MaterialTrait> {
+pub struct Scene<P: Primitive<M>, M: Scatter> {
     pub primitives: Arc<Vec<P>>,
     pub bvh: Arc<Bvh>,
     pub camera: Camera,
@@ -59,8 +59,8 @@ pub struct Scene<P: PrimitiveTrait<M>, M: MaterialTrait> {
 
 impl<P, M> Scene<P, M>
 where
-    P: PrimitiveTrait<M> + Sync + Send,
-    M: MaterialTrait + Send + Sync,
+    P: Primitive<M> + Sync + Send,
+    M: Scatter + Send + Sync,
     Vec<P>: FromIterator<P>,
 {
     pub fn new(

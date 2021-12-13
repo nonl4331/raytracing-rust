@@ -9,7 +9,7 @@ use crate::ray_tracing::{
         aacuboid::aacuboid_intersection, aarect::aarect_intersection, sphere::sphere_intersection,
         triangle::triangle_intersection,
     },
-    material::MaterialTrait,
+    material::Scatter,
     primitives::{AACuboid, AARect, Axis, MeshTriangle, PrimitiveEnum, Sphere, Triangle},
     ray::Ray,
 };
@@ -34,14 +34,14 @@ pub struct Hit {
     pub out: bool,
 }
 
-pub struct SurfaceIntersection<M: MaterialTrait> {
+pub struct SurfaceIntersection<M: Scatter> {
     pub hit: Hit,
     pub material: Arc<M>,
 }
 
 impl<M> SurfaceIntersection<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(
         t: Float,
@@ -66,7 +66,7 @@ where
     }
 }
 
-pub trait Intersection<M: MaterialTrait> {
+pub trait Intersect<M: Scatter> {
     fn get_int(&self, _: &Ray) -> Option<SurfaceIntersection<M>> {
         unimplemented!()
     }
@@ -75,9 +75,9 @@ pub trait Intersection<M: MaterialTrait> {
     }
 }
 
-pub trait PrimitiveTrait<M>: Intersection<M>
+pub trait Primitive<M>: Intersect<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_aabb(&self) -> Option<Aabb> {
         unimplemented!()
@@ -130,9 +130,9 @@ pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
     }
 }
 
-impl<M> Intersection<M> for PrimitiveEnum<M>
+impl<M> Intersect<M> for PrimitiveEnum<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         match self {
@@ -155,9 +155,9 @@ where
     }
 }
 
-impl<M> PrimitiveTrait<M> for PrimitiveEnum<M>
+impl<M> Primitive<M> for PrimitiveEnum<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_aabb(&self) -> Option<Aabb> {
         match self {
@@ -189,9 +189,9 @@ where
     }
 }
 
-impl<M> Intersection<M> for Sphere<M>
+impl<M> Intersect<M> for Sphere<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         sphere_intersection(self, ray)
@@ -199,9 +199,9 @@ where
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
-impl<M> PrimitiveTrait<M> for Sphere<M>
+impl<M> Primitive<M> for Sphere<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
@@ -223,9 +223,9 @@ where
     }
 }
 
-impl<M> Intersection<M> for AARect<M>
+impl<M> Intersect<M> for AARect<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         aarect_intersection(self, ray)
@@ -245,9 +245,9 @@ where
     }
 }
 
-impl<M> PrimitiveTrait<M> for AARect<M>
+impl<M> Primitive<M> for AARect<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_uv(&self, point: Vec3) -> Option<Vec2> {
         if self.material.requires_uv() {
@@ -267,9 +267,9 @@ where
     }
 }
 
-impl<M> Intersection<M> for AACuboid<M>
+impl<M> Intersect<M> for AACuboid<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         aacuboid_intersection(self, ray)
@@ -285,27 +285,27 @@ where
     }
 }
 
-impl<M> PrimitiveTrait<M> for AACuboid<M>
+impl<M> Primitive<M> for AACuboid<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(self.min, self.max))
     }
 }
 
-impl<M> Intersection<M> for Triangle<M>
+impl<M> Intersect<M> for Triangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         triangle_intersection(self, ray)
     }
 }
 
-impl<M> PrimitiveTrait<M> for Triangle<M>
+impl<M> Primitive<M> for Triangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(
@@ -315,18 +315,18 @@ where
     }
 }
 
-impl<M> Intersection<M> for MeshTriangle<M>
+impl<M> Intersect<M> for MeshTriangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
         triangle_intersection(self, ray)
     }
 }
 
-impl<M> PrimitiveTrait<M> for MeshTriangle<M>
+impl<M> Primitive<M> for MeshTriangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     fn get_aabb(&self) -> Option<Aabb> {
         let points = [

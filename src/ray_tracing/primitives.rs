@@ -1,11 +1,11 @@
-use crate::ray_tracing::material::MaterialTrait;
+use crate::ray_tracing::material::Scatter;
 use crate::utility::{
     math::Float,
     vec::{Vec2, Vec3},
 };
 use std::sync::Arc;
 
-pub enum PrimitiveEnum<M: MaterialTrait> {
+pub enum PrimitiveEnum<M: Scatter> {
     Sphere(Sphere<M>),
     AARect(AARect<M>),
     AACuboid(AACuboid<M>),
@@ -86,7 +86,7 @@ impl Axis {
 }
 
 #[derive(Clone)]
-pub struct AARect<M: MaterialTrait> {
+pub struct AARect<M: Scatter> {
     pub min: Vec2,
     pub max: Vec2,
     pub k: Float,
@@ -96,7 +96,7 @@ pub struct AARect<M: MaterialTrait> {
 
 impl<M> AARect<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(point_one: Vec2, point_two: Vec2, k: Float, axis: Axis, material: &Arc<M>) -> Self {
         if point_one == point_two {
@@ -114,7 +114,7 @@ where
     }
 }
 
-pub struct AACuboid<M: MaterialTrait> {
+pub struct AACuboid<M: Scatter> {
     pub min: Vec3,
     pub max: Vec3,
     pub rects: [AARect<M>; 6],
@@ -123,7 +123,7 @@ pub struct AACuboid<M: MaterialTrait> {
 
 impl<M> AACuboid<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(point_one: Vec3, point_two: Vec3, material: &Arc<M>) -> Self {
         if point_one == point_two {
@@ -185,7 +185,7 @@ where
     }
 }
 
-pub struct Sphere<M: MaterialTrait> {
+pub struct Sphere<M: Scatter> {
     pub center: Vec3,
     pub radius: Float,
     pub material: Arc<M>,
@@ -193,7 +193,7 @@ pub struct Sphere<M: MaterialTrait> {
 
 impl<M> Sphere<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(center: Vec3, radius: Float, material: &Arc<M>) -> Self {
         Sphere {
@@ -205,7 +205,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct Triangle<M: MaterialTrait> {
+pub struct Triangle<M: Scatter> {
     pub points: [Vec3; 3],
     pub normals: [Vec3; 3],
     pub material: Arc<M>,
@@ -213,7 +213,7 @@ pub struct Triangle<M: MaterialTrait> {
 
 impl<M> Triangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<M>) -> Self {
         Triangle {
@@ -224,7 +224,7 @@ where
     }
 }
 
-pub struct MeshTriangle<M: MaterialTrait> {
+pub struct MeshTriangle<M: Scatter> {
     pub point_indices: [usize; 3],
     pub normal_indices: [usize; 3],
     pub material: Arc<M>,
@@ -233,7 +233,7 @@ pub struct MeshTriangle<M: MaterialTrait> {
 
 impl<M> MeshTriangle<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(
         point_indices: [usize; 3],
@@ -250,7 +250,7 @@ where
     }
 }
 
-pub struct MeshData<M: MaterialTrait> {
+pub struct MeshData<M: Scatter> {
     pub vertices: Vec<Vec3>,
     pub normals: Vec<Vec3>,
     pub material: Arc<M>,
@@ -258,7 +258,7 @@ pub struct MeshData<M: MaterialTrait> {
 
 impl<M> MeshData<M>
 where
-    M: MaterialTrait,
+    M: Scatter,
 {
     pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<M>) -> Self {
         MeshData {

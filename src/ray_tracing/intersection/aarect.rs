@@ -1,6 +1,6 @@
 use crate::ray_tracing::{
-    intersection::{PrimitiveTrait, SurfaceIntersection},
-    material::MaterialTrait,
+    intersection::{Primitive, SurfaceIntersection},
+    material::Scatter,
     primitives::AARect,
     ray::Ray,
 };
@@ -13,7 +13,7 @@ enum AARectIntersection {
     One,
 }
 
-pub fn aarect_intersection<M: MaterialTrait>(
+pub fn aarect_intersection<M: Scatter>(
     aarect: &AARect<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
@@ -22,7 +22,7 @@ pub fn aarect_intersection<M: MaterialTrait>(
     }
 }
 
-fn aarect_intersection_one<M: MaterialTrait>(
+fn aarect_intersection_one<M: Scatter>(
     aarect: &AARect<M>,
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
