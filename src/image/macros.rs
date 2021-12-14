@@ -353,6 +353,21 @@ macro_rules! triangle {
 // OTHER STRUCTURES
 //-----
 #[macro_export]
+macro_rules! camera {
+    ($origin:expr, $lookat:expr, $vup:expr, $fov:expr, $aspect_ratio:expr, $aperture:expr, $focus_dist:expr) => {
+        $crate::image::camera::Camera::new(
+            $origin,
+            $lookat,
+            $vup,
+            $fov as $crate::utility::math::Float,
+            $aspect_ratio as $crate::utility::math::Float,
+            $aperture as $crate::utility::math::Float,
+            $focus_dist as $crate::utility::math::Float,
+        )
+    };
+}
+
+#[macro_export]
 macro_rules! sky {
     () => {
         $crate::ray_tracing::sky::Sky::new(None)
@@ -364,18 +379,7 @@ macro_rules! sky {
 
 #[macro_export]
 macro_rules! scene {
-    ($origin:expr, $lookat:expr, $vup:expr, $fov:expr, $aspect_ratio:expr, $aperture:expr, $focus_dist:expr, $sky:expr, $split_type:expr, $primitives:expr) => {
-        $crate::image::scene::Scene::new(
-            $origin,
-            $lookat,
-            $vup,
-            $fov as $crate::utility::math::Float,
-            $aspect_ratio as $crate::utility::math::Float,
-            $aperture as $crate::utility::math::Float,
-            $focus_dist as $crate::utility::math::Float,
-            $sky,
-            $split_type,
-            $primitives,
-        )
+    ($camera:expr, $sky:expr, $split_type:expr, $primitives:expr) => {
+        $crate::image::scene::Scene::new($camera, $sky, $split_type, $primitives)
     };
 }

@@ -72,18 +72,17 @@ pub fn scene_one(
 
     let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
-    scene!(
+    let camera = camera!(
         position!(13, 2, -3),
         position!(0, 0, 0),
         position!(0, 1, 0),
         29,
         aspect_ratio,
         0.1,
-        10,
-        sky,
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky, bvh_type, primitives)
 }
 
 pub fn scene_two(
@@ -131,18 +130,17 @@ pub fn scene_two(
 
     let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
-    scene!(
+    let camera = camera!(
         position!(3, 1, -15),
         position!(0, 1, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
         0,
-        10,
-        sky,
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky, bvh_type, primitives)
 }
 
 pub fn scene_three(
@@ -177,18 +175,17 @@ pub fn scene_three(
 
     let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
-    scene!(
+    let camera = camera!(
         position!(-5, 3, -3),
         position!(0, 1.5, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
         0,
-        10,
-        sky,
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky, bvh_type, primitives)
 }
 
 pub fn scene_four(
@@ -215,18 +212,17 @@ pub fn scene_four(
     primitives.push(glowy);
     primitives.push(cube);
 
-    scene!(
+    let camera = camera!(
         position!(-5, 3, -3),
         position!(0, 0, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
         0,
-        10,
-        sky!(),
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky!(), bvh_type, primitives)
 }
 
 pub fn scene_five(
@@ -253,18 +249,17 @@ pub fn scene_five(
 
     let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
-    scene!(
+    let camera = camera!(
         position!(-5, 4, -3),
         position!(0, 0.5, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
         0,
-        10,
-        sky,
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky, bvh_type, primitives)
 }
 
 pub fn scene_six(
@@ -284,20 +279,17 @@ pub fn scene_six(
         &refract!(&solid_colour!(1, 1, 1), 1.52)
     ));
 
-    let sky = sky!();
-
-    scene!(
+    let camera = camera!(
         position!(-20, 20, -25),
         position!(0, 3.5, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
         0,
-        10,
-        sky,
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky!(), bvh_type, primitives)
 }
 
 pub fn scene_seven(
@@ -325,16 +317,15 @@ pub fn scene_seven(
 
     let sky = sky!(&image!("res/sky.png"));
 
-    scene!(
+    let camera = camera!(
         position!(-7, 1.5, -7),
         position!(0, 1.5, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
         0,
-        10,
-        sky,
-        bvh_type,
-        primitives
-    )
+        10
+    );
+
+    scene!(camera, sky, bvh_type, primitives)
 }

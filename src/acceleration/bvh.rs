@@ -281,20 +281,17 @@ mod tests {
             }
         }
 
-        let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
-
-        let scene = scene!(
+        let camera = camera!(
             position!(13, 2, -3),
             position!(0, 0, 0),
             position!(0, 1, 0),
             29,
             16.0 / 9.0,
             0.1,
-            10,
-            sky,
-            SplitType::Sah,
-            primitives
+            10
         );
+
+        let scene = scene!(camera, sky!(), SplitType::Sah, primitives);
 
         let bvh = scene.bvh;
 

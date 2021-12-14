@@ -6,10 +6,7 @@ use crate::ray_tracing::{
     ray::{Colour, Ray},
     sky::Sky,
 };
-use crate::utility::{
-    math::{random_float, random_in_unit_disk, Float},
-    vec::Vec3,
-};
+use crate::utility::math::{random_float, random_in_unit_disk, Float};
 use chrono::Local;
 use rand::Rng;
 use rayon::prelude::*;
@@ -63,18 +60,7 @@ where
     M: Scatter + Send + Sync,
     Vec<P>: FromIterator<P>,
 {
-    pub fn new(
-        origin: Vec3,
-        lookat: Vec3,
-        vup: Vec3,
-        fov: Float,
-        aspect_ratio: Float,
-        aperture: Float,
-        focus_dist: Float,
-        sky: Sky,
-        split_type: SplitType,
-        primitives: Vec<P>,
-    ) -> Self {
+    pub fn new(camera: Camera, sky: Sky, split_type: SplitType, primitives: Vec<P>) -> Self {
         let mut primitives: Vec<P> = primitives;
 
         let time = Local::now();
@@ -88,8 +74,6 @@ where
 
         println!("\tBvh construction finished in: {}ms", duration.as_millis());
         println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
-
-        let camera = Camera::new(origin, lookat, vup, fov, aspect_ratio, aperture, focus_dist);
 
         Scene {
             primitives: Arc::new(primitives),
