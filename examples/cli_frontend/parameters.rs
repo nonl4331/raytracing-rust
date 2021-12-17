@@ -2,8 +2,8 @@ extern crate cpu_raytracer;
 
 use chrono::Local;
 use cpu_raytracer::{
-    material::MaterialEnum, texture::TextureEnum, Float, Parameters, PrimitiveEnum, Scene,
-    SplitType,
+    image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float, Parameters,
+    PrimitiveEnum, Scene, SplitType,
 };
 use std::process;
 
@@ -22,14 +22,14 @@ macro_rules! scene {
     }};
 }
 
-const WIDTH_DEFAULT: u32 = 800;
-const HEIGHT_DEFAULT: u32 = 600;
+const WIDTH_DEFAULT: u64 = 800;
+const HEIGHT_DEFAULT: u64 = 600;
 const BVH_DEFAULT: SplitType = SplitType::Middle;
 
 pub fn process_args(
     args: Vec<String>,
 ) -> Option<(
-    Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>>,
+    Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler>,
     Parameters,
 )> {
     let mut scene_index = None;
@@ -277,7 +277,7 @@ fn get_scene(
     bvh_type: SplitType,
     aspect_ratio: Float,
     seed: Option<String>,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>> {
+) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
     match args.get(index) {
         None => {
             println!("Please specify a value for scene!");
@@ -380,9 +380,9 @@ fn get_bvh_type(args: &[String], index: usize) -> SplitType {
     }
 }
 
-fn get_samples(args: &[String], index: usize) -> u32 {
+fn get_samples(args: &[String], index: usize) -> u64 {
     match args.get(index) {
-        Some(string) => match string.parse::<u32>() {
+        Some(string) => match string.parse::<u64>() {
             Ok(parsed) => match parsed {
                 0 => {
                     println!("Samples must be non zero positive integer.");
@@ -407,9 +407,9 @@ fn get_samples(args: &[String], index: usize) -> u32 {
     }
 }
 
-fn get_dimension(args: &[String], index: usize) -> u32 {
+fn get_dimension(args: &[String], index: usize) -> u64 {
     match args.get(index) {
-        Some(string) => match string.parse::<u32>() {
+        Some(string) => match string.parse::<u64>() {
             Ok(parsed) => match parsed {
                 0 => {
                     println!("Height must be non zero positive integer.");

@@ -202,6 +202,7 @@ impl Node {
 mod tests {
 
     use crate::acceleration::bvh::PrimitiveInfo;
+    use crate::image::camera::RandomSampler;
     use crate::material::MaterialEnum;
     use crate::ray_tracing::{intersection::Primitive, primitives::PrimitiveEnum};
     use crate::texture::TextureEnum;
@@ -209,6 +210,7 @@ mod tests {
     use crate::*;
     use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
     use rand_seeder::Seeder;
+    use std::sync::Arc;
 
     #[test]
     fn primitive_info_new() {
@@ -291,7 +293,13 @@ mod tests {
             10
         );
 
-        let scene = scene!(camera, sky!(), SplitType::Sah, primitives);
+        let scene = scene!(
+            camera,
+            sky!(),
+            random_sampler!(),
+            SplitType::Sah,
+            primitives
+        );
 
         let bvh = scene.bvh;
 

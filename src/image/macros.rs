@@ -355,7 +355,7 @@ macro_rules! triangle {
 #[macro_export]
 macro_rules! camera {
     ($origin:expr, $lookat:expr, $vup:expr, $fov:expr, $aspect_ratio:expr, $aperture:expr, $focus_dist:expr) => {
-        $crate::image::camera::Camera::new(
+        std::sync::Arc::new($crate::image::camera::Camera::new(
             $origin,
             $lookat,
             $vup,
@@ -363,23 +363,30 @@ macro_rules! camera {
             $aspect_ratio as $crate::utility::math::Float,
             $aperture as $crate::utility::math::Float,
             $focus_dist as $crate::utility::math::Float,
-        )
+        ))
+    };
+}
+
+#[macro_export]
+macro_rules! random_sampler {
+    () => {
+        std::sync::Arc::new($crate::image::camera::RandomSampler {})
     };
 }
 
 #[macro_export]
 macro_rules! sky {
     () => {
-        $crate::ray_tracing::sky::Sky::new(None)
+        std::sync::Arc::new($crate::ray_tracing::sky::Sky::new(None))
     };
     ($sky_texture:expr) => {
-        $crate::ray_tracing::sky::Sky::new(Some($sky_texture))
+        std::sync::Arc::new($crate::ray_tracing::sky::Sky::new(Some($sky_texture)))
     };
 }
 
 #[macro_export]
 macro_rules! scene {
-    ($camera:expr, $sky:expr, $split_type:expr, $primitives:expr) => {
-        $crate::image::scene::Scene::new($camera, $sky, $split_type, $primitives)
+    ($camera:expr, $sky:expr, $sampler:expr, $split_type:expr, $primitives:expr) => {
+        $crate::image::scene::Scene::new($camera, $sky, $sampler, $split_type, $primitives)
     };
 }
