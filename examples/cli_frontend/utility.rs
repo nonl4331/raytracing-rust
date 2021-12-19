@@ -1,13 +1,21 @@
+extern crate chrono;
+extern crate cpu_raytracer;
+extern crate image;
+
 use crate::parameters::Parameters;
-use cpu_raytracer::{Float, SamplerProgress};
+use chrono::Local;
+use cpu_raytracer::acceleration::bvh::Bvh;
+use cpu_raytracer::material::Scatter;
+use cpu_raytracer::ray_tracing::intersection::Primitive;
+use cpu_raytracer::*;
 use std::{
     convert::TryInto,
     io::{stdout, Write},
     sync::{Arc, RwLock},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
-const BAR_LENGTH: u32 = 50;
+const BAR_LENGTH: u32 = 30;
 
 pub fn progress_bar(percentage: f64) {
     print!("\r[");
@@ -27,7 +35,7 @@ pub fn progress_bar(percentage: f64) {
 }
 
 pub fn line_break() {
-    println!("------------------------------");
+    println!("--------------------------------");
 }
 
 pub fn get_readable_duration(duration: Duration) -> String {
@@ -107,4 +115,23 @@ pub fn get_progress_output(
         .iter()
         .map(|value| (value.sqrt() * 255.0) as u8)
         .collect()
+}
+
+pub fn create_bvh_with_info<P: Primitive<M>, M: Scatter>(
+    primitives: Vec<P>,
+    bvh_type: SplitType,
+) -> Arc<Bvh<P, M>> {
+    let time = Local::now();
+
+    println!("\n{} - Bvh construction started at", time.format("%X"));
+
+    let start = Instant::now();
+    let bvh = bvh!(primitives, bvh_type);
+    let end = Instant::now();
+    let duration = end.checked_duration_since(start).unwrap();
+
+    println!("\tBvh construction finished in: {}ms", duration.as_millis());
+    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+
+    bvh
 }

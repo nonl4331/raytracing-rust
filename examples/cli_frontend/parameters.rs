@@ -1,5 +1,6 @@
 extern crate cpu_raytracer;
 
+use crate::utility::line_break;
 use chrono::Local;
 use cpu_raytracer::{
     image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float,
@@ -38,13 +39,13 @@ impl Parameters {
 
 macro_rules! scene {
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr) => {{
-        println!("------------------------------");
+        line_break();
         let time = Local::now();
         println!("{} - Scene Generation started", time.format("%X"));
         super::generate::$scene_name($bvh_type, $aspect_ratio)
     }};
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr, $seed:expr) => {{
-        println!("------------------------------");
+        line_break();
         let time = Local::now();
         println!("{} - Scene Generation started", time.format("%X"));
         super::generate::$scene_name($bvh_type, $aspect_ratio, $seed)

@@ -54,7 +54,7 @@ where
         let mut bvh = Self {
             split_type,
             nodes: Vec::new(),
-            primitives: primitives,
+            primitives,
             phantom: PhantomData,
         };
         let mut primitives_info: Vec<PrimitiveInfo> = bvh

@@ -1,12 +1,12 @@
 extern crate cpu_raytracer;
 
+use crate::utility::create_bvh_with_info;
 use chrono::Local;
 use cpu_raytracer::{
     image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
-use std::time::Instant;
 
 pub fn get_seed(length: usize) -> String {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
@@ -86,17 +86,7 @@ pub fn scene_one(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky, random_sampler!(), bvh)
 }
@@ -156,17 +146,7 @@ pub fn scene_two(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky, random_sampler!(), bvh)
 }
@@ -213,17 +193,7 @@ pub fn scene_three(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky, random_sampler!(), bvh)
 }
@@ -262,17 +232,7 @@ pub fn scene_four(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky!(), random_sampler!(), bvh)
 }
@@ -311,17 +271,7 @@ pub fn scene_five(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky, random_sampler!(), bvh)
 }
@@ -353,17 +303,7 @@ pub fn scene_six(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky!(), random_sampler!(), bvh)
 }
@@ -403,17 +343,7 @@ pub fn scene_seven(
         10
     );
 
-    let time = Local::now();
-
-    println!("\n{} - Bvh construction started at", time.format("%X"));
-
-    let start = Instant::now();
-    let bvh = bvh!(primitives, bvh_type);
-    let end = Instant::now();
-    let duration = end.checked_duration_since(start).unwrap();
-
-    println!("\tBvh construction finished in: {}ms", duration.as_millis());
-    println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
+    let bvh = create_bvh_with_info(primitives, bvh_type);
 
     scene!(camera, sky, random_sampler!(), bvh)
 }

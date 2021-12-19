@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use crate::utility::vec::Vec3;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
