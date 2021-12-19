@@ -2,10 +2,39 @@ extern crate cpu_raytracer;
 
 use chrono::Local;
 use cpu_raytracer::{
-    image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float, Parameters,
+    image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float,
     PrimitiveEnum, Scene, SplitType,
 };
 use std::process;
+
+const SAMPLES_DEFAULT: u64 = 30;
+const WIDTH_DEFAULT: u64 = 800;
+const HEIGHT_DEFAULT: u64 = 600;
+const BVH_DEFAULT: SplitType = SplitType::Middle;
+const FILENAME_DEFAULT: &str = "out.png";
+
+pub struct Parameters {
+    pub samples: u64,
+    pub width: u64,
+    pub height: u64,
+    pub filename: String,
+}
+
+impl Parameters {
+    pub fn new(
+        samples: Option<u64>,
+        width: Option<u64>,
+        height: Option<u64>,
+        filename: Option<String>,
+    ) -> Self {
+        Parameters {
+            samples: samples.unwrap_or(SAMPLES_DEFAULT),
+            width: width.unwrap_or(WIDTH_DEFAULT),
+            height: height.unwrap_or(HEIGHT_DEFAULT),
+            filename: filename.unwrap_or(FILENAME_DEFAULT.to_string()),
+        }
+    }
+}
 
 macro_rules! scene {
     ($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr) => {{
@@ -21,10 +50,6 @@ macro_rules! scene {
         super::generate::$scene_name($bvh_type, $aspect_ratio, $seed)
     }};
 }
-
-const WIDTH_DEFAULT: u64 = 800;
-const HEIGHT_DEFAULT: u64 = 600;
-const BVH_DEFAULT: SplitType = SplitType::Middle;
 
 pub fn process_args(
     args: Vec<String>,

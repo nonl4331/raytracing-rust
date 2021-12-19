@@ -1,3 +1,5 @@
+use std::thread::current;
+
 use crate::utility::vec::Vec3;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
@@ -75,4 +77,36 @@ pub fn previous_float(mut float: Float) -> Float {
 pub fn gamma(n: u32) -> Float {
     let nm = n as Float * 0.5 * Float::EPSILON;
     return (nm) / (1.0 - nm);
+}
+
+pub fn sort_by_indices<T>(vec: &mut [T], mut indices: Vec<usize>) {
+    for index in 0..vec.len() {
+        if indices[index] != index {
+            let mut current_index = index;
+            loop {
+                let target_index = indices[current_index];
+                indices[current_index] = current_index;
+                if indices[target_index] == target_index {
+                    break;
+                }
+                vec.swap(current_index, target_index);
+                current_index = target_index;
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utility::math::sort_by_indices;
+
+    #[test]
+    fn sort_vec_by_indices() {
+        let indices = vec![0, 4, 2, 1, 3];
+        let mut values = ["a", "b", "c", "d", "e"];
+
+        sort_by_indices(&mut values, indices);
+
+        assert_eq!(values, ["a", "e", "c", "b", "d"]);
+    }
 }

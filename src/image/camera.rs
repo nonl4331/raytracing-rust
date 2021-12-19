@@ -35,15 +35,14 @@ impl SamplerProgress {
 }
 
 pub trait Sampler {
-    fn sample_image<M, P>(
+    fn sample_image<P, M: 'static>(
         &self,
         _: u64,
         _: u64,
         _: u64,
         _: Arc<Camera>,
         _: Arc<Sky>,
-        _: Arc<Vec<P>>,
-        _: Arc<Bvh>,
+        _: Arc<Bvh<P, M>>,
     ) -> Vec<Arc<RwLock<SamplerProgress>>>
     where
         P: 'static + Primitive<M> + Sync + Send,
@@ -57,15 +56,14 @@ pub trait Sampler {
 pub struct RandomSampler;
 
 impl Sampler for RandomSampler {
-    fn sample_image<M, P>(
+    fn sample_image<P, M: 'static>(
         &self,
         samples_per_pixel: u64,
         width: u64,
         height: u64,
         camera: Arc<Camera>,
         sky: Arc<Sky>,
-        primitives: Arc<Vec<P>>,
-        bvh: Arc<Bvh>,
+        bvh: Arc<Bvh<P, M>>,
     ) -> Vec<Arc<RwLock<SamplerProgress>>>
     where
         P: 'static + Primitive<M> + Sync + Send,
@@ -89,7 +87,6 @@ impl Sampler for RandomSampler {
 
             let thread_sky = sky.clone();
             let thread_bvh = bvh.clone();
-            let thread_primitives = primitives.clone();
             let thread_camera = camera.clone();
 
             let thread_samples = if samples_per_pixel % threads as u64 <= thread_num as u64 {
@@ -110,12 +107,8 @@ impl Sampler for RandomSampler {
                         let v = 1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
 
                         let mut ray = thread_camera.get_ray(u, v); // remember to add le DOF
-                        let result = Ray::get_colour(
-                            &mut ray,
-                            thread_sky.clone(),
-                            thread_bvh.clone(),
-                            thread_primitives.clone(),
-                        );
+                        let result =
+                            Ray::get_colour(&mut ray, thread_sky.clone(), thread_bvh.clone());
 
                         let mut sample_progress = thread_progress.write().unwrap();
                         colour += result.0;

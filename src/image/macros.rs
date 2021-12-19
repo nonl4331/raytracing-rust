@@ -385,8 +385,18 @@ macro_rules! sky {
 }
 
 #[macro_export]
+macro_rules! bvh {
+    ($primitives:expr, $split_type:expr) => {
+        std::sync::Arc::new($crate::acceleration::bvh::Bvh::new(
+            $primitives,
+            $split_type,
+        ))
+    };
+}
+
+#[macro_export]
 macro_rules! scene {
-    ($camera:expr, $sky:expr, $sampler:expr, $split_type:expr, $primitives:expr) => {
-        $crate::image::scene::Scene::new($camera, $sky, $sampler, $split_type, $primitives)
+    ($camera:expr, $sky:expr, $sampler:expr, $bvh:expr) => {
+        $crate::image::scene::Scene::new($camera, $sky, $sampler, $bvh)
     };
 }

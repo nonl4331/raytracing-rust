@@ -47,8 +47,7 @@ impl Ray {
 
     fn check_hit<P: Primitive<M>, M: Scatter>(
         &mut self,
-        bvh: &Arc<Bvh>,
-        primitives: &Arc<Vec<P>>,
+        bvh: &Arc<Bvh<P, M>>,
     ) -> Option<SurfaceIntersection<M>> {
         let offset_lens = bvh.get_intersection_candidates(self);
 
@@ -57,7 +56,7 @@ impl Ray {
         for offset_len in offset_lens {
             let offset = offset_len.0;
             let len = offset_len.1;
-            for object in &primitives[offset..offset + len] {
+            for object in &bvh.primitives[offset..offset + len] {
                 // check for hit
                 if let Some(current_hit) = object.get_int(self) {
                     // make sure ray is going forwards
@@ -83,8 +82,7 @@ impl Ray {
     pub fn get_colour<P: Primitive<M>, M: Scatter>(
         ray: &mut Ray,
         sky: Arc<Sky>,
-        bvh: Arc<Bvh>,
-        primitives: Arc<Vec<P>>,
+        bvh: Arc<Bvh<P, M>>,
     ) -> (Colour, u64) {
         let mut colour = Colour::one();
         let mut depth = 0;
@@ -93,7 +91,7 @@ impl Ray {
         // stop generating new bounce rays after MAX_DEPTH
         while depth < MAX_DEPTH {
             // check for intersection with any of the objects in the scene
-            let hit = ray.check_hit(&bvh, &primitives);
+            let hit = ray.check_hit(&bvh);
 
             ray_count += 1;
 

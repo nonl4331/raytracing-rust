@@ -1,10 +1,14 @@
-use crate::acceleration::{
-    aabb::Aabb,
-    split::{Split, SplitType},
-};
 use crate::ray_tracing::{intersection::Primitive, material::Scatter, primitives::Axis, ray::Ray};
 use crate::utility::vec::Vec3;
-use std::{collections::VecDeque, mem};
+use crate::{
+    acceleration::{
+        aabb::Aabb,
+        split::{Split, SplitType},
+    },
+    utility::math::sort_by_indices,
+};
+use std::collections::VecDeque;
+use std::marker::PhantomData;
 
 #[cfg(all(feature = "f64"))]
 use std::f64::EPSILON;
@@ -34,21 +38,27 @@ impl PrimitiveInfo {
     }
 }
 
-pub struct Bvh {
+pub struct Bvh<P: Primitive<M>, M: Scatter> {
     split_type: SplitType,
     nodes: Vec<Node>,
+    pub primitives: Vec<P>,
+    phantom: PhantomData<M>,
 }
 
-impl Bvh {
-    pub fn new<P: Primitive<M>, M: Scatter>(
-        primitives: &mut Vec<P>,
-        split_type: SplitType,
-    ) -> Self {
+impl<P, M> Bvh<P, M>
+where
+    P: Primitive<M>,
+    M: Scatter,
+{
+    pub fn new(primitives: Vec<P>, split_type: SplitType) -> Self {
         let mut bvh = Self {
             split_type,
             nodes: Vec::new(),
+            primitives: primitives,
+            phantom: PhantomData,
         };
-        let mut primitives_info: Vec<PrimitiveInfo> = primitives
+        let mut primitives_info: Vec<PrimitiveInfo> = bvh
+            .primitives
             .iter()
             .enumerate()
             .map(|(index, primitive)| PrimitiveInfo::new(index, primitive))
@@ -56,14 +66,10 @@ impl Bvh {
 
         bvh.build_bvh(&mut Vec::new(), 0, &mut primitives_info);
 
-        let mut temp_vec = Vec::with_capacity(primitives.len());
-
-        for index in primitives_info.iter().map(|&info| info.index) {
-            temp_vec.push(unsafe { mem::transmute_copy(&primitives[index]) });
-        }
-
-        mem::swap(primitives, &mut temp_vec);
-        mem::forget(temp_vec);
+        sort_by_indices(
+            &mut bvh.primitives,
+            primitives_info.iter().map(|&info| info.index).collect(),
+        );
 
         bvh
     }
@@ -202,7 +208,6 @@ impl Node {
 mod tests {
 
     use crate::acceleration::bvh::PrimitiveInfo;
-    use crate::image::camera::RandomSampler;
     use crate::material::MaterialEnum;
     use crate::ray_tracing::{intersection::Primitive, primitives::PrimitiveEnum};
     use crate::texture::TextureEnum;
@@ -210,7 +215,6 @@ mod tests {
     use crate::*;
     use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
     use rand_seeder::Seeder;
-    use std::sync::Arc;
 
     #[test]
     fn primitive_info_new() {
@@ -293,19 +297,15 @@ mod tests {
             10
         );
 
-        let scene = scene!(
-            camera,
-            sky!(),
-            random_sampler!(),
-            SplitType::Sah,
-            primitives
-        );
+        let bvh = bvh!(primitives, SplitType::Sah);
+
+        let scene = scene!(camera, sky!(), random_sampler!(), bvh);
 
         let bvh = scene.bvh;
 
         for node in &bvh.nodes {
             for i in node.primitive_offset..(node.primitive_offset + node.number_primitives) {
-                let aabb = scene.primitives[i].get_aabb().unwrap();
+                let aabb = bvh.primitives[i].get_aabb().unwrap();
                 assert!(
                     (node.bounds.max - aabb.max).component_min() >= 0.0
                         && (aabb.min - node.bounds.min).component_min() >= 0.0
