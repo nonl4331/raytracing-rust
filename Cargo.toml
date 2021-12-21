@@ -14,6 +14,7 @@ rand_seeder = "0.2.2"
 wavefront_obj = "10.0.0"
 
 [dev-dependencies]
+chrono = "0.4.19"
 image = "0.23.14"
 
 [features]

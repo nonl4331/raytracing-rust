@@ -83,12 +83,12 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
 
 pub fn get_progress_output(
     options: &Parameters,
-    progresses: Vec<Arc<RwLock<SamplerProgress>>>,
+    progresses: &Vec<Arc<RwLock<SamplerProgress>>>,
 ) -> Vec<u8> {
     let mut exit = false;
     while !exit {
         let mut samples_sum = 0;
-        for progress in &progresses {
+        for progress in progresses.iter() {
             samples_sum += progress.read().unwrap().samples_completed;
         }
 

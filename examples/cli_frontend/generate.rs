@@ -1,7 +1,6 @@
 extern crate cpu_raytracer;
 
 use crate::utility::create_bvh_with_info;
-use chrono::Local;
 use cpu_raytracer::{
     image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
