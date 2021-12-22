@@ -98,7 +98,7 @@ impl Sampler for RandomSampler {
             thread::spawn(move || {
                 let mut rng = rand::thread_rng();
 
-                for _ in 0..thread_samples {
+                for thread_i in 0..thread_samples {
                     for pixel_i in 0..pixel_num {
                         let x = pixel_i % width;
                         let y = (pixel_i - x) / width;
@@ -114,12 +114,17 @@ impl Sampler for RandomSampler {
                         colour += result.0;
                         sample_progress.rays_shot += result.1;
 
-                        colour /= samples_per_pixel as Float;
-                        sample_progress.current_image[(pixel_i * channels) as usize] += colour.x;
-                        sample_progress.current_image[(pixel_i * channels + 1) as usize] +=
-                            colour.y;
-                        sample_progress.current_image[(pixel_i * channels + 2) as usize] +=
-                            colour.z;
+                        sample_progress.current_image[(pixel_i * channels) as usize] += (colour.x
+                            - sample_progress.current_image[(pixel_i * channels) as usize])
+                            / (thread_i + 1) as Float;
+                        sample_progress.current_image[(pixel_i * channels + 1) as usize] += (colour
+                            .y
+                            - sample_progress.current_image[(pixel_i * channels + 1) as usize])
+                            / (thread_i + 1) as Float;
+                        sample_progress.current_image[(pixel_i * channels + 2) as usize] += (colour
+                            .z
+                            - sample_progress.current_image[(pixel_i * channels + 2) as usize])
+                            / (thread_i + 1) as Float;
                     }
                     let mut sample_progress = thread_progress.write().unwrap();
                     sample_progress.samples_completed += 1;

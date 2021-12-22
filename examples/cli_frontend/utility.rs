@@ -110,6 +110,10 @@ pub fn get_progress_output(
         vec![0.0; (options.width * options.height * 3) as usize],
         |acc, image| acc.iter().zip(image).map(|(&a, &b)| a + b).collect(),
     );
+    let image: Vec<Float> = image
+        .iter()
+        .map(|pixel_val| pixel_val / progresses.len() as Float)
+        .collect();
 
     image
         .iter()
