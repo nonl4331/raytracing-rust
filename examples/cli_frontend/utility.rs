@@ -99,7 +99,7 @@ pub fn get_progress_output(
         if samples_sum == options.samples {
             exit = true;
         }
-        std::thread::sleep(std::time::Duration::from_millis(250));
+        std::thread::sleep(std::time::Duration::from_millis(100));
     }
     let progresses: Vec<Vec<Float>> = progresses
         .iter()

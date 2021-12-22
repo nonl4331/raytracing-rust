@@ -115,9 +115,11 @@ impl Sampler for RandomSampler {
                         sample_progress.rays_shot += result.1;
 
                         colour /= samples_per_pixel as Float;
-                        sample_progress.current_image[(pixel_i * channels) as usize] = colour.x;
-                        sample_progress.current_image[(pixel_i * channels + 1) as usize] = colour.y;
-                        sample_progress.current_image[(pixel_i * channels + 2) as usize] = colour.z;
+                        sample_progress.current_image[(pixel_i * channels) as usize] += colour.x;
+                        sample_progress.current_image[(pixel_i * channels + 1) as usize] +=
+                            colour.y;
+                        sample_progress.current_image[(pixel_i * channels + 2) as usize] +=
+                            colour.z;
                     }
                     let mut sample_progress = thread_progress.write().unwrap();
                     sample_progress.samples_completed += 1;
