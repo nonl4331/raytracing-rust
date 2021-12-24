@@ -26,15 +26,13 @@ fn main() {
         println!("\tHeight: {}", height);
         println!("\tSamples per pixel: {}\n", samples);
         let start = Instant::now();
-        let progresses = scene.generate_image_threaded(width, height, samples);
-        let output = get_progress_output(&parameters, &progresses);
+        let progress = scene.generate_image_threaded(width, height, samples);
+        let output = get_progress_output(&parameters, &progress);
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 
-        let mut ray_count = 0;
-        for progress in &progresses {
-            ray_count += progress.read().unwrap().rays_shot;
-        }
+        let ray_count = progress.read().unwrap().rays_shot;
+
         let time = Local::now();
         println!(
             "\u{001b}[2K\r{} - Finised rendering image",

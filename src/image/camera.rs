@@ -45,7 +45,7 @@ pub trait Sampler {
         _: Arc<Camera>,
         _: Arc<Sky>,
         _: Arc<Bvh<P, M>>,
-    ) -> Vec<Arc<RwLock<SamplerProgress>>>
+    ) -> Arc<RwLock<SamplerProgress>>
     where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
@@ -66,7 +66,7 @@ impl Sampler for RandomSampler {
         camera: Arc<Camera>,
         sky: Arc<Sky>,
         bvh: Arc<Bvh<P, M>>,
-    ) -> Vec<Arc<RwLock<SamplerProgress>>>
+    ) -> Arc<RwLock<SamplerProgress>>
     where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
@@ -105,7 +105,7 @@ impl Sampler for RandomSampler {
                             .zip(previous.current_image.iter())
                             .for_each(|(pres, acc)| {
                                 *pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
-                            })
+                            });
                     });
                 }
 
@@ -125,8 +125,6 @@ impl Sampler for RandomSampler {
 
                             let mut ray = camera.get_ray(u, v); // remember to add le DOF
                             let result = Ray::get_colour(&mut ray, sky.clone(), bvh.clone());
-
-                            //let mut sample_progress = thread_progress.write().unwrap();
 
                             chunk[chunk_pixel_i * channels as usize] = result.0.x;
                             chunk[chunk_pixel_i * channels as usize + 1] = result.0.y;
@@ -156,10 +154,11 @@ impl Sampler for RandomSampler {
                 .iter_mut()
                 .zip(previous.current_image.iter())
                 .for_each(|(pres, acc)| {
-                    *pres += (acc - *pres) / samples_per_pixel as Float; // since copies first buffer when i=1
+                    *pres += (acc - *pres) / samples_per_pixel as Float;
                 });
-        }
-        vec![presentation_buffer]
+        } // scope is to drop pbuffer RwLock
+
+        presentation_buffer
     }
 }
 

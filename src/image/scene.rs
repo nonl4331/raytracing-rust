@@ -34,7 +34,7 @@ where
         width: u64,
         height: u64,
         samples: u64,
-    ) -> Vec<Arc<RwLock<SamplerProgress>>> {
+    ) -> Arc<RwLock<SamplerProgress>> {
         self.sampler.sample_image(
             samples,
             width,
