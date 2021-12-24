@@ -2,20 +2,21 @@
 name = "cpu_raytracer"
 version = "0.1.0"
 authors = ["NonL4331 <nicholasl0003@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+crossbeam-utils = "0.8.5"
 image = "0.23.14"
 num_cpus = "1.13.0"
 rand = { version = "0.8.3", features = [ "small_rng" ] }
 rand_seeder = "0.2.2"
+rayon = "1.5.1"
 wavefront_obj = "10.0.0"
 
 [dev-dependencies]
 chrono = "0.4.19"
-image = "0.23.14"
 
 [features]
 f64 = []

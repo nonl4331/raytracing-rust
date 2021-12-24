@@ -1,6 +1,5 @@
 use crate::acceleration::bvh::Bvh;
 use crate::material::Scatter;
-use crate::ray::Colour;
 use crate::ray_tracing::intersection::Primitive;
 use crate::ray_tracing::sky::Sky;
 use std::iter::FromIterator;
@@ -8,7 +7,10 @@ use std::iter::FromIterator;
 use std::sync::Arc;
 
 use std::sync::RwLock;
-use std::thread;
+//use std::thread;
+
+use crossbeam_utils::thread;
+use rayon::prelude::*;
 
 use rand::Rng;
 
@@ -73,66 +75,91 @@ impl Sampler for RandomSampler {
         let channels = 3;
         let pixel_num = width * height;
 
-        let mut progresses: Vec<Arc<RwLock<SamplerProgress>>> = Vec::new();
+        let mut accumulator_buffers = (
+            SamplerProgress::new(pixel_num, channels),
+            SamplerProgress::new(pixel_num, channels),
+        );
 
-        let threads = num_cpus::get();
+        let presentation_buffer = Arc::new(RwLock::new(SamplerProgress::new(pixel_num, channels)));
 
-        let upper_sample_count = (samples_per_pixel as Float / threads as Float).ceil() as u64;
-        let lower_sample_count = (samples_per_pixel as Float / threads as Float).floor() as u64;
+        let pixel_chunk_size = 10000;
+        let chunk_size = pixel_chunk_size * channels;
 
-        for thread_num in 0..threads {
-            let thread_progress = Arc::new(RwLock::new(SamplerProgress::new(pixel_num, channels)));
-
-            progresses.push(thread_progress.clone());
-
-            let thread_sky = sky.clone();
-            let thread_bvh = bvh.clone();
-            let thread_camera = camera.clone();
-
-            let thread_samples = if samples_per_pixel % threads as u64 <= thread_num as u64 {
-                lower_sample_count
+        for i in 0..samples_per_pixel {
+            let (previous, current) = if i % 2 == 0 {
+                (&accumulator_buffers.0, &mut accumulator_buffers.1)
             } else {
-                upper_sample_count
+                (&accumulator_buffers.1, &mut accumulator_buffers.0)
             };
 
-            thread::spawn(move || {
-                let mut rng = rand::thread_rng();
+            thread::scope(|s| {
+                if i != 0 {
+                    s.spawn(|_| {
+                        let mut pbuffer = presentation_buffer.write().unwrap();
+                        pbuffer.samples_completed += 1;
+                        pbuffer.rays_shot += previous.rays_shot;
 
-                for thread_i in 0..thread_samples {
-                    for pixel_i in 0..pixel_num {
-                        let x = pixel_i % width;
-                        let y = (pixel_i - x) / width;
-                        let mut colour = Colour::new(0.0, 0.0, 0.0);
-                        let u = (rng.gen_range(0.0..1.0) + x as Float) / width as Float;
-                        let v = 1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
-
-                        let mut ray = thread_camera.get_ray(u, v); // remember to add le DOF
-                        let result =
-                            Ray::get_colour(&mut ray, thread_sky.clone(), thread_bvh.clone());
-
-                        let mut sample_progress = thread_progress.write().unwrap();
-                        colour += result.0;
-                        sample_progress.rays_shot += result.1;
-
-                        sample_progress.current_image[(pixel_i * channels) as usize] += (colour.x
-                            - sample_progress.current_image[(pixel_i * channels) as usize])
-                            / (thread_i + 1) as Float;
-                        sample_progress.current_image[(pixel_i * channels + 1) as usize] += (colour
-                            .y
-                            - sample_progress.current_image[(pixel_i * channels + 1) as usize])
-                            / (thread_i + 1) as Float;
-                        sample_progress.current_image[(pixel_i * channels + 2) as usize] += (colour
-                            .z
-                            - sample_progress.current_image[(pixel_i * channels + 2) as usize])
-                            / (thread_i + 1) as Float;
-                    }
-                    let mut sample_progress = thread_progress.write().unwrap();
-                    sample_progress.samples_completed += 1;
+                        pbuffer
+                            .current_image
+                            .iter_mut()
+                            .zip(previous.current_image.iter())
+                            .for_each(|(pres, acc)| {
+                                *pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
+                            })
+                    });
                 }
-            });
+
+                current.rays_shot = current
+                    .current_image
+                    .par_chunks_mut(chunk_size as usize)
+                    .enumerate()
+                    .map(|(chunk_i, chunk)| {
+                        let mut rng = rand::thread_rng();
+                        let mut rays_shot = 0;
+                        for chunk_pixel_i in 0..(chunk.len() / 3) {
+                            let pixel_i = chunk_pixel_i as u64 + pixel_chunk_size * chunk_i as u64;
+                            let x = pixel_i as u64 % width;
+                            let y = (pixel_i as u64 - x) / width;
+                            let u = (rng.gen_range(0.0..1.0) + x as Float) / width as Float;
+                            let v = 1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
+
+                            let mut ray = camera.get_ray(u, v); // remember to add le DOF
+                            let result = Ray::get_colour(&mut ray, sky.clone(), bvh.clone());
+
+                            //let mut sample_progress = thread_progress.write().unwrap();
+
+                            chunk[chunk_pixel_i * channels as usize] = result.0.x;
+                            chunk[chunk_pixel_i * channels as usize + 1] = result.0.y;
+                            chunk[chunk_pixel_i * channels as usize + 2] = result.0.z;
+                            rays_shot += result.1;
+                        }
+                        rays_shot
+                    })
+                    .sum();
+            })
+            .unwrap();
         }
 
-        progresses
+        {
+            let previous = if samples_per_pixel % 2 == 0 {
+                &accumulator_buffers.0
+            } else {
+                &accumulator_buffers.1
+            };
+
+            let mut pbuffer = presentation_buffer.write().unwrap();
+            pbuffer.samples_completed += 1;
+            pbuffer.rays_shot += previous.rays_shot;
+
+            pbuffer
+                .current_image
+                .iter_mut()
+                .zip(previous.current_image.iter())
+                .for_each(|(pres, acc)| {
+                    *pres += (acc - *pres) / samples_per_pixel as Float; // since copies first buffer when i=1
+                });
+        }
+        vec![presentation_buffer]
     }
 }
 
