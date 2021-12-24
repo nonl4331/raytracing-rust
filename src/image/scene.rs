@@ -5,7 +5,7 @@ use crate::ray_tracing::{intersection::Primitive, material::Scatter, sky::Sky};
 use std::{
     iter::FromIterator,
     marker::{Send, Sync},
-    sync::{Arc, RwLock},
+    sync::Arc,
 };
 
 pub struct Scene<P: Primitive<M>, M: Scatter, S: Sampler> {
@@ -34,7 +34,8 @@ where
         width: u64,
         height: u64,
         samples: u64,
-    ) -> Arc<RwLock<SamplerProgress>> {
+        presentation_update: Option<impl Fn(&SamplerProgress) + Send + Sync>,
+    ) -> SamplerProgress {
         self.sampler.sample_image(
             samples,
             width,
@@ -42,6 +43,7 @@ where
             self.camera.clone(),
             self.sky.clone(),
             self.bvh.clone(),
+            presentation_update,
         )
     }
 }

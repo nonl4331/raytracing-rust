@@ -6,9 +6,6 @@ use std::iter::FromIterator;
 
 use std::sync::Arc;
 
-use std::sync::RwLock;
-//use std::thread;
-
 use crossbeam_utils::thread;
 use rayon::prelude::*;
 
@@ -37,7 +34,7 @@ impl SamplerProgress {
 }
 
 pub trait Sampler {
-    fn sample_image<P, M: 'static>(
+    fn sample_image<P, M: 'static, F>(
         &self,
         _: u64,
         _: u64,
@@ -45,11 +42,13 @@ pub trait Sampler {
         _: Arc<Camera>,
         _: Arc<Sky>,
         _: Arc<Bvh<P, M>>,
-    ) -> Arc<RwLock<SamplerProgress>>
+        _: Option<F>,
+    ) -> SamplerProgress
     where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
         Vec<P>: FromIterator<P>,
+        F: Fn(&SamplerProgress) + Send + Sync,
     {
         unimplemented!()
     }
@@ -58,7 +57,7 @@ pub trait Sampler {
 pub struct RandomSampler;
 
 impl Sampler for RandomSampler {
-    fn sample_image<P, M: 'static>(
+    fn sample_image<P, M: 'static, F>(
         &self,
         samples_per_pixel: u64,
         width: u64,
@@ -66,11 +65,13 @@ impl Sampler for RandomSampler {
         camera: Arc<Camera>,
         sky: Arc<Sky>,
         bvh: Arc<Bvh<P, M>>,
-    ) -> Arc<RwLock<SamplerProgress>>
+        presentation_update: Option<F>,
+    ) -> SamplerProgress
     where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
         Vec<P>: FromIterator<P>,
+        F: Fn(&SamplerProgress) + Send + Sync,
     {
         let channels = 3;
         let pixel_num = width * height;
@@ -80,7 +81,7 @@ impl Sampler for RandomSampler {
             SamplerProgress::new(pixel_num, channels),
         );
 
-        let presentation_buffer = Arc::new(RwLock::new(SamplerProgress::new(pixel_num, channels)));
+        let mut presentation_buffer = SamplerProgress::new(pixel_num, channels);
 
         let pixel_chunk_size = 10000;
         let chunk_size = pixel_chunk_size * channels;
@@ -95,7 +96,7 @@ impl Sampler for RandomSampler {
             thread::scope(|s| {
                 if i != 0 {
                     s.spawn(|_| {
-                        let mut pbuffer = presentation_buffer.write().unwrap();
+                        let mut pbuffer = &mut presentation_buffer;
                         pbuffer.samples_completed += 1;
                         pbuffer.rays_shot += previous.rays_shot;
 
@@ -106,6 +107,11 @@ impl Sampler for RandomSampler {
                             .for_each(|(pres, acc)| {
                                 *pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
                             });
+
+                        match presentation_update.as_ref() {
+                            Some(f) => f(&pbuffer),
+                            None => (),
+                        }
                     });
                 }
 
@@ -145,7 +151,7 @@ impl Sampler for RandomSampler {
                 &accumulator_buffers.1
             };
 
-            let mut pbuffer = presentation_buffer.write().unwrap();
+            let mut pbuffer = &mut presentation_buffer;
             pbuffer.samples_completed += 1;
             pbuffer.rays_shot += previous.rays_shot;
 

@@ -6,6 +6,7 @@ use crate::utility::get_readable_duration;
 use crate::utility::line_break;
 use crate::utility::{get_progress_output, save_u8_to_image};
 use chrono::Local;
+use cpu_raytracer::SamplerProgress;
 use std::env;
 use std::time::Instant;
 
@@ -26,12 +27,15 @@ fn main() {
         println!("\tHeight: {}", height);
         println!("\tSamples per pixel: {}\n", samples);
         let start = Instant::now();
-        let progress = scene.generate_image_threaded(width, height, samples);
-        let output = get_progress_output(&parameters, &progress);
+        let progress_bar_output = |sp: &SamplerProgress| {
+            get_progress_output(&parameters, sp);
+        };
+        let output =
+            scene.generate_image_threaded(width, height, samples, Some(progress_bar_output));
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 
-        let ray_count = progress.read().unwrap().rays_shot;
+        let ray_count = output.rays_shot;
 
         let time = Local::now();
         println!(
@@ -45,6 +49,12 @@ fn main() {
             (ray_count as f64 / duration.as_secs_f64()) / 1000000.0
         );
         line_break();
+
+        let output: Vec<u8> = output
+            .current_image
+            .iter()
+            .map(|val| (val.sqrt() * 255.0) as u8)
+            .collect();
 
         save_u8_to_image(width, height, output, filename);
     }

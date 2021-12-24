@@ -11,7 +11,7 @@ use cpu_raytracer::*;
 use std::{
     convert::TryInto,
     io::{stdout, Write},
-    sync::{Arc, RwLock},
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -81,31 +81,12 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
     .unwrap();
 }
 
-pub fn get_progress_output(
-    options: &Parameters,
-    progress: &Arc<RwLock<SamplerProgress>>,
-) -> Vec<u8> {
-    let mut exit = false;
-    while !exit {
-        let samples = progress.read().unwrap().samples_completed;
+pub fn get_progress_output(options: &Parameters, progress: &SamplerProgress) {
+    let samples = progress.samples_completed;
 
-        progress_bar(samples as f64 / options.samples as f64);
-        print!(" ({}/{}) samples", samples, options.samples);
-        stdout().flush().unwrap();
-
-        if samples == options.samples {
-            exit = true;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(100));
-    }
-
-    progress
-        .read()
-        .unwrap()
-        .current_image
-        .iter()
-        .map(|value| (value.sqrt() * 255.0) as u8)
-        .collect()
+    progress_bar(samples as f64 / options.samples as f64);
+    print!(" ({}/{}) samples", samples, options.samples);
+    stdout().flush().unwrap();
 }
 
 pub fn create_bvh_with_info<P: Primitive<M>, M: Scatter>(
