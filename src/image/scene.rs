@@ -40,9 +40,9 @@ where
             samples,
             width,
             height,
-            self.camera.clone(),
-            self.sky.clone(),
-            self.bvh.clone(),
+            &self.camera,
+            &self.sky,
+            &self.bvh,
             presentation_update,
         )
     }

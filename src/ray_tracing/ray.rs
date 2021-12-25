@@ -7,7 +7,6 @@ use crate::ray_tracing::{
     sky::Sky,
 };
 use crate::utility::{math::Float, vec::Vec3};
-use std::sync::Arc;
 
 pub type Colour = Vec3;
 
@@ -47,7 +46,7 @@ impl Ray {
 
     fn check_hit<P: Primitive<M>, M: Scatter>(
         &mut self,
-        bvh: &Arc<Bvh<P, M>>,
+        bvh: &Bvh<P, M>,
     ) -> Option<SurfaceIntersection<M>> {
         let offset_lens = bvh.get_intersection_candidates(self);
 
@@ -81,8 +80,8 @@ impl Ray {
 
     pub fn get_colour<P: Primitive<M>, M: Scatter>(
         ray: &mut Ray,
-        sky: Arc<Sky>,
-        bvh: Arc<Bvh<P, M>>,
+        sky: &Sky,
+        bvh: &Bvh<P, M>,
     ) -> (Colour, u64) {
         let mut colour = Colour::one();
         let mut depth = 0;

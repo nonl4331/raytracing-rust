@@ -4,8 +4,6 @@ use crate::ray_tracing::intersection::Primitive;
 use crate::ray_tracing::sky::Sky;
 use std::iter::FromIterator;
 
-use std::sync::Arc;
-
 use crossbeam_utils::thread;
 use rayon::prelude::*;
 
@@ -39,9 +37,9 @@ pub trait Sampler {
         _: u64,
         _: u64,
         _: u64,
-        _: Arc<Camera>,
-        _: Arc<Sky>,
-        _: Arc<Bvh<P, M>>,
+        _: &Camera,
+        _: &Sky,
+        _: &Bvh<P, M>,
         _: Option<F>,
     ) -> SamplerProgress
     where
@@ -62,9 +60,9 @@ impl Sampler for RandomSampler {
         samples_per_pixel: u64,
         width: u64,
         height: u64,
-        camera: Arc<Camera>,
-        sky: Arc<Sky>,
-        bvh: Arc<Bvh<P, M>>,
+        camera: &Camera,
+        sky: &Sky,
+        bvh: &Bvh<P, M>,
         presentation_update: Option<F>,
     ) -> SamplerProgress
     where
@@ -130,7 +128,7 @@ impl Sampler for RandomSampler {
                             let v = 1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
 
                             let mut ray = camera.get_ray(u, v); // remember to add le DOF
-                            let result = Ray::get_colour(&mut ray, sky.clone(), bvh.clone());
+                            let result = Ray::get_colour(&mut ray, sky, bvh);
 
                             chunk[chunk_pixel_i * channels as usize] = result.0.x;
                             chunk[chunk_pixel_i * channels as usize + 1] = result.0.y;
@@ -144,25 +142,23 @@ impl Sampler for RandomSampler {
             .unwrap();
         }
 
-        {
-            let previous = if samples_per_pixel % 2 == 0 {
-                &accumulator_buffers.0
-            } else {
-                &accumulator_buffers.1
-            };
+        let previous = if samples_per_pixel % 2 == 0 {
+            &accumulator_buffers.0
+        } else {
+            &accumulator_buffers.1
+        };
 
-            let mut pbuffer = &mut presentation_buffer;
-            pbuffer.samples_completed += 1;
-            pbuffer.rays_shot += previous.rays_shot;
+        let mut pbuffer = &mut presentation_buffer;
+        pbuffer.samples_completed += 1;
+        pbuffer.rays_shot += previous.rays_shot;
 
-            pbuffer
-                .current_image
-                .iter_mut()
-                .zip(previous.current_image.iter())
-                .for_each(|(pres, acc)| {
-                    *pres += (acc - *pres) / samples_per_pixel as Float;
-                });
-        } // scope is to drop pbuffer RwLock
+        pbuffer
+            .current_image
+            .iter_mut()
+            .zip(previous.current_image.iter())
+            .for_each(|(pres, acc)| {
+                *pres += (acc - *pres) / samples_per_pixel as Float;
+            });
 
         presentation_buffer
     }
