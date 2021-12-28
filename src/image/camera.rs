@@ -1,19 +1,12 @@
 use crate::acceleration::bvh::Bvh;
-use crate::material::Scatter;
-use crate::ray_tracing::intersection::Primitive;
-use crate::ray_tracing::sky::Sky;
-use std::iter::FromIterator;
-
-use crossbeam_utils::thread;
-use rayon::prelude::*;
-
-use rand::Rng;
-
-use crate::ray_tracing::ray::Ray;
+use crate::ray_tracing::{intersection::Primitive, material::Scatter, ray::Ray, sky::Sky};
 use crate::utility::{
     math::{random_float, Float},
     vec::Vec3,
 };
+use rand::Rng;
+use rayon::prelude::*;
+use std::iter::FromIterator;
 
 pub struct SamplerProgress {
     pub samples_completed: u64,
@@ -91,7 +84,7 @@ impl Sampler for RandomSampler {
                 (&accumulator_buffers.1, &mut accumulator_buffers.0)
             };
 
-            thread::scope(|s| {
+            rayon::scope(|s| {
                 if i != 0 {
                     s.spawn(|_| {
                         let mut pbuffer = &mut presentation_buffer;
@@ -138,8 +131,7 @@ impl Sampler for RandomSampler {
                         rays_shot
                     })
                     .sum();
-            })
-            .unwrap();
+            });
         }
 
         let previous = if samples_per_pixel % 2 == 0 {
