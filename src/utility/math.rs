@@ -3,9 +3,13 @@ use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 #[cfg(all(feature = "f64"))]
 pub type Float = f64;
+#[cfg(all(feature = "f64"))]
+use std::f64::consts::PI;
 
 #[cfg(not(feature = "f64"))]
 pub type Float = f32;
+#[cfg(not(feature = "f64"))]
+use std::f32::consts::PI;
 
 pub fn random_unit_vector() -> Vec3 {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
@@ -30,6 +34,31 @@ pub fn random_in_unit_disk() -> Vec3 {
     point
 }
 
+pub fn get_coordinate_system(vec: &Vec3) -> (Vec3, Vec3) {
+    let vec2 = if vec.x.abs() > vec.y.abs() {
+        Vec3::new(-vec.z, 0.0, vec.x) / (vec.x * vec.x + vec.z * vec.z).sqrt()
+    } else {
+        Vec3::new(0.0, vec.z, -vec.y) / (vec.y * vec.y + vec.z * vec.z).sqrt()
+    };
+    (vec2, vec.cross(vec2))
+}
+
+pub fn cone_sampling(cos_theta_max: Float) -> Vec3 {
+    let r1 = random_float();
+    let cos_theta = (1.0 - r1) + r1 * cos_theta_max;
+    let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+    let phi = 2.0 * random_float() * PI;
+    Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
+}
+
+pub fn hemisphere_sampling() -> Vec3 {
+    let cos_theta = random_float();
+    let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+    let phi = 2.0 * random_float() * PI;
+    let vec = Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta);
+    vec
+}
+
 pub fn random_float() -> Float {
     let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
     rng.gen()
@@ -38,6 +67,11 @@ pub fn random_float() -> Float {
 pub fn near_zero(vec: Vec3) -> bool {
     let s = 0.001;
     vec.x.abs() < s && vec.y.abs() < s && vec.z.abs() < s
+}
+
+pub fn power_heuristic(pdf_a: Float, pdf_b: Float) -> Float {
+    let a_sq = pdf_a * pdf_a;
+    a_sq / (a_sq + pdf_b * pdf_b)
 }
 
 pub fn next_float(mut float: Float) -> Float {

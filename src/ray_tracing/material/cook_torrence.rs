@@ -55,11 +55,12 @@ where
     }
 }
 
+// TODO highly WIP
 impl<T> Scatter for CookTorrence<T>
 where
     T: TextureTrait,
 {
-    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Vec3, bool) {
+    fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
         let random_dir = (math::random_unit_vector() + hit.normal).normalised();
         if math::random_float() < self.specular_chance {
             let point = offset_ray(hit.point, hit.normal, hit.error, true);
@@ -75,11 +76,11 @@ where
             let d = ggx_distribution(self.alpha, hit.normal, half_angle);
             let f = fresnel(cos_theta, self.f0);
             let denom = 2.0 * hit.normal.dot(-ray.direction);
-            let colour = PI * f * d * g / denom;
+            let _colour = PI * f * d * g / denom;
 
             *ray = Ray::new(point, direction, ray.time);
 
-            (colour, false)
+            (0.0, false)
         } else {
             let mut direction = random_dir;
             if math::near_zero(direction) {
@@ -87,10 +88,7 @@ where
             }
             let point = offset_ray(hit.point, hit.normal, hit.error, true);
             *ray = Ray::new(point, direction, ray.time);
-            (
-                self.absorbtion * self.texture.colour_value(hit.uv, point),
-                false,
-            )
+            (1.0, false)
         }
     }
 }

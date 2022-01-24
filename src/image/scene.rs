@@ -14,6 +14,7 @@ pub struct Scene<P: Primitive<M>, M: Scatter, S: Sampler> {
     pub sampler: Arc<S>,
     pub sky: Arc<Sky>,
 }
+
 impl<P, M: 'static, S> Scene<P, M, S>
 where
     P: Primitive<M> + Sync + Send + 'static,

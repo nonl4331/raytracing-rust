@@ -42,6 +42,7 @@ pub struct Bvh<P: Primitive<M>, M: Scatter> {
     split_type: SplitType,
     nodes: Vec<Node>,
     pub primitives: Vec<P>,
+    pub lights: Vec<usize>,
     phantom: PhantomData<M>,
 }
 
@@ -55,6 +56,7 @@ where
             split_type,
             nodes: Vec::new(),
             primitives,
+            lights: Vec::new(),
             phantom: PhantomData,
         };
         let mut primitives_info: Vec<PrimitiveInfo> = bvh
@@ -70,6 +72,12 @@ where
             &mut bvh.primitives,
             primitives_info.iter().map(|&info| info.index).collect(),
         );
+
+        for (i, prim) in bvh.primitives.iter().enumerate() {
+            if prim.material_is_light() {
+                bvh.lights.push(i);
+            }
+        }
 
         bvh
     }

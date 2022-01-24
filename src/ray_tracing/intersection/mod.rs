@@ -14,7 +14,8 @@ use crate::ray_tracing::{
     ray::Ray,
 };
 use crate::utility::{
-    math::{next_float, previous_float, Float},
+    coord::Coordinate,
+    math::{next_float, previous_float, random_float, Float},
     vec::{Vec2, Vec3},
 };
 use std::sync::Arc;
@@ -87,6 +88,19 @@ where
     }
     fn get_uv(&self, _: Vec3) -> Option<Vec2> {
         None
+    }
+    fn get_sample(&self) -> Vec3 {
+        todo!()
+    }
+    fn sample_visible_from_point(&self, _: Vec3) -> (Vec3, Vec3, Vec3) {
+        todo!()
+    }
+    fn area(&self) -> Float;
+    fn scattering_pdf(&self, _: &Hit, _: Vec3, _: Vec3) -> Float {
+        1.0 / self.area()
+    }
+    fn material_is_light(&self) -> bool {
+        false
     }
 }
 
@@ -187,6 +201,53 @@ where
             PrimitiveEnum::MeshTriangle(triangle) => triangle.material.requires_uv(),
         }
     }
+    fn get_sample(&self) -> Vec3 {
+        match self {
+            PrimitiveEnum::Sphere(sphere) => sphere.get_sample(),
+            PrimitiveEnum::AARect(rect) => rect.get_sample(),
+            PrimitiveEnum::AACuboid(aab) => aab.get_sample(),
+            PrimitiveEnum::Triangle(triangle) => triangle.get_sample(),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.get_sample(),
+        }
+    }
+    fn sample_visible_from_point(&self, point: Vec3) -> (Vec3, Vec3, Vec3) {
+        match self {
+            PrimitiveEnum::Sphere(sphere) => sphere.sample_visible_from_point(point),
+            PrimitiveEnum::AARect(rect) => rect.sample_visible_from_point(point),
+            PrimitiveEnum::AACuboid(aab) => aab.sample_visible_from_point(point),
+            PrimitiveEnum::Triangle(triangle) => triangle.sample_visible_from_point(point),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.sample_visible_from_point(point),
+        }
+    }
+    fn area(&self) -> Float {
+        match self {
+            PrimitiveEnum::Sphere(sphere) => sphere.area(),
+            PrimitiveEnum::AARect(rect) => rect.area(),
+            PrimitiveEnum::AACuboid(aab) => aab.area(),
+            PrimitiveEnum::Triangle(triangle) => triangle.area(),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.area(),
+        }
+    }
+    fn scattering_pdf(&self, hit: &Hit, out_dir: Vec3, light_point: Vec3) -> Float {
+        match self {
+            PrimitiveEnum::Sphere(sphere) => sphere.scattering_pdf(hit, out_dir, light_point),
+            PrimitiveEnum::AARect(rect) => rect.scattering_pdf(hit, out_dir, light_point),
+            PrimitiveEnum::AACuboid(aab) => aab.scattering_pdf(hit, out_dir, light_point),
+            PrimitiveEnum::Triangle(triangle) => triangle.scattering_pdf(hit, out_dir, light_point),
+            PrimitiveEnum::MeshTriangle(triangle) => {
+                triangle.scattering_pdf(hit, out_dir, light_point)
+            }
+        }
+    }
+    fn material_is_light(&self) -> bool {
+        match self {
+            PrimitiveEnum::Sphere(sphere) => sphere.material.is_light(),
+            PrimitiveEnum::AARect(rect) => rect.material.is_light(),
+            PrimitiveEnum::AACuboid(aab) => aab.material.is_light(),
+            PrimitiveEnum::Triangle(triangle) => triangle.material.is_light(),
+            PrimitiveEnum::MeshTriangle(triangle) => triangle.material.is_light(),
+        }
+    }
 }
 
 impl<M> Intersect<M> for Sphere<M>
@@ -220,6 +281,63 @@ where
             self.center - self.radius * Vec3::one(),
             self.center + self.radius * Vec3::one(),
         ))
+    }
+    fn get_sample(&self) -> Vec3 {
+        let z = 1.0 - 2.0 * random_float();
+        let a = (1.0 - z * z).max(0.0).sqrt();
+        let b = 2.0 * PI * random_float();
+        self.center + self.radius * Vec3::new(a * b.cos(), a * b.sin(), z)
+    }
+    fn sample_visible_from_point(&self, in_point: Vec3) -> (Vec3, Vec3, Vec3) {
+        let distance_sq = (in_point - self.center).mag_sq();
+        let point = if distance_sq <= self.radius * self.radius {
+            self.get_sample()
+        } else {
+            let distance = (self.center - in_point).mag();
+            let distance_sq = distance * distance;
+            let sin_theta_max_sq = self.radius * self.radius / distance_sq;
+            let cost_theta_max = (1.0 - sin_theta_max_sq).max(0.0).sqrt();
+            let r1 = random_float();
+            let cos_theta = (1.0 - r1) + r1 * cost_theta_max;
+            let sin_theta = (1.0 - cos_theta * cos_theta).max(0.0).sqrt();
+            let phi = 2.0 * random_float() * PI;
+
+            // calculate alpha
+            let smol = self.radius * self.radius - distance_sq * sin_theta * sin_theta;
+            let side_a = distance * cos_theta - smol;
+            let side_b = &self.radius;
+            let side_c = &distance;
+            let cos_alpha =
+                (side_a * side_a + side_b * side_b - side_c * side_c) / (2.0 * side_a * side_b);
+            let sin_alpha = (1.0 - cos_alpha * cos_alpha).max(0.0).sqrt();
+
+            // get sphere point
+            let coord_system = Coordinate::new_from_z((in_point - self.center).normalised());
+            let mut vec = Vec3::new(sin_alpha * phi.cos(), sin_alpha * phi.sin(), cos_alpha);
+            coord_system.vec_to_coordinate(&mut vec);
+
+            self.center - self.radius * vec
+        };
+        (
+            point,
+            (point - in_point).normalised(),
+            (point - self.center).normalised(),
+        )
+    }
+    fn scattering_pdf(&self, hit: &Hit, out_dir: Vec3, light_point: Vec3) -> Float {
+        let rsq = self.radius * self.radius;
+        let dsq = (hit.point - self.center).mag_sq();
+        if dsq <= rsq {
+            return (light_point - hit.point).mag_sq()
+                / (out_dir.dot(-hit.normal).abs() * self.area());
+        }
+        let sin_theta_max_sq = rsq / dsq;
+        let cos_theta_max = (1.0 - sin_theta_max_sq).max(0.0).sqrt();
+
+        1.0 / (2.0 * PI * (1.0 - cos_theta_max))
+    }
+    fn area(&self) -> Float {
+        4.0 * PI * self.radius * self.radius
     }
 }
 
@@ -265,6 +383,9 @@ where
             Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
         ))
     }
+    fn area(&self) -> Float {
+        (self.max.x - self.min.x) * (self.max.y - self.min.y)
+    }
 }
 
 impl<M> Intersect<M> for AACuboid<M>
@@ -292,6 +413,9 @@ where
     fn get_aabb(&self) -> Option<Aabb> {
         Some(Aabb::new(self.min, self.max))
     }
+    fn area(&self) -> Float {
+        (self.max.x - self.min.x) * (self.max.y - self.min.y) * (self.max.z - self.min.z)
+    }
 }
 
 impl<M> Intersect<M> for Triangle<M>
@@ -312,6 +436,9 @@ where
             self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
             self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
         ))
+    }
+    fn area(&self) -> Float {
+        todo!()
     }
 }
 
@@ -339,5 +466,8 @@ where
             points[0].min_by_component(points[1].min_by_component(points[2])),
             points[0].max_by_component(points[1].max_by_component(points[2])),
         ))
+    }
+    fn area(&self) -> Float {
+        todo!()
     }
 }

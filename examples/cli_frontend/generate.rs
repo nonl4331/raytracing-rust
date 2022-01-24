@@ -223,7 +223,7 @@ pub fn scene_four(
 
     let camera = camera!(
         position!(-5, 3, -3),
-        position!(0, 0, 0),
+        position!(0, 0.5, 0),
         position!(0, 1, 0),
         34,
         aspect_ratio,
