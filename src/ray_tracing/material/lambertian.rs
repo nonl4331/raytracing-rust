@@ -36,9 +36,13 @@ where
     T: TextureTrait,
 {
     fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
-        let coordinate_system = Coordinate::new_from_z(hit.normal);
+        /*let coordinate_system = Coordinate::new_from_z(hit.normal);
         let mut direction = math::hemisphere_sampling();
-        coordinate_system.vec_to_coordinate(&mut direction);
+        coordinate_system.vec_to_coordinate(&mut direction);*/
+        let mut direction = math::random_unit_vector() + hit.normal;
+        if math::near_zero(direction) {
+            direction = hit.normal;
+        }
 
         let point = offset_ray(hit.point, hit.normal, hit.error, true);
         *ray = Ray::new(point, direction, ray.time);

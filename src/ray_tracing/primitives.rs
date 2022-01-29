@@ -8,6 +8,7 @@ use std::sync::Arc;
 pub enum PrimitiveEnum<M: Scatter> {
     Sphere(Sphere<M>),
     AARect(AARect<M>),
+    Rect(Rect<M>),
     AACuboid(AACuboid<M>),
     Triangle(Triangle<M>),
     MeshTriangle(MeshTriangle<M>),
@@ -265,6 +266,28 @@ where
             vertices,
             normals,
             material: material.clone(),
+        }
+    }
+}
+
+pub struct Rect<M: Scatter> {
+    pub aarect: AARect<M>,
+    pub cos_rotations: Vec3,
+    pub sin_rotations: Vec3,
+}
+
+impl<M> Rect<M>
+where
+    M: Scatter,
+{
+    pub fn new(aarect: AARect<M>, rotations: Vec3) -> Self {
+        let cos_rotations = Vec3::new(rotations.x.cos(), rotations.y.cos(), rotations.z.cos());
+        let sin_rotations = Vec3::new(rotations.x.sin(), rotations.y.sin(), rotations.z.sin());
+
+        Rect {
+            aarect,
+            cos_rotations,
+            sin_rotations,
         }
     }
 }

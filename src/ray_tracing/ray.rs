@@ -154,12 +154,12 @@ impl Ray {
                     bxdf_contrib *= emission;
                     return (bxdf_contrib + light_contrib, ray_count);
                 } else {
-                    let pdf_light; // = 0.0;
+                    //let pdf_light; // = 0.0;
 
                     light_contrib += bxdf_contrib * emission;
 
                     //add light contribution
-                    let (light_dir, light_colour, light_point) =
+                    /*let (light_dir, light_colour, light_point) =
                         Ray::sample_light(&hit, bvh.lights[0], bvh);
                     pdf_light =
                         bvh.primitives[bvh.lights[0]].scattering_pdf(&hit, light_dir, light_point);
@@ -170,20 +170,14 @@ impl Ray {
                             * light_dir.dot(hit.normal).abs()
                             / pdf_light;
                         light_contrib += bxdf_contrib * lc;
-                    }
+                    }*/
 
                     // add bxdf contribution
                     let bc = mat.scattering_albedo(&hit, old_dir, ray.direction)
                         * mat.scattering_pdf(hit.point, ray.direction, hit.normal)
-                        * ray.direction.dot(hit.normal).abs()
+                        //* ray.direction.dot(hit.normal).abs() // to compare to https://raytracing.github.io
                         * 1.0
                         / pdf_scattering;
-
-                    assert_eq!(
-                        mat.scattering_pdf(hit.point, ray.direction, hit.normal),
-                        pdf_scattering
-                    );
-
                     bxdf_contrib *= bc;
                 }
 

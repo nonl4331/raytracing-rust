@@ -1,16 +1,17 @@
 pub mod aacuboid;
 pub mod aarect;
+pub mod rect;
 pub mod sphere;
 pub mod triangle;
 
 use crate::acceleration::aabb::Aabb;
 use crate::ray_tracing::{
     intersection::{
-        aacuboid::aacuboid_intersection, aarect::aarect_intersection, sphere::sphere_intersection,
-        triangle::triangle_intersection,
+        aacuboid::aacuboid_intersection, aarect::aarect_intersection, rect::rect_intersection,
+        sphere::sphere_intersection, triangle::triangle_intersection,
     },
     material::Scatter,
-    primitives::{AACuboid, AARect, Axis, MeshTriangle, PrimitiveEnum, Sphere, Triangle},
+    primitives::{AACuboid, AARect, Axis, MeshTriangle, PrimitiveEnum, Rect, Sphere, Triangle},
     ray::Ray,
 };
 use crate::utility::{
@@ -152,6 +153,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_int(ray),
             PrimitiveEnum::AARect(rect) => rect.get_int(ray),
+            PrimitiveEnum::Rect(rect) => rect.get_int(ray),
             PrimitiveEnum::AACuboid(aab) => aab.get_int(ray),
             PrimitiveEnum::Triangle(triangle) => triangle.get_int(ray),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.get_int(ray),
@@ -162,6 +164,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.does_int(ray),
             PrimitiveEnum::AARect(rect) => rect.does_int(ray),
+            PrimitiveEnum::Rect(rect) => rect.does_int(ray),
             PrimitiveEnum::AACuboid(aab) => aab.does_int(ray),
             PrimitiveEnum::Triangle(triangle) => triangle.does_int(ray),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.does_int(ray),
@@ -177,6 +180,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_aabb(),
             PrimitiveEnum::AARect(rect) => rect.get_aabb(),
+            PrimitiveEnum::Rect(rect) => rect.get_aabb(),
             PrimitiveEnum::AACuboid(aab) => aab.get_aabb(),
             PrimitiveEnum::Triangle(triangle) => triangle.get_aabb(),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.get_aabb(),
@@ -186,6 +190,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_uv(point),
             PrimitiveEnum::AARect(rect) => rect.get_uv(point),
+            PrimitiveEnum::Rect(rect) => rect.get_uv(point),
             PrimitiveEnum::AACuboid(aab) => aab.get_uv(point),
             PrimitiveEnum::Triangle(triangle) => triangle.get_uv(point),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.get_uv(point),
@@ -196,6 +201,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => (*sphere.material).requires_uv(),
             PrimitiveEnum::AARect(rect) => rect.material.requires_uv(),
+            PrimitiveEnum::Rect(rect) => rect.aarect.material.requires_uv(),
             PrimitiveEnum::AACuboid(aab) => aab.material.requires_uv(),
             PrimitiveEnum::Triangle(triangle) => triangle.material.requires_uv(),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.material.requires_uv(),
@@ -205,6 +211,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.get_sample(),
             PrimitiveEnum::AARect(rect) => rect.get_sample(),
+            PrimitiveEnum::Rect(rect) => rect.get_sample(),
             PrimitiveEnum::AACuboid(aab) => aab.get_sample(),
             PrimitiveEnum::Triangle(triangle) => triangle.get_sample(),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.get_sample(),
@@ -214,6 +221,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.sample_visible_from_point(point),
             PrimitiveEnum::AARect(rect) => rect.sample_visible_from_point(point),
+            PrimitiveEnum::Rect(rect) => rect.sample_visible_from_point(point),
             PrimitiveEnum::AACuboid(aab) => aab.sample_visible_from_point(point),
             PrimitiveEnum::Triangle(triangle) => triangle.sample_visible_from_point(point),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.sample_visible_from_point(point),
@@ -223,6 +231,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.area(),
             PrimitiveEnum::AARect(rect) => rect.area(),
+            PrimitiveEnum::Rect(rect) => rect.area(),
             PrimitiveEnum::AACuboid(aab) => aab.area(),
             PrimitiveEnum::Triangle(triangle) => triangle.area(),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.area(),
@@ -232,6 +241,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.scattering_pdf(hit, out_dir, light_point),
             PrimitiveEnum::AARect(rect) => rect.scattering_pdf(hit, out_dir, light_point),
+            PrimitiveEnum::Rect(rect) => rect.scattering_pdf(hit, out_dir, light_point),
             PrimitiveEnum::AACuboid(aab) => aab.scattering_pdf(hit, out_dir, light_point),
             PrimitiveEnum::Triangle(triangle) => triangle.scattering_pdf(hit, out_dir, light_point),
             PrimitiveEnum::MeshTriangle(triangle) => {
@@ -243,6 +253,7 @@ where
         match self {
             PrimitiveEnum::Sphere(sphere) => sphere.material.is_light(),
             PrimitiveEnum::AARect(rect) => rect.material.is_light(),
+            PrimitiveEnum::Rect(rect) => rect.aarect.material.is_light(),
             PrimitiveEnum::AACuboid(aab) => aab.material.is_light(),
             PrimitiveEnum::Triangle(triangle) => triangle.material.is_light(),
             PrimitiveEnum::MeshTriangle(triangle) => triangle.material.is_light(),
@@ -469,5 +480,87 @@ where
     }
     fn area(&self) -> Float {
         todo!()
+    }
+}
+
+impl<M> Intersect<M> for Rect<M>
+where
+    M: Scatter,
+{
+    fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
+        rect_intersection(self, ray)
+    }
+
+    fn does_int(&self, ray: &Ray) -> bool {
+        let t = (self.aarect.k - self.aarect.axis.get_axis_value(ray.origin))
+            / self.aarect.axis.get_axis_value(ray.direction);
+        let point = ray.at(t);
+        let point_2d = self.aarect.axis.point_without_axis(point);
+
+        // x & y are not the x & y axis but rather the two axis that are not self.axis
+        point_2d.x > self.aarect.min.x
+            && point_2d.x < self.aarect.max.x
+            && point_2d.y > self.aarect.min.y
+            && point_2d.y < self.aarect.max.y
+    }
+}
+
+impl<M> Primitive<M> for Rect<M>
+where
+    M: Scatter,
+{
+    fn get_uv(&self, point: Vec3) -> Option<Vec2> {
+        if self.aarect.material.requires_uv() {
+            let pwa = self.aarect.axis.point_without_axis(point);
+            return Some(Vec2::new(
+                (pwa.x - self.aarect.min.x) / self.aarect.max.x,
+                (pwa.y - self.aarect.min.y) / self.aarect.max.y,
+            ));
+        }
+        None
+    }
+    fn get_aabb(&self) -> Option<Aabb> {
+        let max = Axis::point_from_2d(&self.aarect.max, &self.aarect.axis, self.aarect.k);
+        let min = Axis::point_from_2d(&self.aarect.min, &self.aarect.axis, self.aarect.k);
+        let center_point = (max + min) / 2.0;
+
+        let mut point_a = max - center_point;
+        let mut point_b = min - center_point;
+
+        // rotate around x
+        point_a.y = self.cos_rotations.x * point_a.y - self.sin_rotations.x * point_a.z;
+        point_a.z = self.sin_rotations.x * point_a.y + self.cos_rotations.x * point_a.z;
+        point_b.y = self.cos_rotations.x * point_b.y - self.sin_rotations.x * point_b.z;
+        point_b.z = self.sin_rotations.x * point_b.y + self.cos_rotations.x * point_b.z;
+
+        // rotate around y
+        point_a.x = self.cos_rotations.y * point_a.x - self.sin_rotations.y * point_a.z;
+        point_a.z = self.sin_rotations.y * point_a.x + self.cos_rotations.y * point_a.z;
+        point_b.x = self.cos_rotations.y * point_b.x - self.sin_rotations.y * point_b.z;
+        point_b.z = self.sin_rotations.y * point_b.x + self.cos_rotations.y * point_b.z;
+
+        // rotate around z
+        point_a.x = self.cos_rotations.z * point_a.x - self.sin_rotations.z * point_a.y;
+        point_a.y = self.sin_rotations.z * point_a.x + self.cos_rotations.z * point_a.y;
+        point_b.x = self.cos_rotations.z * point_b.x - self.sin_rotations.z * point_b.y;
+        point_b.y = self.sin_rotations.z * point_b.x + self.cos_rotations.z * point_b.y;
+
+        point_a += center_point;
+        point_b += center_point;
+
+        point_a += self
+            .aarect
+            .axis
+            .return_point_with_axis(Vec3::one() * 0.0001);
+        point_b -= self
+            .aarect
+            .axis
+            .return_point_with_axis(Vec3::one() * 0.0001);
+
+        Some(Aabb::new(point_b, point_a))
+    }
+
+    fn area(&self) -> Float {
+        (self.aarect.max.x - self.aarect.min.x) * (self.aarect.max.y - self.aarect.min.y)
     }
 }

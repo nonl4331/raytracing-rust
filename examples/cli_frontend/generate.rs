@@ -2,7 +2,8 @@ extern crate cpu_raytracer;
 
 use crate::utility::create_bvh_with_info;
 use cpu_raytracer::{
-    image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
+    image::camera::RandomSampler, material::MaterialEnum, ray_tracing::primitives,
+    texture::TextureEnum, *,
 };
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
@@ -340,6 +341,52 @@ pub fn scene_seven(
         aspect_ratio,
         0,
         10
+    );
+
+    let bvh = create_bvh_with_info(primitives, bvh_type);
+
+    scene!(camera, sky, random_sampler!(), bvh)
+}
+
+pub fn scene_eight(
+    bvh_type: SplitType,
+    aspect_ratio: Float,
+) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+    let mut primitives = Vec::new();
+
+    let red = &diffuse!(0.65, 0.05, 0.05, 0.0);
+    let white = &diffuse!(0.73, 0.73, 0.73, 0.0);
+    let green = &diffuse!(0.12, 0.45, 0.15, 0.0);
+    let light = &emit!(&solid_colour!(colour!(1)), 15);
+
+    primitives.push(aarect!(0, 0, 555, 555, 555, axis!(X), red));
+    primitives.push(aarect!(0, 0, 555, 555, 0, axis!(X), green));
+
+    primitives.push(aarect!(0, 0, 555, 555, 555, axis!(Y), white));
+    primitives.push(aarect!(0, 0, 555, 555, 0, axis!(Y), white));
+
+    primitives.push(aarect!(0, 0, 555, 555, 555, axis!(Z), white));
+    primitives.push(rect!(
+        213,
+        227,
+        343,
+        332,
+        554,
+        axis!(Y),
+        Vec3::new(0.0, 0.0, 0.0),
+        light
+    ));
+
+    let sky = sky!();
+
+    let camera = camera!(
+        position!(278, 278, -800),
+        position!(278, 278, 0),
+        position!(0, 1, 0),
+        40,
+        aspect_ratio,
+        0,
+        1
     );
 
     let bvh = create_bvh_with_info(primitives, bvh_type);

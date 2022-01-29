@@ -53,7 +53,7 @@ fn main() {
         let output: Vec<u8> = output
             .current_image
             .iter()
-            .map(|val| (val.sqrt() * 255.0) as u8)
+            .map(|val| (val.sqrt() * 255.999) as u8)
             .collect();
 
         save_u8_to_image(width, height, output, filename);

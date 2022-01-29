@@ -93,7 +93,7 @@ where
 
 pub trait Scatter {
     fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (Float, bool) {
-        (1.0, true)
+        (0.0, true)
     }
     fn requires_uv(&self) -> bool {
         false
@@ -108,7 +108,7 @@ pub trait Scatter {
         false
     }
     fn scattering_pdf(&self, _: Vec3, _: Vec3, _: Vec3) -> Float {
-        1.0
+        0.0
     }
     fn scattering_albedo(&self, _: &Hit, _: Vec3, _: Vec3) -> Vec3 {
         Vec3::one()

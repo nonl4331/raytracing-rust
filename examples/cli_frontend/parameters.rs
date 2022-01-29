@@ -229,6 +229,13 @@ fn get_list() {
     println!("Sky: Yes");
     println!("Motion Blur: No");
     println!("-------------------");
+    println!("-------------------");
+    println!("8: Cornell Box");
+    println!("-------------------");
+    println!("Objects: 6");
+    println!("Sky: No");
+    println!("Motion Blur: No");
+    println!("-------------------");
 }
 
 fn get_info(args: &[String], index: usize) {
@@ -287,6 +294,12 @@ fn get_info(args: &[String], index: usize) {
                 println!("Sky: Yes");
                 println!("Motion Blur: No");
             }
+            "8" => {
+                println!("8: Cornell Box");
+                println!("Objects: 6");
+                println!("Sky: No");
+                println!("Motion Blur: No");
+            }
             _ => {
                 println!("{} is not a valid scene index!", string);
                 println!("Please specify a valid for scene!");
@@ -332,6 +345,9 @@ fn get_scene(
             }
             "7" => {
                 scene!(scene_seven, bvh_type, aspect_ratio)
+            }
+            "8" => {
+                scene!(scene_eight, bvh_type, aspect_ratio)
             }
             _ => {
                 println!("{} is not a valid scene index!", string);
