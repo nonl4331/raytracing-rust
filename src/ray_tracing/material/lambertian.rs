@@ -4,7 +4,7 @@ use crate::ray_tracing::{
     texture::TextureTrait,
 };
 
-use crate::utility::{coord::Coordinate, math, math::Float, vec::Vec3};
+use crate::utility::{math, math::Float, vec::Vec3};
 
 use std::sync::Arc;
 

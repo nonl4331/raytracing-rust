@@ -4,7 +4,18 @@ use crate::ray_tracing::{
     primitives::Sphere,
     ray::Ray,
 };
-use crate::utility::{interval::Interval, interval_vec::IntervalVec3, math::gamma, vec::Vec3};
+use crate::utility::{
+    interval::Interval,
+    interval_vec::IntervalVec3,
+    math::{gamma, Float},
+    vec::Vec3,
+};
+
+#[cfg(all(feature = "f64"))]
+const EPSILON: Float = 5.58E-17;
+
+#[cfg(not(feature = "f64"))]
+const EPSILON: Float = 3.0E-8;
 
 const SPHERE_INTERSECTION: SphereIntersection = if cfg!(feature = "sphere_three") {
     SphereIntersection::Three
@@ -207,7 +218,7 @@ pub fn sphere_intersection_three<M: Scatter>(
         Some(SurfaceIntersection::new(
             t,
             point,
-            0.000001 * Vec3::one(),
+            EPSILON * Vec3::one(),
             normal,
             sphere.get_uv(point),
             out,

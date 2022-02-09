@@ -2,8 +2,7 @@ extern crate cpu_raytracer;
 
 use crate::utility::create_bvh_with_info;
 use cpu_raytracer::{
-    image::camera::RandomSampler, material::MaterialEnum, ray_tracing::primitives,
-    texture::TextureEnum, *,
+    image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
@@ -359,22 +358,35 @@ pub fn scene_eight(
     let green = &diffuse!(0.12, 0.45, 0.15, 0.0);
     let light = &emit!(&solid_colour!(colour!(1)), 15);
 
-    primitives.push(aarect!(0, 0, 555, 555, 555, axis!(X), red));
-    primitives.push(aarect!(0, 0, 555, 555, 0, axis!(X), green));
+    primitives.push(aarect!(0, 0, 555, 555, 555, axis!(X), green));
+    primitives.push(aarect!(0, 0, 555, 555, 0, axis!(X), red));
 
     primitives.push(aarect!(0, 0, 555, 555, 555, axis!(Y), white));
     primitives.push(aarect!(0, 0, 555, 555, 0, axis!(Y), white));
 
     primitives.push(aarect!(0, 0, 555, 555, 555, axis!(Z), white));
-    primitives.push(rect!(
-        213,
-        227,
-        343,
-        332,
-        554,
-        axis!(Y),
-        Vec3::new(0.0, 0.0, 0.0),
-        light
+    primitives.push(aarect!(213, 227, 343, 332, 554, axis!(Y), light));
+
+    primitives.push(cuboid!(
+        265,
+        0,
+        295,
+        430,
+        330,
+        460,
+        rotation!(0, 15, 0, D),
+        &diffuse!(0.5, 0.5, 0.5, 0.5)
+    ));
+
+    primitives.push(cuboid!(
+        130,
+        0,
+        65,
+        295,
+        165,
+        230,
+        rotation!(0, -18, 0, D),
+        &diffuse!(0.5, 0.5, 0.5, 0.5)
     ));
 
     let sky = sky!();

@@ -28,10 +28,28 @@ macro_rules! colour {
         )
     };
     ($value:expr) => {
-        ray::Colour::new(
+        $crate::ray_tracing::ray::Colour::new(
             $value as $crate::utility::math::Float,
             $value as $crate::utility::math::Float,
             $value as $crate::utility::math::Float,
+        )
+    };
+}
+
+#[macro_export]
+macro_rules! rotation {
+    ($x:expr, $y:expr, $z:expr, D) => {
+        $crate::utility::vec::Vec3::new(
+            $x as $crate::utility::math::Float * 3.1415926535 / 180.0,
+            $y as $crate::utility::math::Float * 3.1415926535 / 180.0,
+            $z as $crate::utility::math::Float * 3.1415926535 / 180.0,
+        )
+    };
+    ($x:expr, $y:expr, $z:expr, R) => {
+        $crate::utility::vec::Vec3::new(
+            $x as $crate::utility::math::Float,
+            $y as $crate::utility::math::Float,
+            $z as $crate::utility::math::Float,
         )
     };
 }
@@ -208,10 +226,9 @@ macro_rules! emit {
         )));
     };
     ($texture:expr,$strength:expr) => {
-        std::sync::Arc::new(material::MaterialEnum::Emit(material::Emit::new(
-            $texture,
-            $strength as $crate::utility::math::Float,
-        )))
+        std::sync::Arc::new($crate::material::MaterialEnum::Emit(
+            $crate::material::Emit::new($texture, $strength as $crate::utility::math::Float),
+        ))
     };
 }
 
@@ -296,6 +313,7 @@ macro_rules! rect {
                     $material,
                 ),
                 $rotation,
+                None,
             ),
         )
     };
@@ -310,6 +328,7 @@ macro_rules! rect {
                     $material,
                 ),
                 $rotation,
+                None,
             ),
         )
     };
@@ -328,6 +347,31 @@ macro_rules! aacuboid {
                 position!($x1, $y1, $z1),
                 position!($x2, $y2, $z2),
                 $material,
+            ),
+        )
+    };
+}
+
+#[macro_export]
+macro_rules! cuboid {
+    ($point_one:expr, $point_two:expr, $rotation:expr) => {
+        $crate::ray_tracing::primitives::PrimitiveEnum::Cubiod(
+            $crate::ray_tracing::primitives::Cuboid::new(
+                $crate::ray_tracing::primitives::AACuboid::new($point_one, $point_two, $material),
+                $rotation,
+            ),
+        )
+    };
+    ($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $rotation:expr, $material:expr) => {
+        $crate::ray_tracing::primitives::PrimitiveEnum::Cuboid(
+            $crate::ray_tracing::primitives::Cuboid::new(
+                $crate::ray_tracing::primitives::AACuboid::new(
+                    position!($x1, $y1, $z1),
+                    position!($x2, $y2, $z2),
+                    $material,
+                ),
+                $rotation,
+                &emit!(&solid_colour!(colour!(1, 0, 0)), 15),
             ),
         )
     };

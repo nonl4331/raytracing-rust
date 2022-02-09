@@ -1,3 +1,4 @@
+use crate::ray_tracing::primitives::Axis;
 use crate::utility::vec::Vec3;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
@@ -128,9 +129,46 @@ pub fn sort_by_indices<T>(vec: &mut [T], mut indices: Vec<usize>) {
     }
 }
 
+pub fn rotate_around_point(
+    point: &mut Vec3,
+    center_point: Vec3,
+    sin_angles: Vec3,
+    cos_angles: Vec3,
+) {
+    *point -= center_point;
+
+    rotate_around_axis(point, Axis::X, sin_angles.x, cos_angles.x);
+    rotate_around_axis(point, Axis::Y, sin_angles.y, cos_angles.y);
+    rotate_around_axis(point, Axis::Z, sin_angles.z, cos_angles.z);
+
+    *point += center_point;
+}
+
+pub fn rotate_around_axis(point: &mut Vec3, axis: Axis, sin: Float, cos: Float) {
+    match axis {
+        Axis::X => {
+            let old_y = point.y;
+            point.y = cos * point.y - sin * point.z;
+            point.z = sin * old_y + cos * point.z;
+        }
+        Axis::Y => {
+            let old_x = point.x;
+            point.x = cos * point.x - sin * point.z;
+            point.z = sin * old_x + cos * point.z;
+        }
+        Axis::Z => {
+            let old_y = point.y;
+            point.y = cos * point.y - sin * point.x;
+            point.x = sin * old_y + cos * point.x;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::utility::math::sort_by_indices;
+    use crate::utility::{math::sort_by_indices, vec::Vec3};
+
+    use super::rotate_around_point;
 
     #[test]
     fn sort_vec_by_indices() {
@@ -140,5 +178,21 @@ mod tests {
         sort_by_indices(&mut values, indices);
 
         assert_eq!(values, ["a", "e", "c", "b", "d"]);
+    }
+
+    #[test]
+    fn rotation() {
+        let center_point = Vec3::new(1.0, 0.0, 0.0);
+
+        let mut point = Vec3::new(2.0, 0.0, 0.0);
+
+        let angles = Vec3::new(0.0, 45.0 * 3.141592 / 180.0, 0.0);
+
+        let cos_angles = Vec3::new(angles.x.cos(), angles.y.cos(), angles.z.cos());
+        let sin_angles = Vec3::new(angles.x.sin(), angles.y.sin(), angles.z.sin());
+
+        rotate_around_point(&mut point, center_point, sin_angles, cos_angles);
+
+        assert_eq!(point, Vec3::new(1.7071069, 0.0, 0.7071069));
     }
 }

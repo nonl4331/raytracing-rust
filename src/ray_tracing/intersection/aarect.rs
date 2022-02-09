@@ -6,7 +6,12 @@ use crate::ray_tracing::{
 };
 use crate::utility::{math::Float, vec::Vec3};
 
-const EPSILON: Float = 0.00000003;
+#[cfg(all(feature = "f64"))]
+const EPSILON: Float = 5.58E-17;
+
+#[cfg(not(feature = "f64"))]
+const EPSILON: Float = 3.0E-8;
+
 const AARECT_INTERSECTION: AARectIntersection = AARectIntersection::One;
 
 enum AARectIntersection {
@@ -39,11 +44,11 @@ fn aarect_intersection_one<M: Scatter>(
     {
         Some(SurfaceIntersection::new(
             t,
-            point + EPSILON * aarect.axis.return_point_with_axis(Vec3::one()),
-            Vec3::zero(),
+            point,
+            EPSILON * aarect.axis.return_point_with_axis(Vec3::one()),
             aarect
                 .axis
-                .return_point_with_axis(-1.0 * ray.direction)
+                .return_point_with_axis(-ray.direction)
                 .normalised(),
             aarect.get_uv(point),
             true,
