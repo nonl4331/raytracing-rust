@@ -398,7 +398,7 @@ pub fn scene_eight(
         40,
         aspect_ratio,
         0,
-        1
+        10
     );
 
     let bvh = create_bvh_with_info(primitives, bvh_type);

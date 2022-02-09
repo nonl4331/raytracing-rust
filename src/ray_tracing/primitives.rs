@@ -328,7 +328,7 @@ where
                     &material,
                 ),
                 rotations,
-                Some(center),
+                Some(min),
             ),
             Rect::new(
                 AARect::new(
@@ -339,7 +339,7 @@ where
                     &material,
                 ),
                 rotations,
-                Some(center),
+                Some(min),
             ),
             Rect::new(
                 AARect::new(
@@ -350,7 +350,7 @@ where
                     &material,
                 ),
                 rotations,
-                Some(center),
+                Some(min),
             ),
             Rect::new(
                 AARect::new(
@@ -361,7 +361,7 @@ where
                     &material,
                 ),
                 rotations,
-                Some(center),
+                Some(min),
             ),
             Rect::new(
                 AARect::new(
@@ -372,7 +372,7 @@ where
                     &material,
                 ),
                 rotations,
-                Some(center),
+                Some(min),
             ),
             Rect::new(
                 AARect::new(
@@ -383,7 +383,7 @@ where
                     &material,
                 ),
                 rotations,
-                Some(center),
+                Some(min),
             ),
         ];
 
@@ -396,14 +396,14 @@ where
         let mut point_seven = Vec3::new(max.x, min.y, min.z);
         let mut point_eight = Vec3::new(max.x, min.y, max.z);
 
-        rotate_around_point(&mut point_one, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_two, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_three, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_four, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_five, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_six, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_seven, center, sin_rotations, cos_rotations);
-        rotate_around_point(&mut point_eight, center, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_one, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_two, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_three, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_four, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_five, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_six, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_seven, max, sin_rotations, cos_rotations);
+        rotate_around_point(&mut point_eight, max, sin_rotations, cos_rotations);
 
         let max = point_one
             .max_by_component(point_two)

@@ -25,7 +25,7 @@ fn cuboid_intersection_one<M: Scatter>(
     ray: &Ray,
 ) -> Option<SurfaceIntersection<M>> {
     let mut hit: Option<SurfaceIntersection<M>> = None;
-    for side in cuboid.rects[0..5].iter() {
+    for side in cuboid.rects.iter() {
         if let Some(current_hit) = side.get_int(ray) {
             if current_hit.hit.t > 0.0 {
                 if hit.is_some() {
