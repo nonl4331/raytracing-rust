@@ -6,7 +6,7 @@ use crate::utility::get_readable_duration;
 use crate::utility::line_break;
 use crate::utility::{get_progress_output, save_u8_to_image};
 use chrono::Local;
-use cpu_raytracer::SamplerProgress;
+use cpu_raytracer::{Float, SamplerProgress};
 use std::env;
 use std::time::Instant;
 
@@ -27,11 +27,29 @@ fn main() {
         println!("\tHeight: {}", height);
         println!("\tSamples per pixel: {}\n", samples);
         let start = Instant::now();
-        let progress_bar_output = |sp: &SamplerProgress| {
-            get_progress_output(&parameters, sp);
-        };
-        let output =
-            scene.generate_image_threaded(width, height, samples, Some(progress_bar_output));
+        let progress_bar_output =
+            |sp: &mut Option<SamplerProgress>, previous: &SamplerProgress, i: u64| {
+                if let Some(sp) = sp {
+                    sp.samples_completed += 1;
+                    sp.rays_shot += previous.rays_shot;
+
+                    sp.current_image
+                        .iter_mut()
+                        .zip(previous.current_image.iter())
+                        .for_each(|(pres, acc)| {
+                            *pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
+                        });
+
+                    get_progress_output(&parameters, sp);
+                }
+            };
+        let output = scene.generate_image_threaded(
+            width,
+            height,
+            samples,
+            Some(progress_bar_output),
+            &mut None,
+        );
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 

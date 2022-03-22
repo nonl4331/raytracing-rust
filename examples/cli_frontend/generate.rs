@@ -375,7 +375,7 @@ pub fn scene_eight(
         330,
         460,
         rotation!(0, 15, 0, D),
-        &diffuse!(0.5, 0.5, 0.5, 0.5)
+        white
     ));
 
     primitives.push(cuboid!(
@@ -386,7 +386,7 @@ pub fn scene_eight(
         165,
         230,
         rotation!(0, -18, 0, D),
-        &diffuse!(0.5, 0.5, 0.5, 0.5)
+        white
     ));
 
     let sky = sky!();

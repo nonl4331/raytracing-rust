@@ -25,7 +25,7 @@ impl SamplerProgress {
 }
 
 pub trait Sampler {
-    fn sample_image<P, M: 'static, F>(
+    fn sample_image<P, M: 'static, T, F>(
         &self,
         _: u64,
         _: u64,
@@ -34,12 +34,14 @@ pub trait Sampler {
         _: &Sky,
         _: &Bvh<P, M>,
         _: Option<F>,
+        _: &mut Option<T>,
     ) -> SamplerProgress
     where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
         Vec<P>: FromIterator<P>,
-        F: Fn(&SamplerProgress) + Send + Sync,
+        F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
+        T: Send,
     {
         unimplemented!()
     }
@@ -48,7 +50,7 @@ pub trait Sampler {
 pub struct RandomSampler;
 
 impl Sampler for RandomSampler {
-    fn sample_image<P, M: 'static, F>(
+    fn sample_image<P, M: 'static, T, F>(
         &self,
         samples_per_pixel: u64,
         width: u64,
@@ -57,12 +59,14 @@ impl Sampler for RandomSampler {
         sky: &Sky,
         bvh: &Bvh<P, M>,
         presentation_update: Option<F>,
+        data: &mut Option<T>,
     ) -> SamplerProgress
     where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
         Vec<P>: FromIterator<P>,
-        F: Fn(&SamplerProgress) + Send + Sync,
+        F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
+        T: Send,
     {
         let channels = 3;
         let pixel_num = width * height;
@@ -86,23 +90,9 @@ impl Sampler for RandomSampler {
 
             rayon::scope(|s| {
                 if i != 0 {
-                    s.spawn(|_| {
-                        let mut pbuffer = &mut presentation_buffer;
-                        pbuffer.samples_completed += 1;
-                        pbuffer.rays_shot += previous.rays_shot;
-
-                        pbuffer
-                            .current_image
-                            .iter_mut()
-                            .zip(previous.current_image.iter())
-                            .for_each(|(pres, acc)| {
-                                *pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
-                            });
-
-                        match presentation_update.as_ref() {
-                            Some(f) => f(&pbuffer),
-                            None => (),
-                        }
+                    s.spawn(|_| match presentation_update.as_ref() {
+                        Some(f) => f(data, previous, i),
+                        None => (),
                     });
                 }
 

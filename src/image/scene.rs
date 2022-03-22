@@ -30,13 +30,17 @@ where
             sky,
         }
     }
-    pub fn generate_image_threaded(
+    pub fn generate_image_threaded<T>(
         &self,
         width: u64,
         height: u64,
         samples: u64,
-        presentation_update: Option<impl Fn(&SamplerProgress) + Send + Sync>,
-    ) -> SamplerProgress {
+        presentation_update: Option<impl Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync>,
+        data: &mut Option<T>,
+    ) -> SamplerProgress
+    where
+        T: Send,
+    {
         self.sampler.sample_image(
             samples,
             width,
@@ -45,6 +49,7 @@ where
             &self.sky,
             &self.bvh,
             presentation_update,
+            data,
         )
     }
 }
