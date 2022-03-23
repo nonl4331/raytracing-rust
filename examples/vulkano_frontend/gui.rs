@@ -7,8 +7,8 @@ use vulkano::{
     command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage},
     descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet},
     device::{
-        physical::{PhysicalDevice, PhysicalDeviceType, QueueFamily},
-        Device, DeviceExtensions, Features, Queue, QueuesIter,
+        physical::{PhysicalDevice, PhysicalDeviceType},
+        Device, DeviceExtensions, Features, Queue,
     },
     format::Format,
     image::{view::ImageView, ImageDimensions::Dim2d, ImageUsage, StorageImage, SwapchainImage},
@@ -155,7 +155,6 @@ macro_rules! update {
                 Filter::Nearest,
             )
             .unwrap();
-        println!("{}x{} to {}x{}", width, height, sc_width, sc_height);
 
         let blit_command_buffer = builder.build().unwrap();
 
@@ -222,7 +221,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(device: Arc<Device>) -> Self {
+    pub fn new() -> Self {
         State {
             presentation_finished: None,
             start: SystemTime::now(),
@@ -231,13 +230,10 @@ impl State {
 }
 
 pub struct GUI<'a> {
-    instance: &'a Arc<Instance>,
     pub event_loop: Option<EventLoop<RenderEvent>>,
     surface: Arc<Surface<Window>>,
     pub physical_device: PhysicalDevice<'a>,
-    queue_family: QueueFamily<'a>,
     pub device: Arc<Device>,
-    queues: QueuesIter,
     pub queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
     images: Vec<Arc<SwapchainImage<Window>>>,
@@ -328,23 +324,7 @@ impl<'a> GUI<'a> {
                 .unwrap()
         };
 
-        let extent: [u32; 2] = surface.window().inner_size().into();
-        let width = extent[0];
-        let height = extent[1];
-
         let render_info = RenderInfo::new(WIDTH, HEIGHT);
-
-        /*let combined_buffer = StorageImage::new(
-            device.clone(),
-            Dim2d {
-                width: WIDTH,
-                height: HEIGHT,
-                array_layers: 1,
-            },
-            Format::B8G8R8A8_UINT,
-            physical_device.queue_families(),
-        )
-        .unwrap();*/
 
         let mut usage = vulkano::image::ImageUsage::none();
         usage.storage = true;
@@ -366,12 +346,10 @@ impl<'a> GUI<'a> {
 
         let cpu_rendering = CpuRendering::new(&physical_device, device.clone(), WIDTH, HEIGHT);
 
-        let state = State::new(device.clone());
-
         mod cs {
             vulkano_shaders::shader! {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ty: "compute",
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        src:
+                                                                        ty: "compute",
+                                                                        src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -398,13 +376,10 @@ void main() {
         .unwrap();
 
         GUI {
-            instance,
             event_loop,
             surface,
             physical_device,
-            queue_family,
             device,
-            queues,
             queue,
             swapchain,
             images,
@@ -412,7 +387,7 @@ void main() {
             compute_pipeline,
             cpu_rendering,
             combined_buffer,
-            state,
+            state: State::new(),
         }
     }
 
@@ -428,56 +403,6 @@ void main() {
                     Some(code) => match code {
                         winit::event::VirtualKeyCode::Escape => {
                             *control_flow = ControlFlow::Exit;
-                        }
-                        winit::event::VirtualKeyCode::A => {
-                            /*let iter = [0.0, 0.0, 1.0, 0.0]
-                                .repeat((WIDTH * HEIGHT) as usize)
-                                .into_iter();
-                            self.cpu_rendering.cpu_image = CpuAccessibleBuffer::from_iter(
-                                self.device.clone(),
-                                vulkano::buffer::BufferUsage::all(),
-                                false,
-                                iter,
-                            )
-                            .unwrap();
-
-                            copy_buffer_to_cpu_swapchain!(
-                                // to swapchain
-                                self,
-                                self.cpu_rendering.cpu_image.clone(),
-                                self.cpu_rendering.cpu_swapchain
-                                    [self.cpu_rendering.copy_to_first as usize]
-                                    .clone()
-                            );
-
-                            self.cpu_rendering.copy_to_first = !self.cpu_rendering.copy_to_first;
-
-                            update!(self);*/
-                        }
-                        winit::event::VirtualKeyCode::D => {
-                            /*let iter = [0.0, 1.0, 0.0, 0.0]
-                                .repeat((WIDTH * HEIGHT) as usize)
-                                .into_iter();
-                            self.cpu_rendering.cpu_image = CpuAccessibleBuffer::from_iter(
-                                self.device.clone(),
-                                vulkano::buffer::BufferUsage::all(),
-                                false,
-                                iter,
-                            )
-                            .unwrap();
-
-                            copy_buffer_to_cpu_swapchain!(
-                                // to swapchain
-                                self,
-                                self.cpu_rendering.cpu_image.clone(),
-                                self.cpu_rendering.cpu_swapchain
-                                    [self.cpu_rendering.copy_to_first as usize]
-                                    .clone()
-                            );
-
-                            self.cpu_rendering.copy_to_first = !self.cpu_rendering.copy_to_first;
-
-                            update!(self);*/
                         }
                         _ => {}
                     },
@@ -498,7 +423,6 @@ void main() {
                 }
                 Event::UserEvent(user_event) => match user_event {
                     RenderEvent::SampleCompleted => {
-                        println!("SampleCompleted");
                         let start = std::time::Instant::now();
                         update!(self);
                         println!(

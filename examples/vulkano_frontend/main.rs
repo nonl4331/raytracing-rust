@@ -1,29 +1,25 @@
-use crate::gui::RenderEvent;
-use cpu_raytracer::Float;
-use cpu_raytracer::SamplerProgress;
-use vulkano::buffer::CpuAccessibleBuffer;
-use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage};
-use vulkano::instance::Instance;
-use vulkano::sync::{self, FenceSignalFuture, GpuFuture};
-use vulkano::Version;
-use winit::event_loop::EventLoopProxy;
-
-use vulkano::{
-    device::{Device, Queue},
-    image::StorageImage,
-};
-
 extern crate cpu_raytracer;
 use cpu_raytracer::{
     image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
 
+use crate::gui::{RenderEvent, GUI};
+
+use vulkano::{
+    buffer::CpuAccessibleBuffer,
+    command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage},
+    device::{Device, Queue},
+    image::StorageImage,
+    instance::Instance,
+    sync::{self, FenceSignalFuture, GpuFuture},
+    Version,
+};
+use winit::event_loop::EventLoopProxy;
+
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
 };
-
-use crate::gui::GUI;
 
 const WIDTH: u32 = 2560;
 const HEIGHT: u32 = 1440;
@@ -132,21 +128,28 @@ fn get_scene(
 
     let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
-    let glowy = sphere!(5, 3.5, 5, 1.5, &emit!(&solid_colour!(colour!(1)), 5));
+    let glowy = sphere!(0, 0.5, 0, 0.5, &emit!(&solid_colour!(colour!(1)), 1.5));
+
+    let cube = aacuboid!(
+        -0.5,
+        0.1,
+        -0.5,
+        -0.4,
+        0.2,
+        -0.4,
+        &diffuse!(0.5, 0.5, 0.5, 0.5)
+    );
 
     primitives.push(ground);
     primitives.push(glowy);
-    /*primitives.extend(model!(
-        "res/dragon.obj",
-        &refract!(&solid_colour!(1, 1, 1), 1.52)
-    ));*/
+    primitives.push(cube);
 
     let camera = camera!(
-        position!(-20, 20, -25),
-        position!(0, 3.5, 0),
+        position!(-5, 3, -3),
+        position!(0, 0.5, 0),
         position!(0, 1, 0),
         34,
-        WIDTH as f32 / HEIGHT as f32,
+        16.0 / 9.0,
         0,
         10
     );

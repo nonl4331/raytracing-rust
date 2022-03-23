@@ -2,7 +2,7 @@ use vulkano::{
     device::{physical::PhysicalDevice, Device},
     format::Format,
     image::{ImageDimensions::Dim2d, StorageImage},
-    sync::{self, FenceSignalFuture, GpuFuture},
+    sync::{FenceSignalFuture, GpuFuture},
 };
 
 use std::sync::{atomic::AtomicBool, Arc, Mutex};
@@ -26,7 +26,6 @@ impl RenderInfo {
 }
 
 pub struct CpuRendering {
-    //pub cpu_image: Arc<CpuAccessibleBuffer<[f32]>>,
     pub cpu_swapchain: [Arc<StorageImage>; 2],
     pub to_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
     pub from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
@@ -40,17 +39,6 @@ impl CpuRendering {
         width: u32,
         height: u32,
     ) -> Self {
-        /*let iter = [0.0 as Float, 0.0, 0.0, 0.0]
-            .repeat((width * height) as usize)
-            .into_iter();
-        let cpu_image = CpuAccessibleBuffer::from_iter(
-            device.clone(),
-            vulkano::buffer::BufferUsage::all(),
-            false,
-            iter,
-        )
-        .unwrap();*/
-
         let mut usage = vulkano::image::ImageUsage::none();
         usage.storage = true;
         usage.transfer_source = true;
@@ -85,7 +73,6 @@ impl CpuRendering {
             .unwrap(),
         ];
         CpuRendering {
-            //cpu_image,
             cpu_swapchain,
             to_sc: Arc::new(Mutex::new(None)),
             from_sc: Arc::new(Mutex::new(None)),
