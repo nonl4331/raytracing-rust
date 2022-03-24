@@ -3,52 +3,52 @@ use crate::image::camera::{Camera, Sampler, SamplerProgress};
 use crate::ray_tracing::{intersection::Primitive, material::Scatter, sky::Sky};
 
 use std::{
-    iter::FromIterator,
-    marker::{Send, Sync},
-    sync::Arc,
+	iter::FromIterator,
+	marker::{Send, Sync},
+	sync::Arc,
 };
 
 pub struct Scene<P: Primitive<M>, M: Scatter, S: Sampler> {
-    pub bvh: Arc<Bvh<P, M>>,
-    pub camera: Arc<Camera>,
-    pub sampler: Arc<S>,
-    pub sky: Arc<Sky>,
+	pub bvh: Arc<Bvh<P, M>>,
+	pub camera: Arc<Camera>,
+	pub sampler: Arc<S>,
+	pub sky: Arc<Sky>,
 }
 
 impl<P, M: 'static, S> Scene<P, M, S>
 where
-    P: Primitive<M> + Sync + Send + 'static,
-    M: Scatter + Send + Sync,
-    Vec<P>: FromIterator<P>,
-    S: Sampler,
+	P: Primitive<M> + Sync + Send + 'static,
+	M: Scatter + Send + Sync,
+	Vec<P>: FromIterator<P>,
+	S: Sampler,
 {
-    pub fn new(camera: Arc<Camera>, sky: Arc<Sky>, sampler: Arc<S>, bvh: Arc<Bvh<P, M>>) -> Self {
-        Scene {
-            bvh,
-            camera,
-            sampler,
-            sky,
-        }
-    }
-    pub fn generate_image_threaded<T>(
-        &self,
-        width: u64,
-        height: u64,
-        samples: u64,
-        presentation_update: Option<impl Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync>,
-        data: &mut Option<T>,
-    ) where
-        T: Send,
-    {
-        self.sampler.sample_image(
-            samples,
-            width,
-            height,
-            &self.camera,
-            &self.sky,
-            &self.bvh,
-            presentation_update,
-            data,
-        )
-    }
+	pub fn new(camera: Arc<Camera>, sky: Arc<Sky>, sampler: Arc<S>, bvh: Arc<Bvh<P, M>>) -> Self {
+		Scene {
+			bvh,
+			camera,
+			sampler,
+			sky,
+		}
+	}
+	pub fn generate_image_threaded<T>(
+		&self,
+		width: u64,
+		height: u64,
+		samples: u64,
+		presentation_update: Option<impl Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync>,
+		data: &mut Option<T>,
+	) where
+		T: Send,
+	{
+		self.sampler.sample_image(
+			samples,
+			width,
+			height,
+			&self.camera,
+			&self.sky,
+			&self.bvh,
+			presentation_update,
+			data,
+		)
+	}
 }
