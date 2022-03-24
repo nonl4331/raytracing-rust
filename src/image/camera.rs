@@ -119,6 +119,16 @@ impl Sampler for RandomSampler {
                     .sum();
             });
         }
+
+        let (previous, _) = if samples_per_pixel % 2 == 0 {
+            (&accumulator_buffers.0, &mut accumulator_buffers.1)
+        } else {
+            (&accumulator_buffers.1, &mut accumulator_buffers.0)
+        };
+        match presentation_update.as_ref() {
+            Some(f) => f(data, previous, samples_per_pixel),
+            None => (),
+        }
     }
 }
 
