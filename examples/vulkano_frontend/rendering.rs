@@ -10,8 +10,6 @@ use std::sync::{atomic::AtomicBool, Arc, Mutex};
 pub struct RenderInfo {
     pub render_width: u32,
     pub render_height: u32,
-    pub samples_completed: u64,
-    pub rays_shot: u64,
 }
 
 impl RenderInfo {
@@ -19,8 +17,6 @@ impl RenderInfo {
         RenderInfo {
             render_width,
             render_height,
-            samples_completed: 0,
-            rays_shot: 0,
         }
     }
 }

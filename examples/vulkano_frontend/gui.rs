@@ -27,31 +27,16 @@ use winit::{
 
 use vulkano_win::VkSurfaceBuild;
 
-use std::{sync::Arc, time::SystemTime};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum RenderEvent {
     SampleCompleted,
 }
 
-pub struct State {
-    pub presentation_finished: Option<Box<dyn GpuFuture + 'static>>,
-    pub start: SystemTime,
-}
-
-impl State {
-    pub fn new() -> Self {
-        State {
-            presentation_finished: None,
-            start: SystemTime::now(),
-        }
-    }
-}
-
-pub struct GUI<'a> {
+pub struct GUI {
     pub event_loop: Option<EventLoop<RenderEvent>>,
     surface: Arc<Surface<Window>>,
-    pub physical_device: PhysicalDevice<'a>,
     pub device: Arc<Device>,
     pub queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
@@ -60,11 +45,11 @@ pub struct GUI<'a> {
     pub cpu_rendering: CpuRendering,
     render_info: RenderInfo,
     combined_buffer: Arc<StorageImage>,
-    pub state: State,
+    presentation_finished: Option<Box<dyn GpuFuture + 'static>>,
 }
 
-impl<'a> GUI<'a> {
-    pub fn new(instance: &'a Arc<Instance>) -> Self {
+impl GUI {
+    pub fn new(instance: &Arc<Instance>) -> Self {
         let event_loop: EventLoop<RenderEvent> = EventLoop::with_user_event();
         let surface = WindowBuilder::new()
             .build_vk_surface(&event_loop, instance.clone())
@@ -167,8 +152,8 @@ impl<'a> GUI<'a> {
 
         mod cs {
             vulkano_shaders::shader! {
-                                                                                                                                                                                                                                                ty: "compute",
-                                                                                                                                                                                                                                                src:
+                                                                                                                                                                                                                                                                                                                                                                                                                                    ty: "compute",
+                                                                                                                                                                                                                                                                                                                                                                                                                                    src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -197,7 +182,6 @@ void main() {
         GUI {
             event_loop,
             surface,
-            physical_device,
             device,
             queue,
             swapchain,
@@ -206,7 +190,7 @@ void main() {
             compute_pipeline,
             cpu_rendering,
             combined_buffer,
-            state: State::new(),
+            presentation_finished: None,
         }
     }
 
@@ -258,11 +242,11 @@ void main() {
     }
 
     fn update(&mut self) {
-        match self.state.presentation_finished.as_mut() {
+        match self.presentation_finished.as_mut() {
             Some(future) => future.cleanup_finished(),
             None => {}
         }
-        self.state.presentation_finished = Some(sync::now(self.device.clone()).boxed());
+        self.presentation_finished = Some(sync::now(self.device.clone()).boxed());
 
         let (image_num, suboptimal, acquire_future) =
             match swapchain::acquire_next_image(self.swapchain.clone(), None) {
@@ -396,7 +380,6 @@ void main() {
             }
         }
         let frame_future = self
-            .state
             .presentation_finished
             .take()
             .unwrap()
@@ -408,15 +391,15 @@ void main() {
 
         match frame_future {
             Ok(future) => {
-                self.state.presentation_finished = Some(future.boxed());
+                self.presentation_finished = Some(future.boxed());
             }
             Err(FlushError::OutOfDate) => {
                 self.recreate_swapchain();
-                self.state.presentation_finished = Some(sync::now(self.device.clone()).boxed());
+                self.presentation_finished = Some(sync::now(self.device.clone()).boxed());
             }
             Err(e) => {
                 println!("Failed to flush future: {:?}", e);
-                self.state.presentation_finished = Some(sync::now(self.device.clone()).boxed());
+                self.presentation_finished = Some(sync::now(self.device.clone()).boxed());
             }
         }
     }
