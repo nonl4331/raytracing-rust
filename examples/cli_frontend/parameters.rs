@@ -11,7 +11,7 @@ use std::process;
 const SAMPLES_DEFAULT: u64 = 30;
 const WIDTH_DEFAULT: u64 = 800;
 const HEIGHT_DEFAULT: u64 = 600;
-const BVH_DEFAULT: SplitType = SplitType::Middle;
+const BVH_DEFAULT: SplitType = SplitType::Sah;
 const FILENAME_DEFAULT: &str = "out.png";
 
 pub struct Parameters {

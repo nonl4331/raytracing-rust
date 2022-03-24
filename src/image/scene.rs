@@ -37,8 +37,7 @@ where
         samples: u64,
         presentation_update: Option<impl Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync>,
         data: &mut Option<T>,
-    ) -> SamplerProgress
-    where
+    ) where
         T: Send,
     {
         self.sampler.sample_image(

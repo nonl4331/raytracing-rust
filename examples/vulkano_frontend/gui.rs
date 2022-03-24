@@ -34,187 +34,6 @@ pub enum RenderEvent {
     SampleCompleted,
 }
 
-macro_rules! recreate_swapchain {
-    ($self:expr) => {
-        let dimensions: [u32; 2] = $self.surface.window().inner_size().into();
-        let (new_swapchain, new_images) =
-            match $self.swapchain.recreate().dimensions(dimensions).build() {
-                Ok(r) => r,
-                Err(SwapchainCreationError::UnsupportedDimensions) => return,
-                Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
-            };
-
-        $self.swapchain = new_swapchain;
-        $self.images = new_images;
-    };
-}
-
-macro_rules! update {
-    ($self:expr) => {
-        match $self.state.presentation_finished.as_mut() {
-            Some(future) => future.cleanup_finished(),
-            None => {}
-        }
-        $self.state.presentation_finished = Some(sync::now($self.device.clone()).boxed());
-
-        let (image_num, suboptimal, acquire_future) =
-            match swapchain::acquire_next_image($self.swapchain.clone(), None) {
-                Ok(r) => r,
-                Err(AcquireError::OutOfDate) => {
-                    recreate_swapchain!($self);
-                    return;
-                }
-                Err(e) => {
-                    panic!("Failed to acquire next image: {:?}", e)
-                }
-            };
-
-        if suboptimal {
-            recreate_swapchain!($self);
-        }
-
-        let width = $self.render_info.render_width;
-        let height = $self.render_info.render_height;
-
-        // use compute to merge, tonemap and convert (copy from cpu swapchain)
-        let layout = $self
-            .compute_pipeline
-            .layout()
-            .descriptor_set_layouts()
-            .get(0)
-            .unwrap();
-
-        let image_view = ImageView::new(
-            $self.cpu_rendering.cpu_swapchain[!$self
-                .cpu_rendering
-                .copy_to_first
-                .load(std::sync::atomic::Ordering::Relaxed)
-                as usize]
-                .clone(),
-        )
-        .unwrap();
-
-        let image_view_combined_buffer = ImageView::new($self.combined_buffer.clone()).unwrap();
-        let set = PersistentDescriptorSet::new(
-            layout.clone(),
-            [{ WriteDescriptorSet::image_view(0, image_view) }, {
-                WriteDescriptorSet::image_view(1, image_view_combined_buffer)
-            }],
-        )
-        .unwrap();
-
-        let mut builder = AutoCommandBufferBuilder::primary(
-            $self.device.clone(),
-            $self.queue.family(),
-            CommandBufferUsage::OneTimeSubmit,
-        )
-        .unwrap();
-
-        builder
-            .bind_pipeline_compute($self.compute_pipeline.clone())
-            .bind_descriptor_sets(
-                PipelineBindPoint::Compute,
-                $self.compute_pipeline.layout().clone(),
-                0,
-                set,
-            )
-            .dispatch([
-                ($self.render_info.render_width as f64 / 32.0).ceil() as u32,
-                ($self.render_info.render_height as f64 / 32.0).ceil() as u32,
-                1,
-            ])
-            .unwrap();
-
-        let compute_command_buffer = builder.build().unwrap();
-
-        // blit to swapchain (copy + resize)
-        let mut builder = AutoCommandBufferBuilder::primary(
-            $self.device.clone(),
-            $self.queue.family(),
-            CommandBufferUsage::OneTimeSubmit,
-        )
-        .unwrap();
-
-        let extent: [u32; 2] = $self.surface.window().inner_size().into();
-        let sc_width = extent[0];
-        let sc_height = extent[1];
-
-        builder
-            .blit_image(
-                $self.combined_buffer.clone(),
-                [0, 0, 0],
-                [width as i32, height as i32, 1],
-                0,
-                0,
-                $self.images[image_num].clone(),
-                [0, 0, 0],
-                [sc_width as i32, sc_height as i32, 1],
-                0,
-                0,
-                1,
-                Filter::Nearest,
-            )
-            .unwrap();
-
-        let blit_command_buffer = builder.build().unwrap();
-
-        // from cpu swapchain to combined image
-        match &*$self.cpu_rendering.to_sc.lock().unwrap() {
-            Some(future) => {
-                future.wait(None).unwrap();
-            }
-            None => {}
-        }
-
-        let from_sc = &mut *$self.cpu_rendering.from_sc.lock().unwrap();
-        *from_sc = Some(
-            match from_sc.take() {
-                Some(future) => future
-                    .then_execute($self.queue.clone(), compute_command_buffer)
-                    .unwrap()
-                    .boxed_send_sync(),
-                None => sync::now($self.device.clone())
-                    .then_execute($self.queue.clone(), compute_command_buffer)
-                    .unwrap()
-                    .boxed_send_sync(),
-            }
-            .then_signal_fence_and_flush()
-            .unwrap(),
-        );
-
-        // copy to swapchain from combined image & present
-        match from_sc {
-            Some(val) => val.wait(None).unwrap(),
-            None => {}
-        }
-
-        let frame_future = $self
-            .state
-            .presentation_finished
-            .take()
-            .unwrap()
-            .join(acquire_future)
-            .then_execute($self.queue.clone(), blit_command_buffer)
-            .unwrap()
-            .then_swapchain_present($self.queue.clone(), $self.swapchain.clone(), image_num)
-            .then_signal_fence_and_flush();
-
-        match frame_future {
-            Ok(future) => {
-                $self.state.presentation_finished = Some(future.boxed());
-            }
-            Err(FlushError::OutOfDate) => {
-                recreate_swapchain!($self);
-                $self.state.presentation_finished = Some(sync::now($self.device.clone()).boxed());
-            }
-            Err(e) => {
-                println!("Failed to flush future: {:?}", e);
-                $self.state.presentation_finished = Some(sync::now($self.device.clone()).boxed());
-            }
-        }
-    };
-}
-
 pub struct State {
     pub presentation_finished: Option<Box<dyn GpuFuture + 'static>>,
     pub start: SystemTime,
@@ -348,8 +167,8 @@ impl<'a> GUI<'a> {
 
         mod cs {
             vulkano_shaders::shader! {
-                                                                        ty: "compute",
-                                                                        src:
+                                                                                                                                                                                                                                                ty: "compute",
+                                                                                                                                                                                                                                                src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -391,9 +210,10 @@ void main() {
         }
     }
 
-    pub fn run(mut self) -> ! {
-        let event_loop = self.event_loop.take().unwrap();
-        event_loop.run(move |event, _, control_flow| {
+    pub fn run(mut self) {
+        use winit::platform::run_return::EventLoopExtRunReturn;
+        let mut event_loop = self.event_loop.take().unwrap();
+        event_loop.run_return(move |event, _, control_flow| {
             *control_flow = ControlFlow::Wait;
             match event {
                 Event::DeviceEvent {
@@ -418,13 +238,13 @@ void main() {
                     event: WindowEvent::Resized(_),
                     ..
                 } => {
-                    recreate_swapchain!(self);
-                    update!(self);
+                    self.recreate_swapchain();
+                    self.update();
                 }
                 Event::UserEvent(user_event) => match user_event {
                     RenderEvent::SampleCompleted => {
                         let start = std::time::Instant::now();
-                        update!(self);
+                        self.update();
                         println!(
                             "Update time (micro): {}",
                             (std::time::Instant::now() - start).as_micros()
@@ -435,5 +255,181 @@ void main() {
                 _ => (),
             }
         });
+    }
+
+    fn update(&mut self) {
+        match self.state.presentation_finished.as_mut() {
+            Some(future) => future.cleanup_finished(),
+            None => {}
+        }
+        self.state.presentation_finished = Some(sync::now(self.device.clone()).boxed());
+
+        let (image_num, suboptimal, acquire_future) =
+            match swapchain::acquire_next_image(self.swapchain.clone(), None) {
+                Ok(r) => r,
+                Err(AcquireError::OutOfDate) => {
+                    self.recreate_swapchain();
+                    return;
+                }
+                Err(e) => {
+                    panic!("Failed to acquire next image: {:?}", e)
+                }
+            };
+
+        if suboptimal {
+            self.recreate_swapchain();
+        }
+
+        let width = self.render_info.render_width;
+        let height = self.render_info.render_height;
+
+        // use compute to merge, tonemap and convert (copy from cpu swapchain)
+        let layout = self
+            .compute_pipeline
+            .layout()
+            .descriptor_set_layouts()
+            .get(0)
+            .unwrap();
+
+        let image_view = ImageView::new(
+            self.cpu_rendering.cpu_swapchain[!self
+                .cpu_rendering
+                .copy_to_first
+                .load(std::sync::atomic::Ordering::Relaxed)
+                as usize]
+                .clone(),
+        )
+        .unwrap();
+
+        let image_view_combined_buffer = ImageView::new(self.combined_buffer.clone()).unwrap();
+        let set = PersistentDescriptorSet::new(
+            layout.clone(),
+            [{ WriteDescriptorSet::image_view(0, image_view) }, {
+                WriteDescriptorSet::image_view(1, image_view_combined_buffer)
+            }],
+        )
+        .unwrap();
+
+        let mut builder = AutoCommandBufferBuilder::primary(
+            self.device.clone(),
+            self.queue.family(),
+            CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap();
+
+        builder
+            .bind_pipeline_compute(self.compute_pipeline.clone())
+            .bind_descriptor_sets(
+                PipelineBindPoint::Compute,
+                self.compute_pipeline.layout().clone(),
+                0,
+                set,
+            )
+            .dispatch([
+                (self.render_info.render_width as f64 / 32.0).ceil() as u32,
+                (self.render_info.render_height as f64 / 32.0).ceil() as u32,
+                1,
+            ])
+            .unwrap();
+
+        let compute_command_buffer = builder.build().unwrap();
+
+        // blit to swapchain (copy + resize)
+        let mut builder = AutoCommandBufferBuilder::primary(
+            self.device.clone(),
+            self.queue.family(),
+            CommandBufferUsage::OneTimeSubmit,
+        )
+        .unwrap();
+
+        let extent: [u32; 2] = self.surface.window().inner_size().into();
+        let sc_width = extent[0];
+        let sc_height = extent[1];
+
+        builder
+            .blit_image(
+                self.combined_buffer.clone(),
+                [0, 0, 0],
+                [width as i32, height as i32, 1],
+                0,
+                0,
+                self.images[image_num].clone(),
+                [0, 0, 0],
+                [sc_width as i32, sc_height as i32, 1],
+                0,
+                0,
+                1,
+                Filter::Nearest,
+            )
+            .unwrap();
+
+        let blit_command_buffer = builder.build().unwrap();
+
+        // from cpu swapchain to combined image
+        match &*self.cpu_rendering.to_sc.lock().unwrap() {
+            Some(future) => {
+                future.wait(None).unwrap();
+            }
+            None => {}
+        }
+        {
+            let from_sc = &mut *self.cpu_rendering.from_sc.lock().unwrap();
+            *from_sc = Some(
+                match from_sc.take() {
+                    Some(future) => future
+                        .then_execute(self.queue.clone(), compute_command_buffer)
+                        .unwrap()
+                        .boxed_send_sync(),
+                    None => sync::now(self.device.clone())
+                        .then_execute(self.queue.clone(), compute_command_buffer)
+                        .unwrap()
+                        .boxed_send_sync(),
+                }
+                .then_signal_fence_and_flush()
+                .unwrap(),
+            );
+
+            // copy to swapchain from combined image & present
+            match from_sc {
+                Some(val) => val.wait(None).unwrap(),
+                None => {}
+            }
+        }
+        let frame_future = self
+            .state
+            .presentation_finished
+            .take()
+            .unwrap()
+            .join(acquire_future)
+            .then_execute(self.queue.clone(), blit_command_buffer)
+            .unwrap()
+            .then_swapchain_present(self.queue.clone(), self.swapchain.clone(), image_num)
+            .then_signal_fence_and_flush();
+
+        match frame_future {
+            Ok(future) => {
+                self.state.presentation_finished = Some(future.boxed());
+            }
+            Err(FlushError::OutOfDate) => {
+                self.recreate_swapchain();
+                self.state.presentation_finished = Some(sync::now(self.device.clone()).boxed());
+            }
+            Err(e) => {
+                println!("Failed to flush future: {:?}", e);
+                self.state.presentation_finished = Some(sync::now(self.device.clone()).boxed());
+            }
+        }
+    }
+    fn recreate_swapchain(&mut self) {
+        let dimensions: [u32; 2] = self.surface.window().inner_size().into();
+        let (new_swapchain, new_images) =
+            match self.swapchain.recreate().dimensions(dimensions).build() {
+                Ok(r) => r,
+                Err(SwapchainCreationError::UnsupportedDimensions) => return,
+                Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+            };
+
+        self.swapchain = new_swapchain;
+        self.images = new_images;
     }
 }

@@ -16,10 +16,12 @@ use vulkano::{
 };
 use winit::event_loop::EventLoopProxy;
 
+use chrono::Local;
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
+    atomic::{AtomicBool, AtomicU64, Ordering},
     Arc, Mutex,
 };
+use std::time::{Duration, Instant};
 
 const WIDTH: u32 = 2560;
 const HEIGHT: u32 = 1440;
@@ -35,8 +37,8 @@ struct Data {
     from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
     buffer: Arc<CpuAccessibleBuffer<[f32]>>,
     sc_index: Arc<AtomicBool>,
-    samples: u64,
-    rays_shot: u64,
+    samples: Arc<AtomicU64>,
+    rays_shot: Arc<AtomicU64>,
     event_proxy: EventLoopProxy<RenderEvent>,
 }
 
@@ -49,8 +51,8 @@ impl Data {
         from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
         buffer: Arc<CpuAccessibleBuffer<[f32]>>,
         sc_index: Arc<AtomicBool>,
-        samples: u64,
-        rays_shot: u64,
+        samples: Arc<AtomicU64>,
+        rays_shot: Arc<AtomicU64>,
         event_proxy: EventLoopProxy<RenderEvent>,
     ) -> Self {
         Data {
@@ -90,6 +92,9 @@ fn main() {
     )
     .unwrap();
 
+    let samples = Arc::new(AtomicU64::new(0));
+    let ray_count = Arc::new(AtomicU64::new(0));
+
     let data = Data::new(
         gui.queue.clone(),
         gui.device.clone(),
@@ -98,11 +103,16 @@ fn main() {
         gui.cpu_rendering.from_sc.clone(),
         buffer,
         gui.cpu_rendering.copy_to_first.clone(),
-        0,
-        0,
+        samples.clone(),
+        ray_count.clone(),
         event_loop_proxy.unwrap(),
     );
 
+    let start = Instant::now();
+    let time = Local::now();
+    println!("{} - Render started", time.format("%X"));
+    println!("\tWidth: {}", WIDTH);
+    println!("\tHeight: {}", HEIGHT);
     std::thread::spawn(move || {
         let scene = get_scene();
 
@@ -120,6 +130,24 @@ fn main() {
     });
 
     gui.run();
+
+    let ray_count = ray_count.load(Ordering::Relaxed);
+
+    let end = Instant::now();
+    let duration = end.checked_duration_since(start).unwrap();
+    let time = Local::now();
+    println!(
+        "\u{001b}[2K\r{} - Finised rendering image",
+        time.format("%X")
+    );
+    println!("\tRender Time: {}", get_readable_duration(duration));
+    println!("\tRays: {}", ray_count);
+    println!("\tSamples: {}", samples.load(Ordering::Relaxed));
+    println!(
+        "\tMrays/s: {:.2}",
+        (ray_count as f64 / duration.as_secs_f64()) / 1000000.0
+    );
+    println!("------");
 }
 
 fn get_scene(
@@ -163,8 +191,9 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
     // in this example data should always be Some(_)
     if let Some(data) = data {
         // update infomation about the rays shot and samples completed in the current render
-        data.samples += 1;
-        data.rays_shot += previous.rays_shot;
+        data.samples.fetch_add(1, Ordering::Relaxed);
+        data.rays_shot
+            .fetch_add(previous.rays_shot, Ordering::Relaxed);
 
         // wait on from_sc future if is_some()
         match &*data.from_sc.lock().unwrap() {
@@ -182,7 +211,7 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 
         {
             // get access to CpuAccessibleBuffer
-            let mut buf = data.buffer.write().unwrap(); // jjhasfjhsajfhsakfksajf
+            let mut buf = data.buffer.write().unwrap();
 
             buf.chunks_mut(4)
                 .zip(previous.current_image.chunks(3))
@@ -243,4 +272,36 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
     } else {
         unreachable!();
     }
+}
+
+pub fn get_readable_duration(duration: Duration) -> String {
+    let days = duration.as_secs() / 86400;
+
+    let days_string = match days {
+        0 => "".to_string(),
+        1 => format!("{} day, ", days),
+        _ => format!("{} days, ", days),
+    };
+
+    let hours = (duration.as_secs() - days * 86400) / 3600;
+    let hours_string = match hours {
+        0 => "".to_string(),
+        1 => format!("{} hour, ", hours),
+        _ => format!("{} hours, ", hours),
+    };
+
+    let minutes = (duration.as_secs() - days * 86400 - hours * 3600) / 60;
+    let minutes_string = match minutes {
+        0 => "".to_string(),
+        1 => format!("{} minute, ", minutes),
+        _ => format!("{} minutes, ", minutes),
+    };
+
+    let seconds = duration.as_secs() % 60;
+    let seconds_string = match seconds {
+        0 => "~0 seconds".to_string(),
+        1 => format!("{} second", seconds),
+        _ => format!("{} seconds", seconds),
+    };
+    days_string + &hours_string + &minutes_string + &seconds_string
 }

@@ -35,8 +35,7 @@ pub trait Sampler {
         _: &Bvh<P, M>,
         _: Option<F>,
         _: &mut Option<T>,
-    ) -> SamplerProgress
-    where
+    ) where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
         Vec<P>: FromIterator<P>,
@@ -60,8 +59,7 @@ impl Sampler for RandomSampler {
         bvh: &Bvh<P, M>,
         presentation_update: Option<F>,
         data: &mut Option<T>,
-    ) -> SamplerProgress
-    where
+    ) where
         P: 'static + Primitive<M> + Sync + Send,
         M: Scatter + Send + Sync,
         Vec<P>: FromIterator<P>,
@@ -75,8 +73,6 @@ impl Sampler for RandomSampler {
             SamplerProgress::new(pixel_num, channels),
             SamplerProgress::new(pixel_num, channels),
         );
-
-        let mut presentation_buffer = SamplerProgress::new(pixel_num, channels);
 
         let pixel_chunk_size = 10000;
         let chunk_size = pixel_chunk_size * channels;
@@ -123,26 +119,6 @@ impl Sampler for RandomSampler {
                     .sum();
             });
         }
-
-        let previous = if samples_per_pixel % 2 == 0 {
-            &accumulator_buffers.0
-        } else {
-            &accumulator_buffers.1
-        };
-
-        let mut pbuffer = &mut presentation_buffer;
-        pbuffer.samples_completed += 1;
-        pbuffer.rays_shot += previous.rays_shot;
-
-        pbuffer
-            .current_image
-            .iter_mut()
-            .zip(previous.current_image.iter())
-            .for_each(|(pres, acc)| {
-                *pres += (acc - *pres) / samples_per_pixel as Float;
-            });
-
-        presentation_buffer
     }
 }
 

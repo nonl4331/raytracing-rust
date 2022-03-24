@@ -27,6 +27,7 @@ fn main() {
         println!("\tHeight: {}", height);
         println!("\tSamples per pixel: {}\n", samples);
         let start = Instant::now();
+        let mut image = Some(SamplerProgress::new(width * height, 3));
         let progress_bar_output =
             |sp: &mut Option<SamplerProgress>, previous: &SamplerProgress, i: u64| {
                 if let Some(sp) = sp {
@@ -43,13 +44,14 @@ fn main() {
                     get_progress_output(&parameters, sp);
                 }
             };
-        let output = scene.generate_image_threaded(
+        scene.generate_image_threaded(
             width,
             height,
             samples,
             Some(progress_bar_output),
-            &mut None,
+            &mut image,
         );
+        let output = image.unwrap();
         let end = Instant::now();
         let duration = end.checked_duration_since(start).unwrap();
 
