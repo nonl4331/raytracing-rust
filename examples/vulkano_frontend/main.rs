@@ -2,6 +2,7 @@ extern crate cpu_raytracer;
 use cpu_raytracer::{
 	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
+use vulkano::command_buffer::PrimaryAutoCommandBuffer;
 
 use crate::gui::{RenderEvent, GUI};
 
@@ -32,9 +33,9 @@ mod rendering;
 struct Data {
 	queue: Arc<Queue>,
 	device: Arc<Device>,
-	sc: [Arc<StorageImage>; 2],
 	to_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
 	from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+	command_buffers: [Arc<PrimaryAutoCommandBuffer>; 2],
 	buffer: Arc<CpuAccessibleBuffer<[f32]>>,
 	sc_index: Arc<AtomicBool>,
 	samples: Arc<AtomicU64>,
@@ -46,9 +47,9 @@ impl Data {
 	pub fn new(
 		queue: Arc<Queue>,
 		device: Arc<Device>,
-		sc: [Arc<StorageImage>; 2],
 		to_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
 		from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+		command_buffers: [Arc<PrimaryAutoCommandBuffer>; 2],
 		buffer: Arc<CpuAccessibleBuffer<[f32]>>,
 		sc_index: Arc<AtomicBool>,
 		samples: Arc<AtomicU64>,
@@ -58,9 +59,9 @@ impl Data {
 		Data {
 			queue,
 			device,
-			sc,
 			to_sc,
 			from_sc,
+			command_buffers,
 			buffer,
 			sc_index,
 			samples,
@@ -95,12 +96,19 @@ fn main() {
 	let samples = Arc::new(AtomicU64::new(0));
 	let ray_count = Arc::new(AtomicU64::new(0));
 
+	let command_buffers = create_command_buffers(
+		gui.device.clone(),
+		gui.queue.clone(),
+		buffer.clone(),
+		gui.cpu_rendering.cpu_swapchain.clone(),
+	);
+
 	let data = Data::new(
 		gui.queue.clone(),
 		gui.device.clone(),
-		gui.cpu_rendering.cpu_swapchain.clone(),
 		gui.cpu_rendering.to_sc.clone(),
 		gui.cpu_rendering.from_sc.clone(),
+		command_buffers,
 		buffer,
 		gui.cpu_rendering.copy_to_first.clone(),
 		samples.clone(),
@@ -119,7 +127,7 @@ fn main() {
 		scene.generate_image_threaded(
 			WIDTH as u64,
 			HEIGHT as u64,
-			1000,
+			10,
 			Some(
 				|data: &mut Option<Data>, previous: &SamplerProgress, i: u64| {
 					sample_update(data, previous, i);
@@ -187,6 +195,38 @@ fn get_scene(
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }
 
+fn create_command_buffers(
+	device: Arc<Device>,
+	queue: Arc<Queue>,
+	buffer: Arc<CpuAccessibleBuffer<[f32]>>,
+	sc: [Arc<StorageImage>; 2],
+) -> [Arc<PrimaryAutoCommandBuffer>; 2] {
+	let mut command_buffer_0 = None;
+	let mut command_buffer_1 = None;
+	for i in 0..2 {
+		let mut builder = AutoCommandBufferBuilder::primary(
+			device.clone(),
+			queue.family(),
+			CommandBufferUsage::MultipleSubmit,
+		)
+		.unwrap();
+
+		builder
+			.copy_buffer_to_image(buffer.clone(), sc[i].clone())
+			.unwrap();
+		if i == 0 {
+			command_buffer_0 = Some(builder.build().unwrap());
+		} else {
+			command_buffer_1 = Some(builder.build().unwrap());
+		}
+	}
+
+	[
+		Arc::new(command_buffer_0.unwrap()),
+		Arc::new(command_buffer_1.unwrap()),
+	]
+}
+
 fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 	// in this example data should always be Some(_)
 	if let Some(data) = data {
@@ -224,21 +264,9 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 		}
 
 		// copy to cpu swapchain
-		let mut builder = AutoCommandBufferBuilder::primary(
-			data.device.clone(),
-			data.queue.family(),
-			CommandBufferUsage::OneTimeSubmit,
-		)
-		.unwrap();
 
-		builder
-			.copy_buffer_to_image(
-				data.buffer.clone(),
-				data.sc[data.sc_index.load(Ordering::Relaxed) as usize].clone(),
-			)
-			.unwrap();
-
-		let command_buffer = builder.build().unwrap();
+		let command_buffer =
+			data.command_buffers[data.sc_index.load(Ordering::Relaxed) as usize].clone();
 
 		// copy to swapchain and store op in to_sc future
 		{

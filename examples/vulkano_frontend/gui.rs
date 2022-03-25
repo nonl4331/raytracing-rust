@@ -4,7 +4,7 @@ use crate::WIDTH;
 
 use vulkano::pipeline::ComputePipeline;
 use vulkano::{
-	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage},
+	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
 	descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet},
 	device::{
 		physical::{PhysicalDevice, PhysicalDeviceType},
@@ -41,8 +41,9 @@ pub struct GUI {
 	pub queue: Arc<Queue>,
 	swapchain: Arc<Swapchain<Window>>,
 	images: Vec<Arc<SwapchainImage<Window>>>,
-	compute_pipeline: Arc<ComputePipeline>,
 	pub cpu_rendering: CpuRendering,
+	compute_command_buffers: [Arc<PrimaryAutoCommandBuffer>; 2],
+	presentation_command_buffers: Vec<Arc<PrimaryAutoCommandBuffer>>,
 	render_info: RenderInfo,
 	combined_buffer: Arc<StorageImage>,
 	presentation_finished: Option<Box<dyn GpuFuture + 'static>>,
@@ -152,8 +153,8 @@ impl GUI {
 
 		mod cs {
 			vulkano_shaders::shader! {
-						ty: "compute",
-						src:
+			ty: "compute",
+			src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -178,6 +179,31 @@ void main() {
 			|_| {},
 		)
 		.unwrap();
+		let compute_command_buffers = to_combined_buffer_command_buffers(
+			compute_pipeline.clone(),
+			queue.clone(),
+			device.clone(),
+			cpu_rendering.cpu_swapchain.clone(),
+			combined_buffer.clone(),
+			render_info.render_width,
+			render_info.render_height,
+		);
+
+		let extent: [u32; 2] = surface.window().inner_size().into();
+		let sc_width = extent[0];
+		let sc_height = extent[1];
+
+		let presentation_command_buffers = blit_to_swapchain_command_buffer(
+			device.clone(),
+			queue.clone(),
+			combined_buffer.clone(),
+			&images,
+			render_info.render_width as i32,
+			render_info.render_height as i32,
+			sc_width as i32,
+			sc_height as i32,
+			images.len(),
+		);
 
 		GUI {
 			event_loop,
@@ -187,8 +213,9 @@ void main() {
 			swapchain,
 			images,
 			render_info,
-			compute_pipeline,
 			cpu_rendering,
+			compute_command_buffers,
+			presentation_command_buffers,
 			combined_buffer,
 			presentation_finished: None,
 		}
@@ -264,89 +291,15 @@ void main() {
 			self.recreate_swapchain();
 		}
 
-		let width = self.render_info.render_width;
-		let height = self.render_info.render_height;
-
-		// use compute to merge, tonemap and convert (copy from cpu swapchain)
-		let layout = self
-			.compute_pipeline
-			.layout()
-			.descriptor_set_layouts()
-			.get(0)
-			.unwrap();
-
-		let image_view = ImageView::new(
-			self.cpu_rendering.cpu_swapchain[!self
-				.cpu_rendering
-				.copy_to_first
-				.load(std::sync::atomic::Ordering::Relaxed) as usize]
-				.clone(),
-		)
-		.unwrap();
-
-		let image_view_combined_buffer = ImageView::new(self.combined_buffer.clone()).unwrap();
-		let set = PersistentDescriptorSet::new(
-			layout.clone(),
-			[{ WriteDescriptorSet::image_view(0, image_view) }, {
-				WriteDescriptorSet::image_view(1, image_view_combined_buffer)
-			}],
-		)
-		.unwrap();
-
-		let mut builder = AutoCommandBufferBuilder::primary(
-			self.device.clone(),
-			self.queue.family(),
-			CommandBufferUsage::OneTimeSubmit,
-		)
-		.unwrap();
-
-		builder
-			.bind_pipeline_compute(self.compute_pipeline.clone())
-			.bind_descriptor_sets(
-				PipelineBindPoint::Compute,
-				self.compute_pipeline.layout().clone(),
-				0,
-				set,
-			)
-			.dispatch([
-				(self.render_info.render_width as f64 / 32.0).ceil() as u32,
-				(self.render_info.render_height as f64 / 32.0).ceil() as u32,
-				1,
-			])
-			.unwrap();
-
-		let compute_command_buffer = builder.build().unwrap();
+		let compute_command_buffer = self.compute_command_buffers[!self
+			.cpu_rendering
+			.copy_to_first
+			.load(std::sync::atomic::Ordering::Relaxed)
+			as usize]
+			.clone();
 
 		// blit to swapchain (copy + resize)
-		let mut builder = AutoCommandBufferBuilder::primary(
-			self.device.clone(),
-			self.queue.family(),
-			CommandBufferUsage::OneTimeSubmit,
-		)
-		.unwrap();
-
-		let extent: [u32; 2] = self.surface.window().inner_size().into();
-		let sc_width = extent[0];
-		let sc_height = extent[1];
-
-		builder
-			.blit_image(
-				self.combined_buffer.clone(),
-				[0, 0, 0],
-				[width as i32, height as i32, 1],
-				0,
-				0,
-				self.images[image_num].clone(),
-				[0, 0, 0],
-				[sc_width as i32, sc_height as i32, 1],
-				0,
-				0,
-				1,
-				Filter::Nearest,
-			)
-			.unwrap();
-
-		let blit_command_buffer = builder.build().unwrap();
+		let blit_command_buffer = self.presentation_command_buffers[image_num].clone();
 
 		// from cpu swapchain to combined image
 		match &*self.cpu_rendering.to_sc.lock().unwrap() {
@@ -410,8 +363,128 @@ void main() {
 				Err(SwapchainCreationError::UnsupportedDimensions) => return,
 				Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
 			};
+		let extent: [u32; 2] = self.surface.window().inner_size().into();
+		let sc_width = extent[0];
+		let sc_height = extent[1];
 
 		self.swapchain = new_swapchain;
 		self.images = new_images;
+		self.presentation_command_buffers = blit_to_swapchain_command_buffer(
+			self.device.clone(),
+			self.queue.clone(),
+			self.combined_buffer.clone(),
+			&self.images,
+			self.render_info.render_width as i32,
+			self.render_info.render_height as i32,
+			sc_width as i32,
+			sc_height as i32,
+			self.images.len(),
+		);
 	}
+}
+
+fn to_combined_buffer_command_buffers(
+	compute_pipeline: Arc<ComputePipeline>,
+	queue: Arc<Queue>,
+	device: Arc<Device>,
+	cpu_swapchain: [Arc<StorageImage>; 2],
+	combined_buffer: Arc<StorageImage>,
+	render_width: u32,
+	render_height: u32,
+) -> [Arc<PrimaryAutoCommandBuffer>; 2] {
+	let mut command_buffer_0 = None;
+	let mut command_buffer_1 = None;
+
+	for i in 0..2 {
+		let layout = compute_pipeline
+			.layout()
+			.descriptor_set_layouts()
+			.get(0)
+			.unwrap();
+
+		let image_view = ImageView::new(cpu_swapchain[i].clone()).unwrap();
+
+		let image_view_combined_buffer = ImageView::new(combined_buffer.clone()).unwrap();
+		let set = PersistentDescriptorSet::new(
+			layout.clone(),
+			[{ WriteDescriptorSet::image_view(0, image_view) }, {
+				WriteDescriptorSet::image_view(1, image_view_combined_buffer)
+			}],
+		)
+		.unwrap();
+
+		let mut builder = AutoCommandBufferBuilder::primary(
+			device.clone(),
+			queue.family(),
+			CommandBufferUsage::MultipleSubmit,
+		)
+		.unwrap();
+
+		builder
+			.bind_pipeline_compute(compute_pipeline.clone())
+			.bind_descriptor_sets(
+				PipelineBindPoint::Compute,
+				compute_pipeline.layout().clone(),
+				0,
+				set,
+			)
+			.dispatch([
+				(render_width as f64 / 32.0).ceil() as u32,
+				(render_height as f64 / 32.0).ceil() as u32,
+				1,
+			])
+			.unwrap();
+		if i == 0 {
+			command_buffer_0 = Some(builder.build().unwrap())
+		} else {
+			command_buffer_1 = Some(builder.build().unwrap())
+		}
+	}
+
+	[
+		Arc::new(command_buffer_0.unwrap()),
+		Arc::new(command_buffer_1.unwrap()),
+	]
+}
+
+fn blit_to_swapchain_command_buffer(
+	device: Arc<Device>,
+	queue: Arc<Queue>,
+	combined_buffer: Arc<StorageImage>,
+	images: &[Arc<SwapchainImage<Window>>],
+	input_width: i32,
+	input_height: i32,
+	sc_width: i32,
+	sc_height: i32,
+	image_count: usize,
+) -> Vec<Arc<PrimaryAutoCommandBuffer>> {
+	let mut command_buffers = Vec::new();
+	for i in 0..image_count {
+		let mut builder = AutoCommandBufferBuilder::primary(
+			device.clone(),
+			queue.family(),
+			CommandBufferUsage::MultipleSubmit,
+		)
+		.unwrap();
+
+		builder
+			.blit_image(
+				combined_buffer.clone(),
+				[0, 0, 0],
+				[input_width, input_height, 1],
+				0,
+				0,
+				images[i].clone(),
+				[0, 0, 0],
+				[sc_width, sc_height, 1],
+				0,
+				0,
+				1,
+				Filter::Nearest,
+			)
+			.unwrap();
+
+		command_buffers.push(Arc::new(builder.build().unwrap()));
+	}
+	command_buffers
 }
