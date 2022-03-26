@@ -88,7 +88,7 @@ fn main() {
 	let buffer = CpuAccessibleBuffer::from_iter(
 		gui.device.clone(),
 		vulkano::buffer::BufferUsage::all(),
-		false,
+		true,
 		iter,
 	)
 	.unwrap();
@@ -127,7 +127,7 @@ fn main() {
 		scene.generate_image_threaded(
 			WIDTH as u64,
 			HEIGHT as u64,
-			10,
+			1000,
 			Some(
 				|data: &mut Option<Data>, previous: &SamplerProgress, i: u64| {
 					sample_update(data, previous, i);
@@ -155,7 +155,6 @@ fn main() {
 		"\tMrays/s: {:.2}",
 		(ray_count as f64 / duration.as_secs_f64()) / 1000000.0
 	);
-	println!("------");
 }
 
 fn get_scene(
@@ -252,7 +251,6 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 		{
 			// get access to CpuAccessibleBuffer
 			let mut buf = data.buffer.write().unwrap();
-
 			buf.chunks_mut(4)
 				.zip(previous.current_image.chunks(3))
 				.for_each(|(pres, acc)| {
@@ -264,7 +262,6 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 		}
 
 		// copy to cpu swapchain
-
 		let command_buffer =
 			data.command_buffers[data.sc_index.load(Ordering::Relaxed) as usize].clone();
 
@@ -288,7 +285,6 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 		}
 
 		// modify sc_index to !sc_index
-
 		data.sc_index
 			.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| Some(!x))
 			.unwrap();

@@ -153,8 +153,8 @@ impl GUI {
 
 		mod cs {
 			vulkano_shaders::shader! {
-			ty: "compute",
-			src:
+						ty: "compute",
+						src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -254,12 +254,7 @@ void main() {
 				}
 				Event::UserEvent(user_event) => match user_event {
 					RenderEvent::SampleCompleted => {
-						let start = std::time::Instant::now();
 						self.update();
-						println!(
-							"Update time (micro): {}",
-							(std::time::Instant::now() - start).as_micros()
-						);
 					}
 				},
 				Event::RedrawEventsCleared => {}
@@ -308,6 +303,7 @@ void main() {
 			}
 			None => {}
 		}
+
 		{
 			let from_sc = &mut *self.cpu_rendering.from_sc.lock().unwrap();
 			*from_sc = Some(
