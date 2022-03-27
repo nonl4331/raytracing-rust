@@ -1,14 +1,12 @@
 extern crate cpu_raytracer;
 extern crate utility;
 
-mod generate;
-mod parameters;
-
 use cpu_raytracer::{Float, SamplerProgress};
 use std::env;
 
 use utility::{
-	get_progress_output, line_break, print_final_statistics, print_render_start, save_u8_to_image,
+	get_progress_output, line_break, parameters, print_final_statistics, print_render_start,
+	save_u8_to_image,
 };
 
 fn main() {
@@ -38,9 +36,10 @@ fn main() {
 							*pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
 						});
 
-					get_progress_output(sp.samples_completed, Some(parameters.samples));
+					get_progress_output(sp.samples_completed, parameters.samples);
 				}
 			};
+
 		scene.generate_image_threaded(
 			width,
 			height,
@@ -48,6 +47,7 @@ fn main() {
 			Some(progress_bar_output),
 			&mut image,
 		);
+
 		let output = image.unwrap();
 
 		let ray_count = output.rays_shot;
@@ -61,6 +61,9 @@ fn main() {
 			.map(|val| (val.sqrt() * 255.999) as u8)
 			.collect();
 
-		save_u8_to_image(width, height, output, filename);
+		match filename {
+			Some(filename) => save_u8_to_image(width, height, output, filename, false),
+			None => {}
+		}
 	}
 }

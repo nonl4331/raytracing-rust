@@ -2,6 +2,9 @@ extern crate chrono;
 extern crate cpu_raytracer;
 extern crate image;
 
+pub mod generate;
+pub mod parameters;
+
 use chrono::Local;
 use cpu_raytracer::{
 	acceleration::bvh::Bvh, material::Scatter, ray_tracing::intersection::Primitive, *,
@@ -68,28 +71,33 @@ pub fn get_readable_duration(duration: Duration) -> String {
 	days_string + &hours_string + &minutes_string + &seconds_string
 }
 
-pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: String) {
-	image::save_buffer(
-		filename,
-		&image,
-		width.try_into().unwrap(),
-		height.try_into().unwrap(),
-		image::ColorType::Rgb8,
-	)
-	.unwrap();
+pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: String, alpha: bool) {
+	if alpha {
+		image::save_buffer(
+			filename,
+			&image,
+			width.try_into().unwrap(),
+			height.try_into().unwrap(),
+			image::ColorType::Rgba8,
+		)
+		.unwrap();
+	} else {
+		image::save_buffer(
+			filename,
+			&image,
+			width.try_into().unwrap(),
+			height.try_into().unwrap(),
+			image::ColorType::Rgb8,
+		)
+		.unwrap();
+	}
 }
 
-pub fn get_progress_output(samples_completed: u64, total_samples: Option<u64>) {
-	match total_samples {
-		Some(total_samples) => {
-			progress_bar(samples_completed as f64 / total_samples as f64);
-			print!(" ({}/{}) samples", samples_completed, total_samples);
-		}
-		None => {
-			progress_bar(0.0);
-			print!(" ({}/∞) samples", samples_completed);
-		}
-	}
+pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
+	progress_bar(samples_completed as f64 / total_samples as f64);
+
+	print!(" ({}/{}) samples", samples_completed, total_samples);
+
 	stdout().flush().unwrap();
 }
 
@@ -124,7 +132,9 @@ pub fn print_final_statistics(start: Instant, ray_count: u64, samples: Option<u6
 	println!("\tRays: {}", ray_count);
 	match samples {
 		Some(samples) => println!("\tSamples: {}", samples),
-		None => {}
+		None => {
+			println!("")
+		}
 	}
 
 	println!(
@@ -140,7 +150,7 @@ pub fn print_render_start(width: u64, height: u64, samples: Option<u64>) -> Inst
 	println!("\tHeight: {}", height);
 	match samples {
 		Some(samples) => println!("\tSamples per pixel: {}\n", samples),
-		None => {}
+		None => println!(""),
 	}
 	Instant::now()
 }

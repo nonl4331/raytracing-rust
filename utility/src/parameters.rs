@@ -1,22 +1,21 @@
+use crate::{generate, line_break};
 use chrono::Local;
 use cpu_raytracer::{
 	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float,
 	PrimitiveEnum, Scene, SplitType,
 };
 use std::process;
-use utility::line_break;
 
 const SAMPLES_DEFAULT: u64 = 30;
 const WIDTH_DEFAULT: u64 = 800;
 const HEIGHT_DEFAULT: u64 = 600;
 const BVH_DEFAULT: SplitType = SplitType::Sah;
-const FILENAME_DEFAULT: &str = "out.png";
 
 pub struct Parameters {
 	pub samples: u64,
 	pub width: u64,
 	pub height: u64,
-	pub filename: String,
+	pub filename: Option<String>,
 }
 
 impl Parameters {
@@ -26,11 +25,16 @@ impl Parameters {
 		height: Option<u64>,
 		filename: Option<String>,
 	) -> Self {
+		let samples = match samples.unwrap_or(SAMPLES_DEFAULT) {
+			0 => u64::MAX,
+			_ => samples.unwrap_or(SAMPLES_DEFAULT),
+		};
+
 		Parameters {
-			samples: samples.unwrap_or(SAMPLES_DEFAULT),
+			samples,
 			width: width.unwrap_or(WIDTH_DEFAULT),
 			height: height.unwrap_or(HEIGHT_DEFAULT),
-			filename: filename.unwrap_or(FILENAME_DEFAULT.to_string()),
+			filename,
 		}
 	}
 }
@@ -40,13 +44,13 @@ macro_rules! scene {
 		line_break();
 		let time = Local::now();
 		println!("{} - Scene Generation started", time.format("%X"));
-		super::generate::$scene_name($bvh_type, $aspect_ratio)
+		generate::$scene_name($bvh_type, $aspect_ratio)
 	}};
 	($scene_name:ident, $bvh_type:expr, $aspect_ratio:expr, $seed:expr) => {{
 		line_break();
 		let time = Local::now();
 		println!("{} - Scene Generation started", time.format("%X"));
-		super::generate::$scene_name($bvh_type, $aspect_ratio, $seed)
+		generate::$scene_name($bvh_type, $aspect_ratio, $seed)
 	}};
 }
 
@@ -124,10 +128,10 @@ pub fn process_args(
 					bvh_type = Some(get_bvh_type(&args, arg_i + 1));
 				}
 				"-O" => {
-					filename = Some(get_filename(&args, arg_i + 1));
+					filename = get_filename(&args, arg_i + 1);
 				}
 				"--output" => {
-					filename = Some(get_filename(&args, arg_i + 1));
+					filename = get_filename(&args, arg_i + 1);
 				}
 				"-J" => {
 					seed = Some(get_seed(&args, arg_i + 1));
@@ -166,7 +170,7 @@ fn display_help() {
 	println!("-S [index], --scene [index]");
 	println!("\t Renders scene");
 	println!("-N [samples], --samples [samples]");
-	println!("\t Set samples per pixel");
+	println!("\t Set samples per pixel. (Note 0 -> u64::MAX)");
 	println!("-X [pixels], --width [pixels]");
 	println!("\t Sets width of image");
 	println!("-Y [pixels], --height [pixels]");
@@ -175,7 +179,7 @@ fn display_help() {
 	println!("\t Sets split type for BVH.");
 	println!("\t supported split types: \"equal\", \"middle\"");
 	println!("-O [filename], --output [filename]");
-	println!("\t filename of output with supported file extension.");
+	println!("\t Filename of output with supported file extension. If not specified no image will be output.");
 	println!("\t supported file extensions: \"png\", \"jpeg\"");
 	println!("-J [seed], --seed [seed]");
 	println!("Seed for scene generation (if supported).")
@@ -368,8 +372,8 @@ fn get_seed(args: &[String], index: usize) -> String {
 	}
 }
 
-fn get_filename(args: &[String], index: usize) -> String {
-	match args.get(index) {
+fn get_filename(args: &[String], index: usize) -> Option<String> {
+	Some(match args.get(index) {
 		Some(string) => {
 			let split_vec: Vec<&str> = string.split('.').collect();
 			if split_vec.len() < 2 {
@@ -396,7 +400,7 @@ fn get_filename(args: &[String], index: usize) -> String {
 			println!("Do -H or --help for more information.");
 			process::exit(0);
 		}
-	}
+	})
 }
 
 fn get_bvh_type(args: &[String], index: usize) -> SplitType {

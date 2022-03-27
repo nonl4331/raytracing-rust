@@ -1,11 +1,12 @@
 extern crate cpu_raytracer;
 extern crate utility;
 
-use cpu_raytracer::{
-	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
-};
+use cpu_raytracer::*;
 
-use utility::{get_progress_output, print_final_statistics, print_render_start};
+use utility::{
+	get_progress_output, line_break, parameters, print_final_statistics, print_render_start,
+	save_u8_to_image,
+};
 
 use vulkano::command_buffer::PrimaryAutoCommandBuffer;
 
@@ -27,6 +28,8 @@ use std::sync::{
 	Arc, Mutex,
 };
 
+use std::env;
+
 const WIDTH: u32 = 2560;
 const HEIGHT: u32 = 1440;
 
@@ -42,6 +45,7 @@ struct Data {
 	buffer: Arc<CpuAccessibleBuffer<[f32]>>,
 	sc_index: Arc<AtomicBool>,
 	samples: Arc<AtomicU64>,
+	total_samples: u64,
 	rays_shot: Arc<AtomicU64>,
 	event_proxy: EventLoopProxy<RenderEvent>,
 }
@@ -56,6 +60,7 @@ impl Data {
 		buffer: Arc<CpuAccessibleBuffer<[f32]>>,
 		sc_index: Arc<AtomicBool>,
 		samples: Arc<AtomicU64>,
+		total_samples: u64,
 		rays_shot: Arc<AtomicU64>,
 		event_proxy: EventLoopProxy<RenderEvent>,
 	) -> Self {
@@ -68,6 +73,7 @@ impl Data {
 			buffer,
 			sc_index,
 			samples,
+			total_samples,
 			rays_shot,
 			event_proxy,
 		}
@@ -75,111 +81,122 @@ impl Data {
 }
 
 fn main() {
-	let required_extensions = vulkano_win::required_extensions();
-	let instance = Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
-	let gui = GUI::new(&instance);
+	let args: Vec<String> = env::args().collect();
 
-	let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> = if let Some(ref el) = gui.event_loop
-	{
-		Some(el.create_proxy())
-	} else {
-		None
-	};
-	let iter = [0.0 as Float, 0.0, 0.0, 0.0]
-		.repeat((WIDTH * HEIGHT) as usize)
-		.into_iter();
-	let buffer = CpuAccessibleBuffer::from_iter(
-		gui.device.clone(),
-		vulkano::buffer::BufferUsage::all(),
-		true,
-		iter,
-	)
-	.unwrap();
-
-	let samples = Arc::new(AtomicU64::new(0));
-	let ray_count = Arc::new(AtomicU64::new(0));
-
-	let command_buffers = create_command_buffers(
-		gui.device.clone(),
-		gui.queue.clone(),
-		buffer.clone(),
-		gui.cpu_rendering.cpu_swapchain.clone(),
-	);
-
-	let data = Data::new(
-		gui.queue.clone(),
-		gui.device.clone(),
-		gui.cpu_rendering.to_sc.clone(),
-		gui.cpu_rendering.from_sc.clone(),
-		command_buffers,
-		buffer,
-		gui.cpu_rendering.copy_to_first.clone(),
-		samples.clone(),
-		ray_count.clone(),
-		event_loop_proxy.unwrap(),
-	);
-
-	let start = print_render_start(WIDTH as u64, HEIGHT as u64, None);
-
-	std::thread::spawn(move || {
-		let scene = get_scene();
-
-		scene.generate_image_threaded(
-			WIDTH as u64,
-			HEIGHT as u64,
-			1000,
-			Some(
-				|data: &mut Option<Data>, previous: &SamplerProgress, i: u64| {
-					sample_update(data, previous, i);
-				},
-			),
-			&mut Some(data),
+	if let Some((scene, parameters)) = parameters::process_args(args) {
+		let (width, height, total_samples, filename) = (
+			parameters.width,
+			parameters.height,
+			parameters.samples,
+			parameters.filename.clone(),
 		);
-	});
 
-	gui.run();
+		let required_extensions = vulkano_win::required_extensions();
+		let instance = Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
+		let gui = GUI::new(&instance);
 
-	let ray_count = ray_count.load(Ordering::Relaxed);
-	let samples = samples.load(Ordering::Relaxed);
+		let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
+			if let Some(ref el) = gui.event_loop {
+				Some(el.create_proxy())
+			} else {
+				None
+			};
+		let iter = [0.0 as Float, 0.0, 0.0, 0.0]
+			.repeat((width * height) as usize)
+			.into_iter();
+		let buffer = CpuAccessibleBuffer::from_iter(
+			gui.device.clone(),
+			vulkano::buffer::BufferUsage::all(),
+			true,
+			iter,
+		)
+		.unwrap();
 
-	print_final_statistics(start, ray_count, Some(samples));
-}
+		let samples = Arc::new(AtomicU64::new(0));
+		let ray_count = Arc::new(AtomicU64::new(0));
 
-fn get_scene(
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
-	let mut primitives = Vec::new();
+		let command_buffers = create_command_buffers(
+			gui.device.clone(),
+			gui.queue.clone(),
+			buffer.clone(),
+			gui.cpu_rendering.cpu_swapchain.clone(),
+		);
 
-	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
+		let data = Data::new(
+			gui.queue.clone(),
+			gui.device.clone(),
+			gui.cpu_rendering.to_sc.clone(),
+			gui.cpu_rendering.from_sc.clone(),
+			command_buffers,
+			buffer.clone(),
+			gui.cpu_rendering.copy_to_first.clone(),
+			samples.clone(),
+			total_samples,
+			ray_count.clone(),
+			event_loop_proxy.unwrap(),
+		);
 
-	let glowy = sphere!(0, 0.5, 0, 0.5, &emit!(&solid_colour!(colour!(1)), 1.5));
+		let image_copy_finished = data.to_sc.clone();
 
-	let cube = aacuboid!(
-		-0.5,
-		0.1,
-		-0.5,
-		-0.4,
-		0.2,
-		-0.4,
-		&diffuse!(0.5, 0.5, 0.5, 0.5)
-	);
+		let start = print_render_start(width, height, None);
 
-	primitives.push(ground);
-	primitives.push(glowy);
-	primitives.push(cube);
+		let render_canceled = Arc::new(AtomicBool::new(true));
 
-	let camera = camera!(
-		position!(-5, 3, -3),
-		position!(0, 0.5, 0),
-		position!(0, 1, 0),
-		34,
-		16.0 / 9.0,
-		0,
-		10
-	);
+		let moved_render_canceled = render_canceled.clone();
+		let moved_filename = filename.clone();
 
-	let bvh = bvh!(primitives, SplitType::Sah);
+		std::thread::spawn(move || {
+			let ray_count = data.rays_shot.clone();
+			let samples = data.samples.clone();
+			let buffer = data.buffer.clone();
+			let to_sc = data.to_sc.clone();
 
-	scene!(camera, sky!(), random_sampler!(), bvh)
+			scene.generate_image_threaded(
+				width,
+				height,
+				total_samples,
+				Some(
+					|data: &mut Option<Data>, previous: &SamplerProgress, i: u64| {
+						sample_update(data, previous, i);
+					},
+				),
+				&mut Some(data),
+			);
+
+			let ray_count = ray_count.load(Ordering::Relaxed);
+			let samples = samples.load(Ordering::Relaxed);
+
+			print_final_statistics(start, ray_count, Some(samples));
+			line_break();
+
+			moved_render_canceled.store(false, Ordering::Relaxed);
+
+			save_file(
+				moved_filename,
+				width,
+				height,
+				&*buffer.read().unwrap(),
+				to_sc,
+			);
+		});
+
+		gui.run();
+		if render_canceled.load(Ordering::Relaxed) {
+			let ray_count = ray_count.load(Ordering::Relaxed);
+			let samples = samples.load(Ordering::Relaxed);
+
+			print_final_statistics(start, ray_count, Some(samples));
+			line_break();
+
+			save_file(
+				filename,
+				width,
+				height,
+				&*buffer.read().unwrap(),
+				image_copy_finished,
+			);
+		}
+	}
 }
 
 fn create_command_buffers(
@@ -277,7 +294,7 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 			.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| Some(!x))
 			.unwrap();
 
-		get_progress_output(i, None);
+		get_progress_output(i, data.total_samples);
 
 		// signal sample is ready to be presented
 		data.event_proxy
@@ -285,5 +302,33 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 			.unwrap();
 	} else {
 		unreachable!();
+	}
+}
+
+fn save_file(
+	filename: Option<String>,
+	width: u64,
+	height: u64,
+	buffer: &[f32],
+	image_fence: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+) {
+	match filename {
+		Some(filename) => {
+			match &*image_fence.lock().unwrap() {
+				Some(future) => {
+					future.wait(None).unwrap();
+				}
+				None => {}
+			}
+
+			save_u8_to_image(
+				width,
+				height,
+				buffer.iter().map(|val| (val * 255.999) as u8).collect(),
+				filename,
+				true,
+			)
+		}
+		None => {}
 	}
 }

@@ -10,3 +10,5 @@ edition = "2021"
 chrono = "0.4.19"
 image = "0.23.14"
 cpu_raytracer = { path = "../"}
+rand = { version = "0.8.3", features = [ "small_rng" ] }
+rand_seeder = "0.2.2"

@@ -1286,6 +1286,8 @@ dependencies = [
  "chrono",
  "cpu_raytracer",
  "image",
+ "rand",
+ "rand_seeder",
 ]
 
 [[package]]

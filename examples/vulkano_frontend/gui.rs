@@ -79,12 +79,6 @@ impl GUI {
 			})
 			.unwrap();
 
-		println!(
-			"Using device: {} (type: {:?})",
-			physical_device.properties().device_name,
-			physical_device.properties().device_type,
-		);
-
 		let (device, mut queues) = Device::new(
 			physical_device,
 			&Features::none(),
@@ -153,8 +147,8 @@ impl GUI {
 
 		mod cs {
 			vulkano_shaders::shader! {
-						ty: "compute",
-						src:
+									ty: "compute",
+									src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
