@@ -1,7 +1,12 @@
 extern crate cpu_raytracer;
+extern crate utility;
+
 use cpu_raytracer::{
 	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
+
+use utility::{get_progress_output, print_final_statistics, print_render_start};
+
 use vulkano::command_buffer::PrimaryAutoCommandBuffer;
 
 use crate::gui::{RenderEvent, GUI};
@@ -17,12 +22,10 @@ use vulkano::{
 };
 use winit::event_loop::EventLoopProxy;
 
-use chrono::Local;
 use std::sync::{
 	atomic::{AtomicBool, AtomicU64, Ordering},
 	Arc, Mutex,
 };
-use std::time::{Duration, Instant};
 
 const WIDTH: u32 = 2560;
 const HEIGHT: u32 = 1440;
@@ -116,11 +119,8 @@ fn main() {
 		event_loop_proxy.unwrap(),
 	);
 
-	let start = Instant::now();
-	let time = Local::now();
-	println!("{} - Render started", time.format("%X"));
-	println!("\tWidth: {}", WIDTH);
-	println!("\tHeight: {}", HEIGHT);
+	let start = print_render_start(WIDTH as u64, HEIGHT as u64, None);
+
 	std::thread::spawn(move || {
 		let scene = get_scene();
 
@@ -140,21 +140,9 @@ fn main() {
 	gui.run();
 
 	let ray_count = ray_count.load(Ordering::Relaxed);
+	let samples = samples.load(Ordering::Relaxed);
 
-	let end = Instant::now();
-	let duration = end.checked_duration_since(start).unwrap();
-	let time = Local::now();
-	println!(
-		"\u{001b}[2K\r{} - Finised rendering image",
-		time.format("%X")
-	);
-	println!("\tRender Time: {}", get_readable_duration(duration));
-	println!("\tRays: {}", ray_count);
-	println!("\tSamples: {}", samples.load(Ordering::Relaxed));
-	println!(
-		"\tMrays/s: {:.2}",
-		(ray_count as f64 / duration.as_secs_f64()) / 1000000.0
-	);
+	print_final_statistics(start, ray_count, Some(samples));
 }
 
 fn get_scene(
@@ -289,6 +277,8 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 			.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| Some(!x))
 			.unwrap();
 
+		get_progress_output(i, None);
+
 		// signal sample is ready to be presented
 		data.event_proxy
 			.send_event(RenderEvent::SampleCompleted)
@@ -296,36 +286,4 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 	} else {
 		unreachable!();
 	}
-}
-
-pub fn get_readable_duration(duration: Duration) -> String {
-	let days = duration.as_secs() / 86400;
-
-	let days_string = match days {
-		0 => "".to_string(),
-		1 => format!("{} day, ", days),
-		_ => format!("{} days, ", days),
-	};
-
-	let hours = (duration.as_secs() - days * 86400) / 3600;
-	let hours_string = match hours {
-		0 => "".to_string(),
-		1 => format!("{} hour, ", hours),
-		_ => format!("{} hours, ", hours),
-	};
-
-	let minutes = (duration.as_secs() - days * 86400 - hours * 3600) / 60;
-	let minutes_string = match minutes {
-		0 => "".to_string(),
-		1 => format!("{} minute, ", minutes),
-		_ => format!("{} minutes, ", minutes),
-	};
-
-	let seconds = duration.as_secs() % 60;
-	let seconds_string = match seconds {
-		0 => "~0 seconds".to_string(),
-		1 => format!("{} second", seconds),
-		_ => format!("{} seconds", seconds),
-	};
-	days_string + &hours_string + &minutes_string + &seconds_string
 }

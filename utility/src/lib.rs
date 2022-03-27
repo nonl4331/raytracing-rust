@@ -2,12 +2,10 @@ extern crate chrono;
 extern crate cpu_raytracer;
 extern crate image;
 
-use crate::parameters::Parameters;
 use chrono::Local;
-use cpu_raytracer::acceleration::bvh::Bvh;
-use cpu_raytracer::material::Scatter;
-use cpu_raytracer::ray_tracing::intersection::Primitive;
-use cpu_raytracer::*;
+use cpu_raytracer::{
+	acceleration::bvh::Bvh, material::Scatter, ray_tracing::intersection::Primitive, *,
+};
 use std::{
 	convert::TryInto,
 	io::{stdout, Write},
@@ -81,11 +79,17 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
 	.unwrap();
 }
 
-pub fn get_progress_output(options: &Parameters, progress: &SamplerProgress) {
-	let samples = progress.samples_completed;
-
-	progress_bar(samples as f64 / options.samples as f64);
-	print!(" ({}/{}) samples", samples, options.samples);
+pub fn get_progress_output(samples_completed: u64, total_samples: Option<u64>) {
+	match total_samples {
+		Some(total_samples) => {
+			progress_bar(samples_completed as f64 / total_samples as f64);
+			print!(" ({}/{}) samples", samples_completed, total_samples);
+		}
+		None => {
+			progress_bar(0.0);
+			print!(" ({}/∞) samples", samples_completed);
+		}
+	}
 	stdout().flush().unwrap();
 }
 
@@ -106,4 +110,37 @@ pub fn create_bvh_with_info<P: Primitive<M>, M: Scatter>(
 	println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
 
 	bvh
+}
+
+pub fn print_final_statistics(start: Instant, ray_count: u64, samples: Option<u64>) {
+	let end = Instant::now();
+	let duration = end.checked_duration_since(start).unwrap();
+	let time = Local::now();
+	println!(
+		"\u{001b}[2K\r{} - Finised rendering image",
+		time.format("%X")
+	);
+	println!("\tRender Time: {}", get_readable_duration(duration));
+	println!("\tRays: {}", ray_count);
+	match samples {
+		Some(samples) => println!("\tSamples: {}", samples),
+		None => {}
+	}
+
+	println!(
+		"\tMrays/s: {:.2}",
+		(ray_count as f64 / duration.as_secs_f64()) / 1000000.0
+	);
+}
+
+pub fn print_render_start(width: u64, height: u64, samples: Option<u64>) -> Instant {
+	let time = Local::now();
+	println!("{} - Render started", time.format("%X"));
+	println!("\tWidth: {}", width);
+	println!("\tHeight: {}", height);
+	match samples {
+		Some(samples) => println!("\tSamples per pixel: {}\n", samples),
+		None => {}
+	}
+	Instant::now()
 }

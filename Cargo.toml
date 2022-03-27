@@ -16,6 +16,7 @@ wavefront_obj = "10.0.0"
 
 [dev-dependencies]
 chrono = "0.4.19"
+utility = { path = "utility" }
 vulkano = "0.28.0"
 vulkano-win = "0.28.0"
 vulkano-shaders = "0.28.0"

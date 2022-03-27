@@ -1,12 +1,10 @@
-extern crate cpu_raytracer;
-
-use crate::utility::line_break;
 use chrono::Local;
 use cpu_raytracer::{
 	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float,
 	PrimitiveEnum, Scene, SplitType,
 };
 use std::process;
+use utility::line_break;
 
 const SAMPLES_DEFAULT: u64 = 30;
 const WIDTH_DEFAULT: u64 = 800;
