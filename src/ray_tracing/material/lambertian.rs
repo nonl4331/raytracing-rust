@@ -3,6 +3,7 @@ use crate::ray_tracing::{
 	ray::Ray,
 	texture::TextureTrait,
 };
+use crate::utility::coord::Coordinate;
 
 use crate::utility::{math, math::Float, vec::Vec3};
 
@@ -35,26 +36,24 @@ impl<T> Scatter for Lambertian<T>
 where
 	T: TextureTrait,
 {
-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
-		/*let coordinate_system = Coordinate::new_from_z(hit.normal);
-		let mut direction = math::hemisphere_sampling();
-		coordinate_system.vec_to_coordinate(&mut direction);*/
-		let mut direction = math::random_unit_vector() + hit.normal;
+	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
+		let coordinate_system = Coordinate::new_from_z(hit.normal);
+		let mut direction = math::cosine_hemisphere_sampling();
+		coordinate_system.vec_to_coordinate(&mut direction);
+
 		if math::near_zero(direction) {
 			direction = hit.normal;
 		}
 
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
 		*ray = Ray::new(point, direction, ray.time);
-		(
-			self.scattering_pdf(hit.point, ray.direction, hit.normal),
-			false,
-		)
+
+		false
 	}
 	fn scattering_pdf(&self, _: Vec3, direction: Vec3, normal: Vec3) -> Float {
 		normal.dot(direction).max(0.0) / PI
 	}
-	fn scattering_albedo(&self, hit: &Hit, _: Vec3, _: Vec3) -> Vec3 {
-		self.texture.colour_value(hit.uv, hit.point) * (1.0 - self.absorption)
+	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
+		self.texture.colour_value(in_dir, hit.point) * (1.0 - self.absorption)
 	}
 }

@@ -1,0 +1,836 @@
+diff --git a/examples/cli_frontend/main.rs b/examples/cli_frontend/main.rs
+index 7588280..b96a426 100644
+--- a/examples/cli_frontend/main.rs
++++ b/examples/cli_frontend/main.rs
+@@ -3,6 +3,7 @@ extern crate utility;
+ 
+ use cpu_raytracer::{Float, SamplerProgress};
+ use std::env;
++//use utility::save_u8_to_image_ppm;
+ 
+ use utility::{
+ 	get_progress_output, line_break, parameters, print_final_statistics, print_render_start,
+@@ -62,7 +63,15 @@ fn main() {
+ 			.collect();
+ 
+ 		match filename {
+-			Some(filename) => save_u8_to_image(width, height, output, filename, false),
++			Some(filename) => {
++				save_u8_to_image(width, height, output.clone(), filename.clone(), false);
++				/*save_u8_to_image_ppm(
++					width,
++					height,
++					output,
++					filename[0..(filename.len() - 3)].to_owned() + "ppm",
++				)*/
++			}
+ 			None => {}
+ 		}
+ 	}
+diff --git a/examples/vulkano_frontend/gui.rs b/examples/vulkano_frontend/gui.rs
+index 005ea12..668879d 100644
+--- a/examples/vulkano_frontend/gui.rs
++++ b/examples/vulkano_frontend/gui.rs
+@@ -147,8 +147,8 @@ impl GUI {
+ 
+ 		mod cs {
+ 			vulkano_shaders::shader! {
+-									ty: "compute",
+-									src:
++												ty: "compute",
++												src:
+ "#version 460
+ 
+ layout(local_size_x = 32, local_size_y = 32) in;
+diff --git a/examples/vulkano_frontend/main.rs b/examples/vulkano_frontend/main.rs
+index cf60bdd..d12bb6b 100644
+--- a/examples/vulkano_frontend/main.rs
++++ b/examples/vulkano_frontend/main.rs
+@@ -30,7 +30,7 @@ use std::sync::{
+ 
+ use std::env;
+ 
+-const WIDTH: u32 = 2560;
++const WIDTH: u32 = 1440;
+ const HEIGHT: u32 = 1440;
+ 
+ mod gui;
+@@ -101,7 +101,7 @@ fn main() {
+ 			} else {
+ 				None
+ 			};
+-		let iter = [0.0 as Float, 0.0, 0.0, 0.0]
++		let iter = [0.0 as f32, 0.0, 0.0, 0.0]
+ 			.repeat((width * height) as usize)
+ 			.into_iter();
+ 		let buffer = CpuAccessibleBuffer::from_iter(
+@@ -259,9 +259,9 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
+ 			buf.chunks_mut(4)
+ 				.zip(previous.current_image.chunks(3))
+ 				.for_each(|(pres, acc)| {
+-					pres[0] += (acc[0] - pres[0]) / i as Float;
+-					pres[1] += (acc[1] - pres[1]) / i as Float;
+-					pres[2] += (acc[2] - pres[2]) / i as Float;
++					pres[0] += (acc[0] as f32 - pres[0]) / i as f32;
++					pres[1] += (acc[1] as f32 - pres[1]) / i as f32;
++					pres[2] += (acc[2] as f32 - pres[2]) / i as f32;
+ 					pres[3] = 1.0;
+ 				});
+ 		}
+diff --git a/src/ray_tracing/intersection/mod.rs b/src/ray_tracing/intersection/mod.rs
+index 3b74fe7..76c5f03 100644
+--- a/src/ray_tracing/intersection/mod.rs
++++ b/src/ray_tracing/intersection/mod.rs
+@@ -23,6 +23,10 @@ use crate::utility::{
+ 	math::{next_float, previous_float, random_float, Float},
+ 	vec::{Vec2, Vec3},
+ };
++use rand::rngs::SmallRng;
++use rand::thread_rng;
++use rand::Rng;
++use rand::SeedableRng;
+ use std::sync::Arc;
+ 
+ #[cfg(all(feature = "f64"))]
+@@ -318,8 +322,7 @@ where
+ 		let point = if distance_sq <= self.radius * self.radius {
+ 			self.get_sample()
+ 		} else {
+-			let distance = (self.center - in_point).mag();
+-			let distance_sq = distance * distance;
++			let distance = distance_sq.sqrt();
+ 			let sin_theta_max_sq = self.radius * self.radius / distance_sq;
+ 			let cost_theta_max = (1.0 - sin_theta_max_sq).max(0.0).sqrt();
+ 			let r1 = random_float();
+@@ -328,12 +331,12 @@ where
+ 			let phi = 2.0 * random_float() * PI;
+ 
+ 			// calculate alpha
+-			let smol = self.radius * self.radius - distance_sq * sin_theta * sin_theta;
+-			let side_a = distance * cos_theta - smol;
+-			let side_b = &self.radius;
+-			let side_c = &distance;
+-			let cos_alpha =
+-				(side_a * side_a + side_b * side_b - side_c * side_c) / (2.0 * side_a * side_b);
++			let ds = distance * cos_theta
++				- (self.radius * self.radius - distance_sq * sin_theta * sin_theta)
++					.max(0.0)
++					.sqrt();
++			let cos_alpha = (distance_sq + self.radius * self.radius - ds * ds)
++				/ (2.0 * distance * self.radius);
+ 			let sin_alpha = (1.0 - cos_alpha * cos_alpha).max(0.0).sqrt();
+ 
+ 			// get sphere point
+@@ -341,7 +344,7 @@ where
+ 			let mut vec = Vec3::new(sin_alpha * phi.cos(), sin_alpha * phi.sin(), cos_alpha);
+ 			coord_system.vec_to_coordinate(&mut vec);
+ 
+-			self.center - self.radius * vec
++			self.center + self.radius * vec
+ 		};
+ 		(
+ 			point,
+@@ -408,8 +411,26 @@ where
+ 			Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
+ 		))
+ 	}
++	fn sample_visible_from_point(&self, in_point: Vec3) -> (Vec3, Vec3, Vec3) {
++		let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
++		let point = Vec2::new(
++			rng.gen_range(self.min.x..self.max.x),
++			rng.gen_range(self.min.y..self.max.y),
++		);
++		let point = Axis::point_from_2d(&point, &self.axis, self.k);
++		let dir = (point - in_point).normalised();
++		let norm = self.axis.return_point_with_axis(-dir).normalised();
++		let point = point - 0.0001 * norm;
++
++		(point, dir, norm)
++	}
++	fn scattering_pdf(&self, hit: &Hit, _: Vec3, light_point: Vec3) -> Float {
++		(light_point - hit.point).mag_sq()
++			/ ((hit.point - light_point).normalised().y.abs() * self.area())
++	}
+ 	fn area(&self) -> Float {
+-		(self.max.x - self.min.x) * (self.max.y - self.min.y)
++		let a = self.max - self.min;
++		a.x * a.y
+ 	}
+ }
+ 
+@@ -598,7 +619,7 @@ where
+ 	M: Scatter,
+ {
+ 	fn get_aabb(&self) -> Option<Aabb> {
+-		Some(Aabb::new(self.min, self.max))
++		Some(Aabb::new(self.min - Vec3::one(), self.max + Vec3::one()))
+ 	}
+ 	fn area(&self) -> Float {
+ 		todo!()
+diff --git a/src/ray_tracing/material/cook_torrence.rs b/src/ray_tracing/material/cook_torrence.rs
+index 8fff2e6..3295c5a 100644
+--- a/src/ray_tracing/material/cook_torrence.rs
++++ b/src/ray_tracing/material/cook_torrence.rs
+@@ -60,7 +60,7 @@ impl<T> Scatter for CookTorrence<T>
+ where
+ 	T: TextureTrait,
+ {
+-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
++	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
+ 		let random_dir = (math::random_unit_vector() + hit.normal).normalised();
+ 		if math::random_float() < self.specular_chance {
+ 			let point = offset_ray(hit.point, hit.normal, hit.error, true);
+@@ -79,8 +79,6 @@ where
+ 			let _colour = PI * f * d * g / denom;
+ 
+ 			*ray = Ray::new(point, direction, ray.time);
+-
+-			(0.0, false)
+ 		} else {
+ 			let mut direction = random_dir;
+ 			if math::near_zero(direction) {
+@@ -88,8 +86,8 @@ where
+ 			}
+ 			let point = offset_ray(hit.point, hit.normal, hit.error, true);
+ 			*ray = Ray::new(point, direction, ray.time);
+-			(1.0, false)
+ 		}
++		false
+ 	}
+ }
+ 
+diff --git a/src/ray_tracing/material/lambertian.rs b/src/ray_tracing/material/lambertian.rs
+index a3b17a7..21a6897 100644
+--- a/src/ray_tracing/material/lambertian.rs
++++ b/src/ray_tracing/material/lambertian.rs
+@@ -3,6 +3,7 @@ use crate::ray_tracing::{
+ 	ray::Ray,
+ 	texture::TextureTrait,
+ };
++use crate::utility::coord::Coordinate;
+ 
+ use crate::utility::{math, math::Float, vec::Vec3};
+ 
+@@ -35,26 +36,24 @@ impl<T> Scatter for Lambertian<T>
+ where
+ 	T: TextureTrait,
+ {
+-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
+-		/*let coordinate_system = Coordinate::new_from_z(hit.normal);
+-		let mut direction = math::hemisphere_sampling();
+-		coordinate_system.vec_to_coordinate(&mut direction);*/
+-		let mut direction = math::random_unit_vector() + hit.normal;
++	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
++		let coordinate_system = Coordinate::new_from_z(hit.normal);
++		let mut direction = math::cosine_hemisphere_sampling();
++		coordinate_system.vec_to_coordinate(&mut direction);
++
+ 		if math::near_zero(direction) {
+ 			direction = hit.normal;
+ 		}
+ 
+ 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
+ 		*ray = Ray::new(point, direction, ray.time);
+-		(
+-			self.scattering_pdf(hit.point, ray.direction, hit.normal),
+-			false,
+-		)
++
++		false
+ 	}
+ 	fn scattering_pdf(&self, _: Vec3, direction: Vec3, normal: Vec3) -> Float {
+ 		normal.dot(direction).max(0.0) / PI
+ 	}
+-	fn scattering_albedo(&self, hit: &Hit, _: Vec3, _: Vec3) -> Vec3 {
+-		self.texture.colour_value(hit.uv, hit.point) * (1.0 - self.absorption)
++	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
++		self.texture.colour_value(in_dir, hit.point) * (1.0 - self.absorption)
+ 	}
+ }
+diff --git a/src/ray_tracing/material/mod.rs b/src/ray_tracing/material/mod.rs
+index 9680088..d601d96 100644
+--- a/src/ray_tracing/material/mod.rs
++++ b/src/ray_tracing/material/mod.rs
+@@ -30,7 +30,7 @@ impl<T> Scatter for MaterialEnum<T>
+ where
+ 	T: TextureTrait,
+ {
+-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
++	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
+ 		match self {
+ 			MaterialEnum::Reflect(reflect) => reflect.scatter_ray(ray, hit),
+ 			MaterialEnum::Lambertian(diffuse) => diffuse.scatter_ray(ray, hit),
+@@ -92,8 +92,8 @@ where
+ }
+ 
+ pub trait Scatter {
+-	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (Float, bool) {
+-		(0.0, true)
++	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> bool {
++		true
+ 	}
+ 	fn requires_uv(&self) -> bool {
+ 		false
+@@ -173,7 +173,7 @@ impl<T> Scatter for Reflect<T>
+ where
+ 	T: TextureTrait,
+ {
+-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
++	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
+ 		let mut direction = ray.direction;
+ 		direction.reflect(hit.normal);
+ 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
+@@ -182,11 +182,11 @@ where
+ 			direction + self.fuzz * math::random_unit_vector(),
+ 			ray.time,
+ 		);
+-		(1.0, false)
++		false
+ 	}
+-	fn scattering_albedo(&self, hit: &Hit, _: Vec3, _: Vec3) -> Vec3 {
++	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
+ 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
+-		self.texture.colour_value(hit.uv, point)
++		self.texture.colour_value(in_dir, point)
+ 	}
+ }
+ 
+@@ -194,7 +194,7 @@ impl<T> Scatter for Refract<T>
+ where
+ 	T: TextureTrait,
+ {
+-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
++	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
+ 		let mut eta_fraction = 1.0 / self.eta;
+ 		if !hit.out {
+ 			eta_fraction = self.eta;
+@@ -216,11 +216,11 @@ where
+ 		let direction = perp + para;
+ 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
+ 		*ray = Ray::new(point, direction, ray.time);
+-		(1.0, false)
++		false
+ 	}
+-	fn scattering_albedo(&self, hit: &Hit, _: Vec3, _: Vec3) -> Vec3 {
++	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
+ 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
+-		self.texture.colour_value(hit.uv, point)
++		self.texture.colour_value(in_dir, point)
+ 	}
+ }
+ 
+@@ -230,13 +230,14 @@ where
+ {
+ 	fn get_emission(&self, hit: &Hit) -> Vec3 {
+ 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
+-		self.strength * self.texture.colour_value(hit.uv, point)
++		//TODO
++		self.strength * self.texture.colour_value(Vec3::zero(), point)
+ 	}
+ 	fn is_light(&self) -> bool {
+ 		true
+ 	}
+-	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> (Float, bool) {
+-		(1.0, true)
++	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> bool {
++		true
+ 	}
+ }
+ 
+diff --git a/src/ray_tracing/primitives.rs b/src/ray_tracing/primitives.rs
+index 18f5488..f1af0ca 100644
+--- a/src/ray_tracing/primitives.rs
++++ b/src/ray_tracing/primitives.rs
+@@ -422,6 +422,10 @@ where
+ 			.min_by_component(point_seven)
+ 			.min_by_component(point_eight);
+ 
++		let len = max - min;
++		let max = max + len * 0.02;
++		let min = min - len * 0.02;
++
+ 		Cuboid {
+ 			rects,
+ 			max,
+diff --git a/src/ray_tracing/ray.rs b/src/ray_tracing/ray.rs
+index 55e84dd..fdbf8c2 100644
+--- a/src/ray_tracing/ray.rs
++++ b/src/ray_tracing/ray.rs
+@@ -6,7 +6,12 @@ use crate::ray_tracing::{
+ 	primitives::Axis,
+ 	sky::Sky,
+ };
+-use crate::utility::{math::Float, vec::Vec3};
++use crate::utility::{
++	math::{random_float, Float},
++	vec::Vec3,
++};
++
++const RUSSIAN_ROULETTE_THRESHOLD: u32 = 3;
+ 
+ pub type Colour = Vec3;
+ 
+@@ -88,6 +93,11 @@ impl Ray {
+ 
+ 		let offset_lens = bvh.get_intersection_candidates(&self);
+ 
++		let light_t = match bvh.primitives[light_index].get_int(&self) {
++			Some(hit) => hit.hit.t,
++			None => return None,
++		};
++
+ 		// check if object blocking
+ 		for offset_len in offset_lens {
+ 			let offset = offset_len.0;
+@@ -100,7 +110,7 @@ impl Ray {
+ 				// check for hit
+ 				if let Some(current_hit) = tobject.get_int(&self) {
+ 					// make sure ray is going forwards
+-					if current_hit.hit.t > 0.0 {
++					if current_hit.hit.t > 0.0 && current_hit.hit.t < light_t {
+ 						return None;
+ 					}
+ 				}
+@@ -113,26 +123,51 @@ impl Ray {
+ 		hit: &Hit,
+ 		light_index: usize,
+ 		bvh: &Bvh<P, M>,
+-	) -> (Vec3, Vec3, Vec3) {
++	) -> (Vec3, Option<Vec3>, Vec3) {
+ 		let light = &bvh.primitives[light_index];
+ 		let (light_point, dir, _normal) = light.sample_visible_from_point(hit.point);
+ 
+ 		let ray = Ray::new(hit.point, dir, 0.0);
+ 
+ 		let li = match ray.get_light_int(light_index, bvh) {
+-			Some(int) => int.material.get_emission(hit),
+-			None => return (Vec3::zero(), Vec3::zero(), Vec3::zero()),
++			Some(int) => Some(int.material.get_emission(hit)),
++			None => return (Vec3::zero(), None, Vec3::zero()),
+ 		};
+ 
+ 		(dir, li, light_point)
+ 	}
+ 
++	fn get_light_contribution<P: Primitive<M>, M: Scatter>(
++		old_dir: Vec3,
++		hit: &Hit,
++		mat: &std::sync::Arc<M>,
++		bvh: &Bvh<P, M>,
++	) -> Vec3 {
++		let light_obj = &bvh.primitives[bvh.lights[0]];
++
++		let (light_dir, light_colour, light_point) = Ray::sample_light(&hit, bvh.lights[0], bvh);
++
++		let pdf_light = light_obj.scattering_pdf(&hit, light_dir, light_point);
++		if !(pdf_light == 0.0 || light_colour.is_none()) {
++			let light_colour = light_colour.unwrap();
++			if light_colour != Vec3::zero() {
++				let lc = light_colour
++					* mat.scattering_albedo(&hit, old_dir, light_dir)
++					* mat.scattering_pdf(hit.point, light_dir, hit.normal)
++					/ pdf_light;
++
++				return lc;
++			}
++		}
++		Vec3::zero()
++	}
++
+ 	pub fn get_colour<P: Primitive<M>, M: Scatter>(
+ 		ray: &mut Ray,
+ 		sky: &Sky,
+ 		bvh: &Bvh<P, M>,
+ 	) -> (Colour, u64) {
+-		let (mut bxdf_contrib, mut light_contrib) = (Colour::one(), Colour::zero());
++		let (mut throughput, mut output) = (Colour::one(), Colour::zero());
+ 		let mut depth = 0;
+ 		let mut ray_count = 0;
+ 
+@@ -148,47 +183,41 @@ impl Ray {
+ 
+ 				let emission = mat.get_emission(&hit);
+ 
+-				let (pdf_scattering, exit) = mat.scatter_ray(ray, &hit);
++				let exit = mat.scatter_ray(ray, &hit);
++
++				if depth == 0 {
++					output += throughput * emission;
++				}
+ 
+ 				if exit {
+-					bxdf_contrib *= emission;
+-					return (bxdf_contrib + light_contrib, ray_count);
+-				} else {
+-					//let pdf_light; // = 0.0;
+-
+-					light_contrib += bxdf_contrib * emission;
+-
+-					//add light contribution
+-					/*let (light_dir, light_colour, light_point) =
+-						Ray::sample_light(&hit, bvh.lights[0], bvh);
+-					pdf_light =
+-						bvh.primitives[bvh.lights[0]].scattering_pdf(&hit, light_dir, light_point);
+-					if pdf_light > 0.0 && light_colour != Vec3::zero() && !exit {
+-						let lc = light_colour
+-							* mat.scattering_pdf(hit.point, light_dir, hit.normal)
+-							* 0.0 // power_heuristic(pdf_light, pdf_scattering)
+-							* light_dir.dot(hit.normal).abs()
+-							/ pdf_light;
+-						light_contrib += bxdf_contrib * lc;
+-					}*/
+-
+-					// add bxdf contribution
+-					let bc = mat.scattering_albedo(&hit, old_dir, ray.direction)
+-                        * mat.scattering_pdf(hit.point, ray.direction, hit.normal)
+-                        //* ray.direction.dot(hit.normal).abs() // to compare to https://raytracing.github.io
+-                        * 1.0
+-						/ pdf_scattering;
+-					bxdf_contrib *= bc;
++					break;
++				}
++
++				//add light contribution
++				ray_count += 1;
++				output += throughput * Ray::get_light_contribution(old_dir, &hit, &mat, bvh);
++
++				// add bxdf contribution
++				throughput *= mat.scattering_albedo(&hit, old_dir, ray.direction);
++
++				// russian roulette
++				if depth > RUSSIAN_ROULETTE_THRESHOLD {
++					let p = throughput.component_max();
++					if random_float() > p {
++						break;
++					}
++					throughput /= p;
+ 				}
+ 
+ 				depth += 1;
+ 			} else {
+-				return (
+-					(bxdf_contrib + light_contrib) * sky.get_colour(ray),
+-					ray_count,
+-				);
++				output += throughput * sky.get_colour(ray);
++				break;
+ 			}
+ 		}
+-		(bxdf_contrib + light_contrib, ray_count)
++		if output.contains_nan() {
++			return (Vec3::zero(), ray_count);
++		}
++		(output, ray_count)
+ 	}
+ }
+diff --git a/src/ray_tracing/sky.rs b/src/ray_tracing/sky.rs
+index cf9e9b1..c96250d 100644
+--- a/src/ray_tracing/sky.rs
++++ b/src/ray_tracing/sky.rs
+@@ -2,14 +2,8 @@ use crate::ray_tracing::{
+ 	ray::{Colour, Ray},
+ 	texture::{TextureEnum, TextureTrait},
+ };
+-use crate::utility::vec::{Vec2, Vec3};
+-use std::sync::Arc;
+-
+-#[cfg(all(feature = "f64"))]
+-use std::f64::consts::PI;
+ 
+-#[cfg(not(feature = "f64"))]
+-use std::f32::consts::PI;
++use std::sync::Arc;
+ 
+ pub struct Sky {
+ 	texture: Option<Arc<TextureEnum>>,
+@@ -23,17 +17,7 @@ impl Sky {
+ 
+ 	pub fn get_colour(&self, ray: &Ray) -> Colour {
+ 		match &self.texture {
+-			Some(texture) => {
+-				let direction = ray.direction.normalised();
+-				if texture.requires_uv() {
+-					let phi = (-1.0 * direction.z).atan2(direction.x) + PI;
+-					let theta = (direction.y).acos();
+-
+-					return texture
+-						.colour_value(Some(Vec2::new(phi / (2.0 * PI), theta / PI)), Vec3::zero());
+-				}
+-				texture.colour_value(None, Vec3::zero())
+-			}
++			Some(texture) => texture.colour_value(ray.direction, ray.origin),
+ 			None => Colour::zero(),
+ 		}
+ 	}
+diff --git a/src/ray_tracing/texture.rs b/src/ray_tracing/texture.rs
+index 4d10da8..41f020e 100644
+--- a/src/ray_tracing/texture.rs
++++ b/src/ray_tracing/texture.rs
+@@ -6,6 +6,12 @@ use crate::utility::{
+ use image::GenericImageView;
+ use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
+ 
++#[cfg(all(feature = "f64"))]
++use std::f64::consts::PI;
++
++#[cfg(not(feature = "f64"))]
++use std::f32::consts::PI;
++
+ const PERLIN_RVECS: usize = 256;
+ 
+ pub enum TextureEnum {
+@@ -17,7 +23,7 @@ pub enum TextureEnum {
+ }
+ 
+ pub trait TextureTrait {
+-	fn colour_value(&self, _: Option<Vec2>, _: Vec3) -> Colour {
++	fn colour_value(&self, _: Vec3, _: Vec3) -> Colour {
+ 		Colour::new(1.0, 1.0, 1.0)
+ 	}
+ 	fn requires_uv(&self) -> bool {
+@@ -26,13 +32,13 @@ pub trait TextureTrait {
+ }
+ 
+ impl TextureTrait for TextureEnum {
+-	fn colour_value(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
++	fn colour_value(&self, direction: Vec3, point: Vec3) -> Colour {
+ 		match self {
+-			TextureEnum::CheckeredTexture(texture) => texture.colour_value(uv, point),
+-			TextureEnum::SolidColour(texture) => texture.colour_value(uv, point),
+-			TextureEnum::ImageTexture(texture) => texture.colour_value(uv, point),
+-			TextureEnum::Lerp(texture) => texture.colour_value(uv, point),
+-			TextureEnum::Perlin(texture) => texture.colour_value(uv, point),
++			TextureEnum::CheckeredTexture(texture) => texture.colour_value(direction, point),
++			TextureEnum::SolidColour(texture) => texture.colour_value(direction, point),
++			TextureEnum::ImageTexture(texture) => texture.colour_value(direction, point),
++			TextureEnum::Lerp(texture) => texture.colour_value(direction, point),
++			TextureEnum::Perlin(texture) => texture.colour_value(direction, point),
+ 		}
+ 	}
+ 	fn requires_uv(&self) -> bool {
+@@ -61,7 +67,7 @@ impl CheckeredTexture {
+ }
+ 
+ impl TextureTrait for CheckeredTexture {
+-	fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
++	fn colour_value(&self, _: Vec3, point: Vec3) -> Colour {
+ 		let sign = (10.0 * point.x).sin() * (10.0 * point.y).sin() * (10.0 * point.z).sin();
+ 		if sign > 0.0 {
+ 			self.primary_colour
+@@ -165,7 +171,7 @@ impl Perlin {
+ }
+ 
+ impl TextureTrait for Perlin {
+-	fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
++	fn colour_value(&self, _: Vec3, point: Vec3) -> Colour {
+ 		0.5 * Colour::one() * (1.0 + self.noise(point))
+ 	}
+ 
+@@ -185,7 +191,7 @@ impl SolidColour {
+ }
+ 
+ impl TextureTrait for SolidColour {
+-	fn colour_value(&self, _: Option<Vec2>, _: Vec3) -> Colour {
++	fn colour_value(&self, _: Vec3, _: Vec3) -> Colour {
+ 		self.colour
+ 	}
+ 	fn requires_uv(&self) -> bool {
+@@ -231,8 +237,10 @@ impl ImageTexture {
+ }
+ 
+ impl TextureTrait for ImageTexture {
+-	fn colour_value(&self, uv: Option<Vec2>, _: Vec3) -> Colour {
+-		let uv = uv.unwrap();
++	fn colour_value(&self, direction: Vec3, _: Vec3) -> Colour {
++		let phi = direction.z.atan2(direction.x) + PI;
++		let theta = direction.y.acos();
++		let uv = Vec2::new(phi / (2.0 * PI), theta / PI);
+ 		let x_pixel = (self.dim.0 as Float * uv.x) as usize;
+ 		let y_pixel = (self.dim.1 as Float * uv.y) as usize;
+ 
+@@ -260,9 +268,9 @@ impl Lerp {
+ }
+ 
+ impl TextureTrait for Lerp {
+-	fn colour_value(&self, uv: Option<Vec2>, _: Vec3) -> Colour {
+-		let uv = uv.unwrap();
+-		self.colour_one * uv.y + self.colour_two * (1.0 - uv.y)
++	fn colour_value(&self, direction: Vec3, _: Vec3) -> Colour {
++		let t = direction.y * 0.5 + 0.5;
++		self.colour_one * t + self.colour_two * (1.0 - t)
+ 	}
+ 	fn requires_uv(&self) -> bool {
+ 		true
+diff --git a/src/utility/math.rs b/src/utility/math.rs
+index e161239..0d50d7c 100644
+--- a/src/utility/math.rs
++++ b/src/utility/math.rs
+@@ -49,15 +49,21 @@ pub fn cone_sampling(cos_theta_max: Float) -> Vec3 {
+ 	let cos_theta = (1.0 - r1) + r1 * cos_theta_max;
+ 	let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+ 	let phi = 2.0 * random_float() * PI;
+-	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
++	Vec3::new(phi.cos() * sin_theta, cos_theta, phi.sin() * sin_theta)
+ }
+ 
+ pub fn hemisphere_sampling() -> Vec3 {
+ 	let cos_theta = random_float();
+ 	let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+ 	let phi = 2.0 * random_float() * PI;
+-	let vec = Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta);
+-	vec
++	Vec3::new(phi.cos() * sin_theta, cos_theta, phi.sin() * sin_theta)
++}
++
++pub fn cosine_hemisphere_sampling() -> Vec3 {
++	let cos_theta = (1.0 - random_float()).sqrt();
++	let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
++	let phi = 2.0 * PI * random_float();
++	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
+ }
+ 
+ pub fn random_float() -> Float {
+diff --git a/src/utility/vec.rs b/src/utility/vec.rs
+index bb19c7b..ad7cf2d 100644
+--- a/src/utility/vec.rs
++++ b/src/utility/vec.rs
+@@ -205,6 +205,11 @@ impl Vec3 {
+ 			self.z.max(other.z),
+ 		)
+ 	}
++
++	#[inline]
++	pub fn contains_nan(&self) -> bool {
++		self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
++	}
+ }
+ 
+ impl Vec2 {
+@@ -269,6 +274,11 @@ impl Vec2 {
+ 	pub fn max_by_component(self, other: Self) -> Self {
+ 		Vec2::new(self.x.max(other.x), self.y.max(other.y))
+ 	}
++
++	#[inline]
++	pub fn contains_nan(&self) -> bool {
++		self.x.is_nan() || self.y.is_nan()
++	}
+ }
+ 
+ impl_operator!(Add, add, +);
+diff --git a/utility/src/generate.rs b/utility/src/generate.rs
+index 6badc2f..7c392ca 100644
+--- a/utility/src/generate.rs
++++ b/utility/src/generate.rs
+@@ -96,53 +96,25 @@ pub fn scene_two(
+ ) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+ 	let mut primitives = Vec::new();
+ 
+-	println!("\tCook Torrence currently has a low convergence rate!");
++	let mat = diffuse!(1.0, 1.0, 1.0, 0.5);
+ 
+-	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5));
++	let ground = sphere!(0, -100.5, 1, 100, &mat);
+ 
+-	let sphere_one = sphere!(
+-		0,
+-		1,
+-		0,
+-		1,
+-		//R, G, B, alpha, absorbtion, spec_chance, f0
+-		&cook_torrence!(1.0, 0.86, 0.57, 0.2, 0.0, 1.0, Vec3::new(1.0, 0.86, 0.57))
+-	);
+-
+-	let sphere_two = sphere!(2, 2, -1.5, 0.5, &emit!(&solid_colour!(colour!(1)), 100));
+-
+-	let rect_one = aarect!(
+-		position!(-5, 0),
+-		position!(5, 8),
+-		5,
+-		axis!(Z),
+-		&diffuse!(1.0, 1.0, 1.0, 0.8)
+-	);
+-
+-	let rect_two = aarect!(
+-		position!(0, -10),
+-		position!(8, 5),
+-		-2,
+-		axis!(X),
+-		&diffuse!(1.0, 0.25, 0.25, 0.8)
+-	);
++	let sphere_one = sphere!(0, 0, 1, 0.5, &mat);
+ 
+ 	primitives.push(ground);
+-	primitives.push(rect_one);
+-	primitives.push(rect_two);
+ 	primitives.push(sphere_one);
+-	primitives.push(sphere_two);
+ 
+ 	let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+ 
+ 	let camera = camera!(
+-		position!(3, 1, -15),
+-		position!(0, 1, 0),
++		position!(0, 0, 0),
++		position!(0, 0, 1),
+ 		position!(0, 1, 0),
+-		34,
++		2.116813733 * 180.0 / 3.1415926532897932,
+ 		aspect_ratio,
+ 		0,
+-		10
++		1
+ 	);
+ 
+ 	let bvh = create_bvh_with_info(primitives, bvh_type);
+@@ -207,7 +179,7 @@ pub fn scene_four(
+ 
+ 	let glowy = sphere!(0, 0.5, 0, 0.5, &emit!(&solid_colour!(colour!(1)), 1.5));
+ 
+-	let cube = aacuboid!(
++	let _cube = aacuboid!(
+ 		-0.5,
+ 		0.1,
+ 		-0.5,
+@@ -217,9 +189,12 @@ pub fn scene_four(
+ 		&diffuse!(0.5, 0.5, 0.5, 0.5)
+ 	);
+ 
++	let sphere = sphere!(-0.45, 0.15, -0.45, 0.05, &diffuse!(0.5, 0.5, 0.5, 0.5));
++
+ 	primitives.push(ground);
+ 	primitives.push(glowy);
+-	primitives.push(cube);
++	primitives.push(sphere);
++	//primitives.push(cube);
+ 
+ 	let camera = camera!(
+ 		position!(-5, 3, -3),
+diff --git a/utility/src/lib.rs b/utility/src/lib.rs
+index ebcbf16..d4f85ae 100644
+--- a/utility/src/lib.rs
++++ b/utility/src/lib.rs
+@@ -93,6 +93,23 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
+ 	}
+ }
+ 
++/*pub fn save_u8_to_image_ppm(width: u64, height: u64, image: Vec<u8>, filename: String) {
++	let mut data = format!("P3\n{} {}\n255\n", width, height)
++		.as_bytes()
++		.to_owned();
++
++	image.iter().enumerate().for_each(|(i, &v)| {
++		if i % 3 == 0 {
++			data.extend_from_slice(format!("{}\n", v).as_bytes())
++		} else {
++			data.extend_from_slice(format!("{} ", v).as_bytes())
++		}
++	});
++
++	let mut file = std::fs::File::create(filename).unwrap();
++	file.write(&data).unwrap();
++}*/
++
+ pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
+ 	progress_bar(samples_completed as f64 / total_samples as f64);
+ 

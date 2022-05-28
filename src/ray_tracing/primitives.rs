@@ -422,6 +422,10 @@ where
 			.min_by_component(point_seven)
 			.min_by_component(point_eight);
 
+		let len = max - min;
+		let max = max + len * 0.02;
+		let min = min - len * 0.02;
+
 		Cuboid {
 			rects,
 			max,

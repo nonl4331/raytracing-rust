@@ -205,6 +205,11 @@ impl Vec3 {
 			self.z.max(other.z),
 		)
 	}
+
+	#[inline]
+	pub fn contains_nan(&self) -> bool {
+		self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
+	}
 }
 
 impl Vec2 {
@@ -268,6 +273,11 @@ impl Vec2 {
 	#[inline]
 	pub fn max_by_component(self, other: Self) -> Self {
 		Vec2::new(self.x.max(other.x), self.y.max(other.y))
+	}
+
+	#[inline]
+	pub fn contains_nan(&self) -> bool {
+		self.x.is_nan() || self.y.is_nan()
 	}
 }
 

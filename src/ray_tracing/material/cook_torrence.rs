@@ -60,7 +60,7 @@ impl<T> Scatter for CookTorrence<T>
 where
 	T: TextureTrait,
 {
-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> (Float, bool) {
+	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
 		let random_dir = (math::random_unit_vector() + hit.normal).normalised();
 		if math::random_float() < self.specular_chance {
 			let point = offset_ray(hit.point, hit.normal, hit.error, true);
@@ -79,8 +79,6 @@ where
 			let _colour = PI * f * d * g / denom;
 
 			*ray = Ray::new(point, direction, ray.time);
-
-			(0.0, false)
 		} else {
 			let mut direction = random_dir;
 			if math::near_zero(direction) {
@@ -88,8 +86,8 @@ where
 			}
 			let point = offset_ray(hit.point, hit.normal, hit.error, true);
 			*ray = Ray::new(point, direction, ray.time);
-			(1.0, false)
 		}
+		false
 	}
 }
 

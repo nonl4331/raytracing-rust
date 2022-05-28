@@ -23,6 +23,10 @@ use crate::utility::{
 	math::{next_float, previous_float, random_float, Float},
 	vec::{Vec2, Vec3},
 };
+use rand::rngs::SmallRng;
+use rand::thread_rng;
+use rand::Rng;
+use rand::SeedableRng;
 use std::sync::Arc;
 
 #[cfg(all(feature = "f64"))]
@@ -318,8 +322,7 @@ where
 		let point = if distance_sq <= self.radius * self.radius {
 			self.get_sample()
 		} else {
-			let distance = (self.center - in_point).mag();
-			let distance_sq = distance * distance;
+			let distance = distance_sq.sqrt();
 			let sin_theta_max_sq = self.radius * self.radius / distance_sq;
 			let cost_theta_max = (1.0 - sin_theta_max_sq).max(0.0).sqrt();
 			let r1 = random_float();
@@ -328,12 +331,12 @@ where
 			let phi = 2.0 * random_float() * PI;
 
 			// calculate alpha
-			let smol = self.radius * self.radius - distance_sq * sin_theta * sin_theta;
-			let side_a = distance * cos_theta - smol;
-			let side_b = &self.radius;
-			let side_c = &distance;
-			let cos_alpha =
-				(side_a * side_a + side_b * side_b - side_c * side_c) / (2.0 * side_a * side_b);
+			let ds = distance * cos_theta
+				- (self.radius * self.radius - distance_sq * sin_theta * sin_theta)
+					.max(0.0)
+					.sqrt();
+			let cos_alpha = (distance_sq + self.radius * self.radius - ds * ds)
+				/ (2.0 * distance * self.radius);
 			let sin_alpha = (1.0 - cos_alpha * cos_alpha).max(0.0).sqrt();
 
 			// get sphere point
@@ -341,7 +344,7 @@ where
 			let mut vec = Vec3::new(sin_alpha * phi.cos(), sin_alpha * phi.sin(), cos_alpha);
 			coord_system.vec_to_coordinate(&mut vec);
 
-			self.center - self.radius * vec
+			self.center + self.radius * vec
 		};
 		(
 			point,
@@ -408,8 +411,26 @@ where
 			Axis::point_from_2d(&self.max, &self.axis, self.k + 0.0001),
 		))
 	}
+	fn sample_visible_from_point(&self, in_point: Vec3) -> (Vec3, Vec3, Vec3) {
+		let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+		let point = Vec2::new(
+			rng.gen_range(self.min.x..self.max.x),
+			rng.gen_range(self.min.y..self.max.y),
+		);
+		let point = Axis::point_from_2d(&point, &self.axis, self.k);
+		let dir = (point - in_point).normalised();
+		let norm = self.axis.return_point_with_axis(-dir).normalised();
+		let point = point - 0.0001 * norm;
+
+		(point, dir, norm)
+	}
+	fn scattering_pdf(&self, hit: &Hit, _: Vec3, light_point: Vec3) -> Float {
+		(light_point - hit.point).mag_sq()
+			/ ((hit.point - light_point).normalised().y.abs() * self.area())
+	}
 	fn area(&self) -> Float {
-		(self.max.x - self.min.x) * (self.max.y - self.min.y)
+		let a = self.max - self.min;
+		a.x * a.y
 	}
 }
 
@@ -598,7 +619,7 @@ where
 	M: Scatter,
 {
 	fn get_aabb(&self) -> Option<Aabb> {
-		Some(Aabb::new(self.min, self.max))
+		Some(Aabb::new(self.min - Vec3::one(), self.max + Vec3::one()))
 	}
 	fn area(&self) -> Float {
 		todo!()

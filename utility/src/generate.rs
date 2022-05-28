@@ -96,53 +96,25 @@ pub fn scene_two(
 ) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
 	let mut primitives = Vec::new();
 
-	println!("\tCook Torrence currently has a low convergence rate!");
+	let mat = diffuse!(1.0, 1.0, 1.0, 0.5);
 
-	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(&perlin!(), 0.5));
+	let ground = sphere!(0, -100.5, 1, 100, &mat);
 
-	let sphere_one = sphere!(
-		0,
-		1,
-		0,
-		1,
-		//R, G, B, alpha, absorbtion, spec_chance, f0
-		&cook_torrence!(1.0, 0.86, 0.57, 0.2, 0.0, 1.0, Vec3::new(1.0, 0.86, 0.57))
-	);
-
-	let sphere_two = sphere!(2, 2, -1.5, 0.5, &emit!(&solid_colour!(colour!(1)), 100));
-
-	let rect_one = aarect!(
-		position!(-5, 0),
-		position!(5, 8),
-		5,
-		axis!(Z),
-		&diffuse!(1.0, 1.0, 1.0, 0.8)
-	);
-
-	let rect_two = aarect!(
-		position!(0, -10),
-		position!(8, 5),
-		-2,
-		axis!(X),
-		&diffuse!(1.0, 0.25, 0.25, 0.8)
-	);
+	let sphere_one = sphere!(0, 0, 1, 0.5, &mat);
 
 	primitives.push(ground);
-	primitives.push(rect_one);
-	primitives.push(rect_two);
 	primitives.push(sphere_one);
-	primitives.push(sphere_two);
 
 	let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
 	let camera = camera!(
-		position!(3, 1, -15),
+		position!(0, 0, 0),
+		position!(0, 0, 1),
 		position!(0, 1, 0),
-		position!(0, 1, 0),
-		34,
+		2.116813733 * 180.0 / 3.1415926532897932,
 		aspect_ratio,
 		0,
-		10
+		1
 	);
 
 	let bvh = create_bvh_with_info(primitives, bvh_type);

@@ -30,7 +30,7 @@ use std::sync::{
 
 use std::env;
 
-const WIDTH: u32 = 2560;
+const WIDTH: u32 = 1440;
 const HEIGHT: u32 = 1440;
 
 mod gui;
@@ -101,7 +101,7 @@ fn main() {
 			} else {
 				None
 			};
-		let iter = [0.0 as Float, 0.0, 0.0, 0.0]
+		let iter = [0.0 as f32, 0.0, 0.0, 0.0]
 			.repeat((width * height) as usize)
 			.into_iter();
 		let buffer = CpuAccessibleBuffer::from_iter(
@@ -259,9 +259,9 @@ fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
 			buf.chunks_mut(4)
 				.zip(previous.current_image.chunks(3))
 				.for_each(|(pres, acc)| {
-					pres[0] += (acc[0] - pres[0]) / i as Float;
-					pres[1] += (acc[1] - pres[1]) / i as Float;
-					pres[2] += (acc[2] - pres[2]) / i as Float;
+					pres[0] += (acc[0] as f32 - pres[0]) / i as f32;
+					pres[1] += (acc[1] as f32 - pres[1]) / i as f32;
+					pres[2] += (acc[2] as f32 - pres[2]) / i as f32;
 					pres[3] = 1.0;
 				});
 		}

@@ -6,6 +6,12 @@ use crate::utility::{
 use image::GenericImageView;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
+#[cfg(all(feature = "f64"))]
+use std::f64::consts::PI;
+
+#[cfg(not(feature = "f64"))]
+use std::f32::consts::PI;
+
 const PERLIN_RVECS: usize = 256;
 
 pub enum TextureEnum {
@@ -17,7 +23,7 @@ pub enum TextureEnum {
 }
 
 pub trait TextureTrait {
-	fn colour_value(&self, _: Option<Vec2>, _: Vec3) -> Colour {
+	fn colour_value(&self, _: Vec3, _: Vec3) -> Colour {
 		Colour::new(1.0, 1.0, 1.0)
 	}
 	fn requires_uv(&self) -> bool {
@@ -26,13 +32,13 @@ pub trait TextureTrait {
 }
 
 impl TextureTrait for TextureEnum {
-	fn colour_value(&self, uv: Option<Vec2>, point: Vec3) -> Colour {
+	fn colour_value(&self, direction: Vec3, point: Vec3) -> Colour {
 		match self {
-			TextureEnum::CheckeredTexture(texture) => texture.colour_value(uv, point),
-			TextureEnum::SolidColour(texture) => texture.colour_value(uv, point),
-			TextureEnum::ImageTexture(texture) => texture.colour_value(uv, point),
-			TextureEnum::Lerp(texture) => texture.colour_value(uv, point),
-			TextureEnum::Perlin(texture) => texture.colour_value(uv, point),
+			TextureEnum::CheckeredTexture(texture) => texture.colour_value(direction, point),
+			TextureEnum::SolidColour(texture) => texture.colour_value(direction, point),
+			TextureEnum::ImageTexture(texture) => texture.colour_value(direction, point),
+			TextureEnum::Lerp(texture) => texture.colour_value(direction, point),
+			TextureEnum::Perlin(texture) => texture.colour_value(direction, point),
 		}
 	}
 	fn requires_uv(&self) -> bool {
@@ -61,7 +67,7 @@ impl CheckeredTexture {
 }
 
 impl TextureTrait for CheckeredTexture {
-	fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
+	fn colour_value(&self, _: Vec3, point: Vec3) -> Colour {
 		let sign = (10.0 * point.x).sin() * (10.0 * point.y).sin() * (10.0 * point.z).sin();
 		if sign > 0.0 {
 			self.primary_colour
@@ -165,7 +171,7 @@ impl Perlin {
 }
 
 impl TextureTrait for Perlin {
-	fn colour_value(&self, _: Option<Vec2>, point: Vec3) -> Colour {
+	fn colour_value(&self, _: Vec3, point: Vec3) -> Colour {
 		0.5 * Colour::one() * (1.0 + self.noise(point))
 	}
 
@@ -185,7 +191,7 @@ impl SolidColour {
 }
 
 impl TextureTrait for SolidColour {
-	fn colour_value(&self, _: Option<Vec2>, _: Vec3) -> Colour {
+	fn colour_value(&self, _: Vec3, _: Vec3) -> Colour {
 		self.colour
 	}
 	fn requires_uv(&self) -> bool {
@@ -231,8 +237,10 @@ impl ImageTexture {
 }
 
 impl TextureTrait for ImageTexture {
-	fn colour_value(&self, uv: Option<Vec2>, _: Vec3) -> Colour {
-		let uv = uv.unwrap();
+	fn colour_value(&self, direction: Vec3, _: Vec3) -> Colour {
+		let phi = direction.z.atan2(direction.x) + PI;
+		let theta = direction.y.acos();
+		let uv = Vec2::new(phi / (2.0 * PI), theta / PI);
 		let x_pixel = (self.dim.0 as Float * uv.x) as usize;
 		let y_pixel = (self.dim.1 as Float * uv.y) as usize;
 
@@ -260,9 +268,9 @@ impl Lerp {
 }
 
 impl TextureTrait for Lerp {
-	fn colour_value(&self, uv: Option<Vec2>, _: Vec3) -> Colour {
-		let uv = uv.unwrap();
-		self.colour_one * uv.y + self.colour_two * (1.0 - uv.y)
+	fn colour_value(&self, direction: Vec3, _: Vec3) -> Colour {
+		let t = direction.y * 0.5 + 0.5;
+		self.colour_one * t + self.colour_two * (1.0 - t)
 	}
 	fn requires_uv(&self) -> bool {
 		true

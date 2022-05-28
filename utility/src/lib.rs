@@ -93,6 +93,23 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
 	}
 }
 
+/*pub fn save_u8_to_image_ppm(width: u64, height: u64, image: Vec<u8>, filename: String) {
+	let mut data = format!("P3\n{} {}\n255\n", width, height)
+		.as_bytes()
+		.to_owned();
+
+	image.iter().enumerate().for_each(|(i, &v)| {
+		if i % 3 == 0 {
+			data.extend_from_slice(format!("{}\n", v).as_bytes())
+		} else {
+			data.extend_from_slice(format!("{} ", v).as_bytes())
+		}
+	});
+
+	let mut file = std::fs::File::create(filename).unwrap();
+	file.write(&data).unwrap();
+}*/
+
 pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
 	progress_bar(samples_completed as f64 / total_samples as f64);
 

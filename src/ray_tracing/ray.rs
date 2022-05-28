@@ -6,7 +6,13 @@ use crate::ray_tracing::{
 	primitives::Axis,
 	sky::Sky,
 };
-use crate::utility::{math::Float, vec::Vec3};
+use crate::utility::math::power_heuristic;
+use crate::utility::{
+	math::{random_float, Float},
+	vec::Vec3,
+};
+
+const RUSSIAN_ROULETTE_THRESHOLD: u32 = 3;
 
 pub type Colour = Vec3;
 
@@ -88,6 +94,11 @@ impl Ray {
 
 		let offset_lens = bvh.get_intersection_candidates(&self);
 
+		let light_t = match bvh.primitives[light_index].get_int(&self) {
+			Some(hit) => hit.hit.t,
+			None => return None,
+		};
+
 		// check if object blocking
 		for offset_len in offset_lens {
 			let offset = offset_len.0;
@@ -100,7 +111,7 @@ impl Ray {
 				// check for hit
 				if let Some(current_hit) = tobject.get_int(&self) {
 					// make sure ray is going forwards
-					if current_hit.hit.t > 0.0 {
+					if current_hit.hit.t > 0.0 && current_hit.hit.t < light_t {
 						return None;
 					}
 				}
@@ -113,18 +124,69 @@ impl Ray {
 		hit: &Hit,
 		light_index: usize,
 		bvh: &Bvh<P, M>,
-	) -> (Vec3, Vec3, Vec3) {
+	) -> (Vec3, Option<Vec3>, Vec3) {
 		let light = &bvh.primitives[light_index];
 		let (light_point, dir, _normal) = light.sample_visible_from_point(hit.point);
 
 		let ray = Ray::new(hit.point, dir, 0.0);
 
 		let li = match ray.get_light_int(light_index, bvh) {
-			Some(int) => int.material.get_emission(hit),
-			None => return (Vec3::zero(), Vec3::zero(), Vec3::zero()),
+			Some(int) => Some(int.material.get_emission(hit)),
+			None => return (Vec3::zero(), None, Vec3::zero()),
 		};
 
 		(dir, li, light_point)
+	}
+
+	fn get_light_contribution<P: Primitive<M>, M: Scatter>(
+		old_dir: Vec3,
+		hit: &Hit,
+		surface_intersection: &SurfaceIntersection<M>,
+		bvh: &Bvh<P, M>,
+	) -> Vec3 {
+		let mut direct_lighting = Vec3::zero();
+
+		let mat = &surface_intersection.material;
+		let light_obj = &bvh.primitives[bvh.lights[0]];
+
+		// sample light
+		let (light_dir, light_colour, light_point) = Ray::sample_light(&hit, bvh.lights[0], bvh);
+
+		let pdf_light = light_obj.scattering_pdf(&hit, light_dir, light_point);
+		if !(pdf_light == 0.0 || light_colour.is_none()) {
+			let light_colour = light_colour.unwrap();
+
+			let scattering_pdf = mat.scattering_pdf(hit.point, light_dir, hit.normal);
+
+			let weight = power_heuristic(pdf_light, scattering_pdf);
+
+			if light_colour != Vec3::zero() {
+				direct_lighting += light_colour
+					* mat.scattering_albedo(&hit, old_dir, light_dir)
+					* scattering_pdf * weight
+					/ pdf_light;
+			}
+
+			// sample bxdf
+			let mut ray = Ray::new(surface_intersection.hit.point, old_dir, 0.0);
+			mat.scatter_ray(&mut ray, &surface_intersection.hit);
+
+			// check light intersection & get colour
+			let (int_point, li) = match ray.get_light_int(bvh.lights[0], bvh) {
+				Some(int) => (int.hit.point, int.material.get_emission(hit)),
+				None => return direct_lighting,
+			};
+
+			// calculate pdfs
+			let scattering_pdf = mat.scattering_pdf(hit.point, ray.direction, hit.normal);
+			let light_pdf = light_obj.scattering_pdf(&hit, ray.direction, int_point);
+
+			let weight = power_heuristic(scattering_pdf, light_pdf);
+
+			direct_lighting += li * mat.scattering_albedo(&hit, old_dir, ray.direction) * weight;
+		}
+
+		direct_lighting
 	}
 
 	pub fn get_colour<P: Primitive<M>, M: Scatter>(
@@ -132,7 +194,7 @@ impl Ray {
 		sky: &Sky,
 		bvh: &Bvh<P, M>,
 	) -> (Colour, u64) {
-		let (mut bxdf_contrib, mut light_contrib) = (Colour::one(), Colour::zero());
+		let (mut throughput, mut output) = (Colour::one(), Colour::zero());
 		let mut depth = 0;
 		let mut ray_count = 0;
 
@@ -142,53 +204,48 @@ impl Ray {
 			ray_count += 1;
 
 			if let Some((surface_intersection, _index)) = hit_info {
-				let (hit, mat) = (surface_intersection.hit, surface_intersection.material);
+				let (hit, mat) = (&surface_intersection.hit, &surface_intersection.material);
 
 				let old_dir = ray.direction;
 
 				let emission = mat.get_emission(&hit);
 
-				let (pdf_scattering, exit) = mat.scatter_ray(ray, &hit);
+				let exit = mat.scatter_ray(ray, &hit);
+
+				if depth == 0 {
+					output += throughput * emission;
+				}
 
 				if exit {
-					bxdf_contrib *= emission;
-					return (bxdf_contrib + light_contrib, ray_count);
-				} else {
-					//let pdf_light; // = 0.0;
+					break;
+				}
 
-					light_contrib += bxdf_contrib * emission;
+				//add light contribution
+				ray_count += 1;
+				output += throughput
+					* Ray::get_light_contribution(old_dir, &hit, &surface_intersection, bvh);
 
-					//add light contribution
-					/*let (light_dir, light_colour, light_point) =
-						Ray::sample_light(&hit, bvh.lights[0], bvh);
-					pdf_light =
-						bvh.primitives[bvh.lights[0]].scattering_pdf(&hit, light_dir, light_point);
-					if pdf_light > 0.0 && light_colour != Vec3::zero() && !exit {
-						let lc = light_colour
-							* mat.scattering_pdf(hit.point, light_dir, hit.normal)
-							* 0.0 // power_heuristic(pdf_light, pdf_scattering)
-							* light_dir.dot(hit.normal).abs()
-							/ pdf_light;
-						light_contrib += bxdf_contrib * lc;
-					}*/
+				// add bxdf contribution
+				throughput *= mat.scattering_albedo(&hit, old_dir, ray.direction);
 
-					// add bxdf contribution
-					let bc = mat.scattering_albedo(&hit, old_dir, ray.direction)
-                        * mat.scattering_pdf(hit.point, ray.direction, hit.normal)
-                        //* ray.direction.dot(hit.normal).abs() // to compare to https://raytracing.github.io
-                        * 1.0
-						/ pdf_scattering;
-					bxdf_contrib *= bc;
+				// russian roulette
+				if depth > RUSSIAN_ROULETTE_THRESHOLD {
+					let p = throughput.component_max();
+					if random_float() > p {
+						break;
+					}
+					throughput /= p;
 				}
 
 				depth += 1;
 			} else {
-				return (
-					(bxdf_contrib + light_contrib) * sky.get_colour(ray),
-					ray_count,
-				);
+				output += throughput * sky.get_colour(ray);
+				break;
 			}
 		}
-		(bxdf_contrib + light_contrib, ray_count)
+		if output.contains_nan() {
+			return (Vec3::zero(), ray_count);
+		}
+		(output, ray_count)
 	}
 }

@@ -49,15 +49,21 @@ pub fn cone_sampling(cos_theta_max: Float) -> Vec3 {
 	let cos_theta = (1.0 - r1) + r1 * cos_theta_max;
 	let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 	let phi = 2.0 * random_float() * PI;
-	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
+	Vec3::new(phi.cos() * sin_theta, cos_theta, phi.sin() * sin_theta)
 }
 
 pub fn hemisphere_sampling() -> Vec3 {
 	let cos_theta = random_float();
 	let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 	let phi = 2.0 * random_float() * PI;
-	let vec = Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta);
-	vec
+	Vec3::new(phi.cos() * sin_theta, cos_theta, phi.sin() * sin_theta)
+}
+
+pub fn cosine_hemisphere_sampling() -> Vec3 {
+	let cos_theta = (1.0 - random_float()).sqrt();
+	let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+	let phi = 2.0 * PI * random_float();
+	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
 }
 
 pub fn random_float() -> Float {
@@ -70,6 +76,7 @@ pub fn near_zero(vec: Vec3) -> bool {
 	vec.x.abs() < s && vec.y.abs() < s && vec.z.abs() < s
 }
 
+#[inline]
 pub fn power_heuristic(pdf_a: Float, pdf_b: Float) -> Float {
 	let a_sq = pdf_a * pdf_a;
 	a_sq / (a_sq + pdf_b * pdf_b)
