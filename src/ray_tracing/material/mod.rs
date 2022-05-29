@@ -188,6 +188,9 @@ where
 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
 		self.texture.colour_value(in_dir, point)
 	}
+	fn is_delta(&self) -> bool {
+		true
+	}
 }
 
 impl<T> Scatter for Refract<T>
@@ -221,6 +224,9 @@ where
 	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
 		self.texture.colour_value(in_dir, point)
+	}
+	fn is_delta(&self) -> bool {
+		true
 	}
 }
 

@@ -153,7 +153,17 @@ impl Ray {
 		let mut direct_lighting = Vec3::zero();
 
 		let mat = &surface_intersection.material;
-		let light_obj = &bvh.primitives[bvh.lights[0]];
+
+		if mat.is_delta() {
+			return direct_lighting;
+		}
+
+		let light_index = match bvh.lights.get(0) {
+			Some(index) => *index,
+			None => return direct_lighting,
+		};
+
+		let light_obj = &bvh.primitives[light_index];
 
 		// sample light
 		let (light_dir, light_colour, light_point) = Ray::sample_light(&hit, bvh.lights[0], bvh);
