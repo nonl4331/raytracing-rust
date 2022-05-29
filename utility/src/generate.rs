@@ -1,11 +1,17 @@
 extern crate cpu_raytracer;
 
 use crate::create_bvh_with_info;
+use cpu_raytracer::acceleration::bvh::Bvh;
 use cpu_raytracer::{
 	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
 };
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
+
+type MaterialType = MaterialEnum<TextureEnum>;
+type PrimitiveType = PrimitiveEnum<MaterialType>;
+type BvhType = Bvh<PrimitiveType, MaterialType>;
+pub type SceneType = Scene<PrimitiveType, MaterialType, RandomSampler, BvhType>;
 
 pub fn get_seed(length: usize) -> String {
 	let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
@@ -16,11 +22,7 @@ pub fn get_seed(length: usize) -> String {
 		.collect()
 }
 
-pub fn scene_one(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-	seed: Option<String>,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -90,10 +92,7 @@ pub fn scene_one(
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_two(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let mat = diffuse!(1.0, 1.0, 1.0, 0.5);
@@ -122,10 +121,7 @@ pub fn scene_two(
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_three(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -169,10 +165,7 @@ pub fn scene_three(
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_four(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -208,10 +201,7 @@ pub fn scene_four(
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }
 
-pub fn scene_five(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(
@@ -247,10 +237,7 @@ pub fn scene_five(
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_six(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -279,10 +266,7 @@ pub fn scene_six(
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }
 
-pub fn scene_seven(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_seven(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground_mat = &diffuse!(
@@ -319,10 +303,7 @@ pub fn scene_seven(
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_eight(
-	bvh_type: SplitType,
-	aspect_ratio: Float,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let red = &diffuse!(0.65, 0.05, 0.05, 0.0);

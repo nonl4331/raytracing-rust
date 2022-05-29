@@ -1,12 +1,12 @@
-use crate::acceleration::bvh::Bvh;
-use crate::ray_tracing::{intersection::Primitive, material::Scatter, ray::Ray, sky::Sky};
+use crate::acceleration::bvh::PrimitiveSampling;
+use crate::ray_tracing::intersection::Primitive;
+use crate::ray_tracing::{material::Scatter, ray::Ray, sky::Sky};
 use crate::utility::{
 	math::{random_float, Float},
 	vec::Vec3,
 };
 use rand::Rng;
 use rayon::prelude::*;
-use std::iter::FromIterator;
 
 pub struct SamplerProgress {
 	pub samples_completed: u64,
@@ -25,46 +25,43 @@ impl SamplerProgress {
 }
 
 pub trait Sampler {
-	fn sample_image<P, M: 'static, T, F>(
+	fn sample_image<P, M, T, F, A>(
 		&self,
 		_: u64,
 		_: u64,
 		_: u64,
 		_: &Camera,
 		_: &Sky,
-		_: &Bvh<P, M>,
+		_: &A,
 		_: Option<F>,
 		_: &mut Option<T>,
 	) where
-		P: 'static + Primitive<M> + Sync + Send,
-		M: Scatter + Send + Sync,
-		Vec<P>: FromIterator<P>,
+		P: Primitive<M> + Sync + Send + 'static,
+		M: Scatter + Send + Sync + 'static,
 		F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
-		T: Send,
-	{
-		unimplemented!()
-	}
+		A: PrimitiveSampling<P, M> + Send + Sync,
+		T: Send;
 }
 
 pub struct RandomSampler;
 
 impl Sampler for RandomSampler {
-	fn sample_image<P, M: 'static, T, F>(
+	fn sample_image<P, M, T, F, A>(
 		&self,
 		samples_per_pixel: u64,
 		width: u64,
 		height: u64,
 		camera: &Camera,
 		sky: &Sky,
-		bvh: &Bvh<P, M>,
+		acceleration_structure: &A,
 		presentation_update: Option<F>,
 		data: &mut Option<T>,
 	) where
-		P: 'static + Primitive<M> + Sync + Send,
-		M: Scatter + Send + Sync,
-		Vec<P>: FromIterator<P>,
+		P: Primitive<M> + Sync + Send + 'static,
+		M: Scatter + Send + Sync + 'static,
 		F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
 		T: Send,
+		A: PrimitiveSampling<P, M> + Send + Sync,
 	{
 		let channels = 3;
 		let pixel_num = width * height;
@@ -107,7 +104,7 @@ impl Sampler for RandomSampler {
 							let v = 1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
 
 							let mut ray = camera.get_ray(u, v); // remember to add le DOF
-							let result = Ray::get_colour(&mut ray, sky, bvh);
+							let result = Ray::get_colour(&mut ray, sky, acceleration_structure);
 
 							chunk[chunk_pixel_i * channels as usize] = result.0.x;
 							chunk[chunk_pixel_i * channels as usize + 1] = result.0.y;

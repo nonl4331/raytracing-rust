@@ -1,4 +1,4 @@
-use crate::acceleration::bvh::Bvh;
+use crate::acceleration::bvh::PrimitiveSampling;
 
 use crate::ray_tracing::{
 	intersection::{Hit, Primitive, SurfaceIntersection},
@@ -50,105 +50,11 @@ impl Ray {
 		self.origin + self.direction * t
 	}
 
-	fn check_hit<P: Primitive<M>, M: Scatter>(
-		&mut self,
-		bvh: &Bvh<P, M>,
-	) -> Option<(SurfaceIntersection<M>, usize)> {
-		let offset_lens = bvh.get_intersection_candidates(self);
-
-		let mut hit: Option<(SurfaceIntersection<M>, usize)> = None;
-
-		for offset_len in offset_lens {
-			let offset = offset_len.0;
-			let len = offset_len.1;
-			for index in offset..(offset + len) {
-				let object = &bvh.primitives[index];
-				// check for hit
-				if let Some(current_hit) = object.get_int(self) {
-					// make sure ray is going forwards
-					if current_hit.hit.t > 0.0 {
-						// check if hit already exists
-						if let Some((last_hit, _)) = &hit {
-							// check if t value is close to 0 than previous hit
-							if current_hit.hit.t < last_hit.hit.t {
-								hit = Some((current_hit, index));
-							}
-							continue;
-						}
-
-						// if hit doesn't exist set current hit to hit
-						hit = Some((current_hit, index));
-					}
-				}
-			}
-		}
-		hit
-	}
-
-	pub fn get_light_int<P: Primitive<M>, M: Scatter>(
-		&self,
-		light_index: usize,
-		bvh: &Bvh<P, M>,
-	) -> Option<SurfaceIntersection<M>> {
-		let light = &bvh.primitives[light_index];
-
-		let offset_lens = bvh.get_intersection_candidates(&self);
-
-		let light_t = match bvh.primitives[light_index].get_int(&self) {
-			Some(hit) => {
-				if hit.hit.t > 0.0 {
-					hit.hit.t
-				} else {
-					return None;
-				}
-			}
-			None => return None,
-		};
-
-		// check if object blocking
-		for offset_len in offset_lens {
-			let offset = offset_len.0;
-			let len = offset_len.1;
-			for index in offset..(offset + len) {
-				if index == light_index {
-					continue;
-				}
-				let tobject = &bvh.primitives[index];
-				// check for hit
-				if let Some(current_hit) = tobject.get_int(&self) {
-					// make sure ray is going forwards
-					if current_hit.hit.t > 0.0 && current_hit.hit.t < light_t {
-						return None;
-					}
-				}
-			}
-		}
-		light.get_int(&self)
-	}
-
-	pub fn sample_light<P: Primitive<M>, M: Scatter>(
-		hit: &Hit,
-		light_index: usize,
-		bvh: &Bvh<P, M>,
-	) -> (Vec3, Option<Vec3>, Vec3) {
-		let light = &bvh.primitives[light_index];
-		let (light_point, dir, _normal) = light.sample_visible_from_point(hit.point);
-
-		let ray = Ray::new(hit.point, dir, 0.0);
-
-		let li = match ray.get_light_int(light_index, bvh) {
-			Some(int) => Some(int.material.get_emission(hit)),
-			None => return (Vec3::zero(), None, Vec3::zero()),
-		};
-
-		(dir, li, light_point)
-	}
-
-	fn get_light_contribution<P: Primitive<M>, M: Scatter>(
+	fn get_light_contribution<A: PrimitiveSampling<P, M>, P: Primitive<M>, M: Scatter>(
 		old_dir: Vec3,
 		hit: &Hit,
 		surface_intersection: &SurfaceIntersection<M>,
-		bvh: &Bvh<P, M>,
+		bvh: &A,
 	) -> Vec3 {
 		let mut direct_lighting = Vec3::zero();
 
@@ -158,15 +64,15 @@ impl Ray {
 			return direct_lighting;
 		}
 
-		let light_index = match bvh.lights.get(0) {
+		let light_index = match bvh.get_samplable().get(0) {
 			Some(index) => *index,
 			None => return direct_lighting,
 		};
 
-		let light_obj = &bvh.primitives[light_index];
+		let light_obj = bvh.get_object(light_index).unwrap();
 
 		// sample light
-		let (light_dir, light_colour, light_point) = Ray::sample_light(&hit, bvh.lights[0], bvh);
+		let (light_dir, light_colour, light_point) = bvh.sample_object(&hit, light_index);
 
 		let pdf_light = light_obj.scattering_pdf(&hit, light_dir, light_point);
 		if !(pdf_light == 0.0 || light_colour.is_none()) {
@@ -189,7 +95,7 @@ impl Ray {
 		mat.scatter_ray(&mut ray, &surface_intersection.hit);
 
 		// check light intersection & get colour
-		let (int_point, li) = match ray.get_light_int(bvh.lights[0], bvh) {
+		let (int_point, li) = match bvh.check_hit_index(&ray, light_index) {
 			Some(int) => (int.hit.point, int.material.get_emission(hit)),
 			None => return direct_lighting,
 		};
@@ -209,17 +115,17 @@ impl Ray {
 		direct_lighting
 	}
 
-	pub fn get_colour<P: Primitive<M>, M: Scatter>(
+	pub fn get_colour<A: PrimitiveSampling<P, M>, P: Primitive<M>, M: Scatter>(
 		ray: &mut Ray,
 		sky: &Sky,
-		bvh: &Bvh<P, M>,
+		bvh: &A,
 	) -> (Colour, u64) {
 		let (mut throughput, mut output) = (Colour::one(), Colour::zero());
 		let mut depth = 0;
 		let mut ray_count = 0;
 
 		while depth < MAX_DEPTH {
-			let hit_info = ray.check_hit(&bvh);
+			let hit_info = bvh.check_hit(ray);
 
 			ray_count += 1;
 

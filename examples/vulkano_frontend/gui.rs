@@ -130,8 +130,8 @@ impl GUI {
 		let combined_buffer = StorageImage::with_usage(
 			device.clone(),
 			Dim2d {
-				width: width,
-				height: height,
+				width,
+				height,
 				array_layers: 1,
 			},
 			Format::R8G8B8A8_UNORM,
@@ -145,8 +145,8 @@ impl GUI {
 
 		mod cs {
 			vulkano_shaders::shader! {
-																					ty: "compute",
-																					src:
+																														ty: "compute",
+																														src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;

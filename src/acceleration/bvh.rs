@@ -1,4 +1,9 @@
-use crate::ray_tracing::{intersection::Primitive, material::Scatter, primitives::Axis, ray::Ray};
+use crate::ray_tracing::{
+	intersection::{Hit, Primitive, SurfaceIntersection},
+	material::Scatter,
+	primitives::Axis,
+	ray::Ray,
+};
 use crate::utility::vec::Vec3;
 use crate::{
 	acceleration::{
@@ -22,6 +27,28 @@ pub struct PrimitiveInfo {
 	pub min: Vec3,
 	pub max: Vec3,
 	pub center: Vec3,
+}
+
+pub trait PrimitiveSampling<P, M>: AccelerationStructure<M>
+where
+	P: Primitive<M>,
+	M: Scatter,
+{
+	fn sample_object(&self, hit: &Hit, index: usize) -> (Vec3, Option<Vec3>, Vec3);
+
+	fn get_samplable(&self) -> &[usize];
+
+	fn get_object(&self, index: usize) -> Option<&P>;
+}
+
+pub trait AccelerationStructure<M: Scatter> {
+	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)>;
+
+	fn check_hit_index(&self, ray: &Ray, object_index: usize) -> Option<SurfaceIntersection<M>>;
+
+	fn check_hit(&self, ray: &Ray) -> Option<(SurfaceIntersection<M>, usize)>;
+
+	fn number_nodes(&self) -> usize;
 }
 
 impl PrimitiveInfo {
@@ -178,6 +205,139 @@ where
 	}
 }
 
+impl<M, P> AccelerationStructure<M> for Bvh<P, M>
+where
+	P: Primitive<M>,
+	M: Scatter,
+{
+	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)> {
+		let mut offset_len = Vec::new();
+
+		let mut node_stack = VecDeque::new();
+		node_stack.push_back(0);
+		while !node_stack.is_empty() {
+			let index = node_stack.pop_front().unwrap();
+
+			let node = &self.nodes[index];
+
+			if !node.bounds.does_int(ray) {
+				continue;
+			}
+
+			match node.children {
+				Some(children) => {
+					node_stack.push_back(children[0]);
+					node_stack.push_back(children[1]);
+				}
+				None => {
+					offset_len.push((node.primitive_offset, node.number_primitives));
+				}
+			}
+		}
+		offset_len
+	}
+
+	fn check_hit_index(&self, ray: &Ray, index: usize) -> Option<SurfaceIntersection<M>> {
+		let object = &self.primitives[index];
+
+		let offset_lens = self.get_intersection_candidates(&ray);
+
+		let intersection = object.get_int(&ray);
+
+		let light_t = match intersection {
+			Some(ref hit) => {
+				if hit.hit.t > 0.0 {
+					hit.hit.t
+				} else {
+					return None;
+				}
+			}
+			None => return None,
+		};
+
+		// check if object blocking
+		for offset_len in offset_lens {
+			let offset = offset_len.0;
+			let len = offset_len.1;
+			for current_index in offset..(offset + len) {
+				if current_index == index {
+					continue;
+				}
+				let tobject = &self.primitives[index];
+				// check for hit
+				if let Some(current_hit) = tobject.get_int(&ray) {
+					// make sure ray is going forwards
+					if current_hit.hit.t > 0.0 && current_hit.hit.t < light_t {
+						return None;
+					}
+				}
+			}
+		}
+		intersection
+	}
+
+	fn check_hit(&self, ray: &Ray) -> Option<(SurfaceIntersection<M>, usize)> {
+		let offset_lens = self.get_intersection_candidates(ray);
+
+		let mut hit: Option<(SurfaceIntersection<M>, usize)> = None;
+
+		for offset_len in offset_lens {
+			let offset = offset_len.0;
+			let len = offset_len.1;
+			for index in offset..(offset + len) {
+				let object = &self.primitives[index];
+				// check for hit
+				if let Some(current_hit) = object.get_int(ray) {
+					// make sure ray is going forwards
+					if current_hit.hit.t > 0.0 {
+						// check if hit already exists
+						if let Some((last_hit, _)) = &hit {
+							// check if t value is close to 0 than previous hit
+							if current_hit.hit.t < last_hit.hit.t {
+								hit = Some((current_hit, index));
+							}
+							continue;
+						}
+
+						// if hit doesn't exist set current hit to hit
+						hit = Some((current_hit, index));
+					}
+				}
+			}
+		}
+		hit
+	}
+	fn number_nodes(&self) -> usize {
+		self.nodes.len()
+	}
+}
+
+impl<P, M> PrimitiveSampling<P, M> for Bvh<P, M>
+where
+	P: Primitive<M>,
+	M: Scatter,
+{
+	fn sample_object(&self, hit: &Hit, index: usize) -> (Vec3, Option<Vec3>, Vec3) {
+		let object = &self.primitives[index];
+		let (object_point, dir, _normal) = object.sample_visible_from_point(hit.point);
+
+		let ray = Ray::new(hit.point, dir, 0.0);
+
+		let li = match self.check_hit_index(&ray, index) {
+			Some(int) => Some(int.material.get_emission(hit)),
+			None => return (Vec3::zero(), None, Vec3::zero()),
+		};
+
+		(dir, li, object_point)
+	}
+	fn get_samplable(&self) -> &[usize] {
+		&self.lights
+	}
+	fn get_object(&self, index: usize) -> Option<&P> {
+		self.primitives.get(index)
+	}
+}
+
 #[derive(Debug)]
 pub struct Node {
 	bounds: Aabb,
@@ -308,7 +468,7 @@ mod tests {
 
 		let scene = scene!(camera, sky!(), random_sampler!(), bvh);
 
-		let bvh = scene.bvh;
+		let bvh = scene.acceleration_structure;
 
 		for node in &bvh.nodes {
 			for i in node.primitive_offset..(node.primitive_offset + node.number_primitives) {

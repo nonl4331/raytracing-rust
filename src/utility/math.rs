@@ -200,6 +200,6 @@ mod tests {
 
 		rotate_around_point(&mut point, center_point, sin_angles, cos_angles);
 
-		assert_eq!(point, Vec3::new(1.7071069, 0.0, 0.7071069));
+		assert!((point - Vec3::new(1.7071069, 0.0, 0.7071069)).abs().mag() < 0.000001);
 	}
 }

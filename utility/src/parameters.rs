@@ -1,9 +1,9 @@
-use crate::{generate, line_break};
-use chrono::Local;
-use cpu_raytracer::{
-	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, Float,
-	PrimitiveEnum, Scene, SplitType,
+use crate::{
+	generate::{self, SceneType},
+	line_break,
 };
+use chrono::Local;
+use cpu_raytracer::{Float, SplitType};
 use std::process;
 
 const SAMPLES_DEFAULT: u64 = 30;
@@ -54,12 +54,7 @@ macro_rules! scene {
 	}};
 }
 
-pub fn process_args(
-	args: Vec<String>,
-) -> Option<(
-	Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler>,
-	Parameters,
-)> {
+pub fn process_args(args: Vec<String>) -> Option<(SceneType, Parameters)> {
 	let mut scene_index = None;
 	let mut samples = None;
 	let mut width = None;
@@ -318,7 +313,7 @@ fn get_scene(
 	bvh_type: SplitType,
 	aspect_ratio: Float,
 	seed: Option<String>,
-) -> Scene<PrimitiveEnum<MaterialEnum<TextureEnum>>, MaterialEnum<TextureEnum>, RandomSampler> {
+) -> SceneType {
 	match args.get(index) {
 		None => {
 			println!("Please specify a value for scene!");
