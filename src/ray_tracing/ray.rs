@@ -95,7 +95,13 @@ impl Ray {
 		let offset_lens = bvh.get_intersection_candidates(&self);
 
 		let light_t = match bvh.primitives[light_index].get_int(&self) {
-			Some(hit) => hit.hit.t,
+			Some(hit) => {
+				if hit.hit.t > 0.0 {
+					hit.hit.t
+				} else {
+					return None;
+				}
+			}
 			None => return None,
 		};
 
@@ -166,24 +172,28 @@ impl Ray {
 					* scattering_pdf * weight
 					/ pdf_light;
 			}
+		}
 
-			// sample bxdf
-			let mut ray = Ray::new(surface_intersection.hit.point, old_dir, 0.0);
-			mat.scatter_ray(&mut ray, &surface_intersection.hit);
+		// sample bxdf
+		let mut ray = Ray::new(surface_intersection.hit.point, old_dir, 0.0);
+		mat.scatter_ray(&mut ray, &surface_intersection.hit);
 
-			// check light intersection & get colour
-			let (int_point, li) = match ray.get_light_int(bvh.lights[0], bvh) {
-				Some(int) => (int.hit.point, int.material.get_emission(hit)),
-				None => return direct_lighting,
-			};
+		// check light intersection & get colour
+		let (int_point, li) = match ray.get_light_int(bvh.lights[0], bvh) {
+			Some(int) => (int.hit.point, int.material.get_emission(hit)),
+			None => return direct_lighting,
+		};
 
-			// calculate pdfs
-			let scattering_pdf = mat.scattering_pdf(hit.point, ray.direction, hit.normal);
+		// calculate pdfs
+		let scattering_pdf = mat.scattering_pdf(hit.point, ray.direction, hit.normal);
+		if scattering_pdf != 0.0 {
 			let light_pdf = light_obj.scattering_pdf(&hit, ray.direction, int_point);
+			if light_pdf != 0.0 {
+				let weight = power_heuristic(scattering_pdf, light_pdf);
 
-			let weight = power_heuristic(scattering_pdf, light_pdf);
-
-			direct_lighting += li * mat.scattering_albedo(&hit, old_dir, ray.direction) * weight;
+				direct_lighting +=
+					li * mat.scattering_albedo(&hit, old_dir, ray.direction) * weight;
+			}
 		}
 
 		direct_lighting
