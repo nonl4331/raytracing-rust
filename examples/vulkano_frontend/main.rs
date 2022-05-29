@@ -30,9 +30,6 @@ use std::sync::{
 
 use std::env;
 
-const WIDTH: u32 = 1440;
-const HEIGHT: u32 = 1440;
-
 mod gui;
 mod rendering;
 
@@ -93,7 +90,7 @@ fn main() {
 
 		let required_extensions = vulkano_win::required_extensions();
 		let instance = Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
-		let gui = GUI::new(&instance);
+		let gui = GUI::new(&instance, width as u32, height as u32);
 
 		let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
 			if let Some(ref el) = gui.event_loop {

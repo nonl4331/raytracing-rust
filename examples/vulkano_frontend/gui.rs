@@ -1,6 +1,4 @@
 use crate::rendering::*;
-use crate::HEIGHT;
-use crate::WIDTH;
 
 use vulkano::pipeline::ComputePipeline;
 use vulkano::{
@@ -50,7 +48,7 @@ pub struct GUI {
 }
 
 impl GUI {
-	pub fn new(instance: &Arc<Instance>) -> Self {
+	pub fn new(instance: &Arc<Instance>, width: u32, height: u32) -> Self {
 		let event_loop: EventLoop<RenderEvent> = EventLoop::with_user_event();
 		let surface = WindowBuilder::new()
 			.build_vk_surface(&event_loop, instance.clone())
@@ -123,7 +121,7 @@ impl GUI {
 				.unwrap()
 		};
 
-		let render_info = RenderInfo::new(WIDTH, HEIGHT);
+		let render_info = RenderInfo::new(width, height);
 
 		let mut usage = vulkano::image::ImageUsage::none();
 		usage.storage = true;
@@ -132,8 +130,8 @@ impl GUI {
 		let combined_buffer = StorageImage::with_usage(
 			device.clone(),
 			Dim2d {
-				width: WIDTH,
-				height: HEIGHT,
+				width: width,
+				height: height,
 				array_layers: 1,
 			},
 			Format::R8G8B8A8_UNORM,
@@ -143,12 +141,12 @@ impl GUI {
 		)
 		.unwrap();
 
-		let cpu_rendering = CpuRendering::new(&physical_device, device.clone(), WIDTH, HEIGHT);
+		let cpu_rendering = CpuRendering::new(&physical_device, device.clone(), width, height);
 
 		mod cs {
 			vulkano_shaders::shader! {
-												ty: "compute",
-												src:
+																					ty: "compute",
+																					src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
