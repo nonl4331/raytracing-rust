@@ -358,3 +358,29 @@ pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 
 	scene!(camera, sky, random_sampler!(), bvh)
 }
+
+pub fn scene_nine(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+	let mut primitives = Vec::new();
+
+	let inner = &diffuse!(1, 1, 1, 0.9);
+	//let emit = &emit!(&solid_colour!(colour!(1)), 5);
+	let emit = &emit!(&solid_colour!(colour!(1)), 5);
+
+	primitives.push(sphere!(0, 0, 0, 0.5, inner));
+	primitives.push(sphere!(0, 0, 0, 10, emit));
+
+	let sky = sky!();
+
+	let camera = camera!(
+		position!(3, 0, 0),
+		position!(0, 0, 0),
+		position!(0, 1, 0),
+		40,
+		aspect_ratio,
+		0,
+		10
+	);
+
+	let bvh = create_bvh_with_info(primitives, bvh_type);
+	scene!(camera, sky, random_sampler!(), bvh)
+}
