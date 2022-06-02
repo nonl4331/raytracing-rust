@@ -263,7 +263,7 @@ where
 				if current_index == index {
 					continue;
 				}
-				let tobject = &self.primitives[index];
+				let tobject = &self.primitives[current_index];
 				// check for hit
 				if let Some(current_hit) = tobject.get_int(&ray) {
 					// make sure ray is going forwards
