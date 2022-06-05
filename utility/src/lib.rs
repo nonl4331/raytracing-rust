@@ -7,7 +7,7 @@ pub mod parameters;
 
 use chrono::Local;
 use cpu_raytracer::{
-	acceleration::bvh::Bvh, material::Scatter, ray_tracing::intersection::Primitive, *,
+	acceleration::Bvh, material::Scatter, ray_tracing::intersection::Primitive, *,
 };
 use std::{
 	convert::TryInto,

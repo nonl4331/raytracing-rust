@@ -1,10 +1,12 @@
-use crate::ray_tracing::{
-	intersection::{Primitive, SurfaceIntersection},
-	material::Scatter,
-	primitives::AARect,
-	ray::Ray,
+use crate::{
+	ray_tracing::{
+		intersection::{Primitive, SurfaceIntersection},
+		material::Scatter,
+		primitives::AARect,
+		Ray,
+	},
+	utility::{vec::Vec3, Float},
 };
-use crate::utility::{math::Float, vec::Vec3};
 
 #[cfg(all(feature = "f64"))]
 const EPSILON: Float = 5.58E-17;

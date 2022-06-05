@@ -1,11 +1,11 @@
-use crate::ray_tracing::{
-	material::{fresnel, offset_ray, Hit, Scatter},
-	ray::Ray,
-	texture::TextureTrait,
+use crate::{
+	ray_tracing::{
+		material::{fresnel, offset_ray, Hit, Scatter},
+		texture::TextureTrait,
+		Ray,
+	},
+	utility::{near_zero, random_float, random_unit_vector, vec::Vec3, Float},
 };
-
-use crate::utility::{math, math::Float, vec::Vec3};
-
 use std::sync::Arc;
 
 #[cfg(all(feature = "f64"))]
@@ -61,13 +61,13 @@ where
 	T: TextureTrait,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let random_dir = (math::random_unit_vector() + hit.normal).normalised();
-		if math::random_float() < self.specular_chance {
+		let random_dir = (random_unit_vector() + hit.normal).normalised();
+		if random_float() < self.specular_chance {
 			let point = offset_ray(hit.point, hit.normal, hit.error, true);
 
 			let mut direction = ray.direction;
 			direction.reflect(hit.normal);
-			direction += self.alpha * math::random_unit_vector();
+			direction += self.alpha * random_unit_vector();
 
 			let cos_theta = random_dir.dot(hit.normal).min(1.0);
 			let half_angle = (random_dir - ray.direction).normalised();
@@ -81,7 +81,7 @@ where
 			*ray = Ray::new(point, direction, ray.time);
 		} else {
 			let mut direction = random_dir;
-			if math::near_zero(direction) {
+			if near_zero(direction) {
 				direction = hit.normal;
 			}
 			let point = offset_ray(hit.point, hit.normal, hit.error, true);

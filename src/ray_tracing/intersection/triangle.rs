@@ -1,12 +1,15 @@
-use crate::ray_tracing::{
-	intersection::{check_side, SurfaceIntersection},
-	material::Scatter,
-	primitives::{Axis, MeshTriangle, Triangle},
-	ray::Ray,
-};
-use crate::utility::{
-	math::{gamma, Float},
-	vec::{Vec2, Vec3},
+use crate::{
+	ray_tracing::{
+		intersection::{check_side, SurfaceIntersection},
+		material::Scatter,
+		primitives::{Axis, MeshTriangle, Triangle},
+		Ray,
+	},
+	utility::{
+		gamma,
+		vec::{Vec2, Vec3},
+		Float,
+	},
 };
 use std::sync::Arc;
 

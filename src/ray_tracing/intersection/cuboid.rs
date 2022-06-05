@@ -2,7 +2,7 @@ use crate::ray_tracing::{
 	intersection::{Intersect, SurfaceIntersection},
 	material::Scatter,
 	primitives::Cuboid,
-	ray::Ray,
+	Ray,
 };
 
 const CUBOID_INTERSECTION: CuboidIntersection = CuboidIntersection::One;

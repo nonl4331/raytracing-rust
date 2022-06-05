@@ -1,14 +1,11 @@
-use crate::ray_tracing::{
-	intersection::{Primitive, SurfaceIntersection},
-	material::Scatter,
-	primitives::Sphere,
-	ray::Ray,
-};
-use crate::utility::{
-	interval::Interval,
-	interval_vec::IntervalVec3,
-	math::{gamma, Float},
-	vec::Vec3,
+use crate::{
+	ray_tracing::{
+		intersection::{Primitive, SurfaceIntersection},
+		material::Scatter,
+		primitives::Sphere,
+		Ray,
+	},
+	utility::{gamma, interval::Interval, interval_vec::IntervalVec3, vec::Vec3, Float},
 };
 
 #[cfg(all(feature = "f64"))]

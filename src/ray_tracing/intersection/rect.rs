@@ -1,10 +1,12 @@
-use crate::ray_tracing::{
-	intersection::{aarect::aarect_intersection, SurfaceIntersection},
-	material::Scatter,
-	primitives::{Axis, Rect},
-	ray::Ray,
+use crate::{
+	ray_tracing::{
+		intersection::{aarect::aarect_intersection, SurfaceIntersection},
+		material::Scatter,
+		primitives::{Axis, Rect},
+		Ray,
+	},
+	utility::{rotate_around_point, vec::Vec3},
 };
-use crate::utility::{math::rotate_around_point, vec::Vec3};
 
 const RECT_INTERSECTION: RectIntersection = RectIntersection::One;
 

@@ -1,8 +1,8 @@
-use crate::utility::{math::Float, vec::Vec3};
 use crate::{
 	material::MaterialEnum,
 	ray_tracing::primitives::{MeshData, MeshTriangle, PrimitiveEnum},
 	texture::TextureEnum,
+	utility::{vec::Vec3, Float},
 };
 use std::sync::Arc;
 

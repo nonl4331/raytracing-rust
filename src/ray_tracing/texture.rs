@@ -1,8 +1,11 @@
-use crate::ray_tracing::ray::Colour;
-use crate::utility::{
-	math::Float,
-	vec::{Vec2, Vec3},
+use crate::{
+	ray_tracing::Colour,
+	utility::{
+		vec::{Vec2, Vec3},
+		Float,
+	},
 };
+use enum_dispatch::enum_dispatch;
 use image::GenericImageView;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
@@ -14,6 +17,7 @@ use std::f32::consts::PI;
 
 const PERLIN_RVECS: usize = 256;
 
+#[enum_dispatch(TextureTrait)]
 pub enum TextureEnum {
 	CheckeredTexture(CheckeredTexture),
 	SolidColour(SolidColour),
@@ -22,33 +26,13 @@ pub enum TextureEnum {
 	Perlin(Box<Perlin>),
 }
 
+#[enum_dispatch]
 pub trait TextureTrait {
 	fn colour_value(&self, _: Vec3, _: Vec3) -> Colour {
 		Colour::new(1.0, 1.0, 1.0)
 	}
 	fn requires_uv(&self) -> bool {
 		false
-	}
-}
-
-impl TextureTrait for TextureEnum {
-	fn colour_value(&self, direction: Vec3, point: Vec3) -> Colour {
-		match self {
-			TextureEnum::CheckeredTexture(texture) => texture.colour_value(direction, point),
-			TextureEnum::SolidColour(texture) => texture.colour_value(direction, point),
-			TextureEnum::ImageTexture(texture) => texture.colour_value(direction, point),
-			TextureEnum::Lerp(texture) => texture.colour_value(direction, point),
-			TextureEnum::Perlin(texture) => texture.colour_value(direction, point),
-		}
-	}
-	fn requires_uv(&self) -> bool {
-		match self {
-			TextureEnum::CheckeredTexture(_) => false,
-			TextureEnum::SolidColour(_) => false,
-			TextureEnum::ImageTexture(_) => true,
-			TextureEnum::Lerp(_) => true,
-			TextureEnum::Perlin(_) => false,
-		}
 	}
 }
 
@@ -170,7 +154,7 @@ impl Perlin {
 	}
 }
 
-impl TextureTrait for Perlin {
+impl TextureTrait for Box<Perlin> {
 	fn colour_value(&self, _: Vec3, point: Vec3) -> Colour {
 		0.5 * Colour::one() * (1.0 + self.noise(point))
 	}

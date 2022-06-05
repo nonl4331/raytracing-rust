@@ -5,33 +5,30 @@
 macro_rules! position {
 	($x:expr, $y:expr, $z:expr) => {
 		$crate::utility::vec::Vec3::new(
-			$x as $crate::utility::math::Float,
-			$y as $crate::utility::math::Float,
-			$z as $crate::utility::math::Float,
+			$x as $crate::utility::Float,
+			$y as $crate::utility::Float,
+			$z as $crate::utility::Float,
 		)
 	};
 	($x:expr, $y:expr) => {
-		$crate::utility::vec::Vec2::new(
-			$x as $crate::utility::math::Float,
-			$y as $crate::utility::math::Float,
-		)
+		$crate::utility::vec::Vec2::new($x as $crate::utility::Float, $y as $crate::utility::Float)
 	};
 }
 
 #[macro_export]
 macro_rules! colour {
 	($r:expr,$g:expr,$b:expr) => {
-		ray::Colour::new(
-			$r as $crate::utility::math::Float,
-			$g as $crate::utility::math::Float,
-			$b as $crate::utility::math::Float,
+		$crate::ray_tracing::Colour::new(
+			$r as $crate::utility::Float,
+			$g as $crate::utility::Float,
+			$b as $crate::utility::Float,
 		)
 	};
 	($value:expr) => {
-		$crate::ray_tracing::ray::Colour::new(
-			$value as $crate::utility::math::Float,
-			$value as $crate::utility::math::Float,
-			$value as $crate::utility::math::Float,
+		$crate::ray_tracing::Colour::new(
+			$value as $crate::utility::Float,
+			$value as $crate::utility::Float,
+			$value as $crate::utility::Float,
 		)
 	};
 }
@@ -40,16 +37,16 @@ macro_rules! colour {
 macro_rules! rotation {
 	($x:expr, $y:expr, $z:expr, D) => {
 		$crate::utility::vec::Vec3::new(
-			$x as $crate::utility::math::Float * 3.1415926535 / 180.0,
-			$y as $crate::utility::math::Float * 3.1415926535 / 180.0,
-			$z as $crate::utility::math::Float * 3.1415926535 / 180.0,
+			$x as $crate::utility::Float * 3.1415926535 / 180.0,
+			$y as $crate::utility::Float * 3.1415926535 / 180.0,
+			$z as $crate::utility::Float * 3.1415926535 / 180.0,
 		)
 	};
 	($x:expr, $y:expr, $z:expr, R) => {
 		$crate::utility::vec::Vec3::new(
-			$x as $crate::utility::math::Float,
-			$y as $crate::utility::math::Float,
-			$z as $crate::utility::math::Float,
+			$x as $crate::utility::Float,
+			$y as $crate::utility::Float,
+			$z as $crate::utility::Float,
 		)
 	};
 }
@@ -65,32 +62,6 @@ macro_rules! axis {
 	(Z) => {
 		$crate::ray_tracing::primitives::Axis::Z
 	};
-}
-
-#[macro_export]
-macro_rules! partition {
-	($array:expr, $closure:expr) => {{
-		let len = $array.len();
-		let (mut left, mut right) = (0, len - 1);
-		let mid_index: usize;
-
-		loop {
-			while left < len && $closure(&$array[left]) {
-				left += 1;
-			}
-
-			while right > 0 && !($closure(&$array[right])) {
-				right -= 1;
-			}
-
-			if left >= right {
-				mid_index = left;
-				break;
-			}
-			$array.swap(left, right);
-		}
-		mid_index
-	}};
 }
 
 //-----
@@ -170,13 +141,13 @@ macro_rules! diffuse {
 				&std::sync::Arc::new($crate::ray_tracing::texture::TextureEnum::SolidColour(
 					$crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
 				)),
-				$absorption as $crate::utility::math::Float,
+				$absorption as $crate::utility::Float,
 			),
 		))
 	};
 	($texture:expr,$absorption:expr) => {
 		std::sync::Arc::new(material::MaterialEnum::Lambertian(
-			material::Lambertian::new($texture, $absorption as $crate::utility::math::Float),
+			material::Lambertian::new($texture, $absorption as $crate::utility::Float),
 		))
 	};
 }
@@ -188,13 +159,13 @@ macro_rules! reflect {
 			&Arc::new($crate::ray_tracing::texture::TextureEnum::SolidColour(
 				$crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
 			)),
-			$fuzz as $crate::utility::math::Float,
+			$fuzz as $crate::utility::Float,
 		)));
 	};
 	($texture:expr,$fuzz:expr) => {
 		std::sync::Arc::new(material::MaterialEnum::Reflect(material::Reflect::new(
 			$texture,
-			$fuzz as $crate::utility::math::Float,
+			$fuzz as $crate::utility::Float,
 		)))
 	};
 }
@@ -206,13 +177,13 @@ macro_rules! refract {
 			&std::sync::Arc::new($crate::ray_tracing::texture::TextureEnum::SolidColour(
 				$crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
 			)),
-			$eta as $crate::utility::math::Float,
+			$eta as $crate::utility::Float,
 		)))
 	};
 	($texture:expr,$eta:expr) => {
 		std::sync::Arc::new(material::MaterialEnum::Refract(material::Refract::new(
 			$texture,
-			$eta as $crate::utility::math::Float,
+			$eta as $crate::utility::Float,
 		)))
 	};
 }
@@ -222,12 +193,12 @@ macro_rules! emit {
 	($r:expr,$g:expr,$b:expr, $strength:expr) => {
 		std::sync::Arc::new(material::MaterialEnum::Emit(material::Emit::new(
 			&std::sync::Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
-			$strength as $crate::utility::math::Float,
+			$strength as $crate::utility::Float,
 		)));
 	};
 	($texture:expr,$strength:expr) => {
 		std::sync::Arc::new($crate::material::MaterialEnum::Emit(
-			$crate::material::Emit::new($texture, $strength as $crate::utility::math::Float),
+			$crate::material::Emit::new($texture, $strength as $crate::utility::Float),
 		))
 	};
 }
@@ -240,9 +211,9 @@ macro_rules! cook_torrence {
 				&std::sync::Arc::new($crate::ray_tracing::texture::TextureEnum::SolidColour(
 					$crate::ray_tracing::texture::SolidColour::new(colour!($r, $g, $b)),
 				)),
-				$alpha as $crate::utility::math::Float,
-				$absorption as $crate::utility::math::Float,
-				$specular_chance as $crate::utility::math::Float,
+				$alpha as $crate::utility::Float,
+				$absorption as $crate::utility::Float,
+				$specular_chance as $crate::utility::Float,
 				$f0,
 			),
 		))
@@ -267,7 +238,7 @@ macro_rules! sphere {
 		$crate::ray_tracing::primitives::PrimitiveEnum::Sphere(
 			$crate::ray_tracing::primitives::Sphere::new(
 				$position,
-				$radius as $crate::utility::math::Float,
+				$radius as $crate::utility::Float,
 				$material,
 			),
 		)
@@ -281,7 +252,7 @@ macro_rules! aarect {
 			$crate::ray_tracing::primitives::AARect::new(
 				$point_one,
 				$point_two,
-				$axis_value as $crate::utility::math::Float,
+				$axis_value as $crate::utility::Float,
 				$axis,
 				$material,
 			),
@@ -292,7 +263,7 @@ macro_rules! aarect {
 			$crate::ray_tracing::primitives::AARect::new(
 				position!($x1, $y1),
 				position!($x2, $y2),
-				$axis_value as $crate::utility::math::Float,
+				$axis_value as $crate::utility::Float,
 				$axis,
 				$material,
 			),
@@ -308,7 +279,7 @@ macro_rules! rect {
 				$crate::ray_tracing::primitives::AARect::new(
 					$point_one,
 					$point_two,
-					$axis_value as $crate::utility::math::Float,
+					$axis_value as $crate::utility::Float,
 					$axis,
 					$material,
 				),
@@ -323,7 +294,7 @@ macro_rules! rect {
 				$crate::ray_tracing::primitives::AARect::new(
 					position!($x1, $y1),
 					position!($x2, $y2),
-					$axis_value as $crate::utility::math::Float,
+					$axis_value as $crate::utility::Float,
 					$axis,
 					$material,
 				),
@@ -435,10 +406,10 @@ macro_rules! camera {
 			$origin,
 			$lookat,
 			$vup,
-			$fov as $crate::utility::math::Float,
-			$aspect_ratio as $crate::utility::math::Float,
-			$aperture as $crate::utility::math::Float,
-			$focus_dist as $crate::utility::math::Float,
+			$fov as $crate::utility::Float,
+			$aspect_ratio as $crate::utility::Float,
+			$aperture as $crate::utility::Float,
+			$focus_dist as $crate::utility::Float,
 		))
 	};
 }
@@ -463,16 +434,13 @@ macro_rules! sky {
 #[macro_export]
 macro_rules! bvh {
 	($primitives:expr, $split_type:expr) => {
-		std::sync::Arc::new($crate::acceleration::bvh::Bvh::new(
-			$primitives,
-			$split_type,
-		))
+		std::sync::Arc::new($crate::acceleration::Bvh::new($primitives, $split_type))
 	};
 }
 
 #[macro_export]
 macro_rules! scene {
 	($camera:expr, $sky:expr, $sampler:expr, $bvh:expr) => {
-		$crate::image::scene::Scene::new($camera, $sky, $sampler, $bvh)
+		$crate::image::Scene::new($camera, $sky, $sampler, $bvh)
 	};
 }

@@ -1,10 +1,37 @@
-use crate::acceleration::{aabb::Aabb, bvh::PrimitiveInfo};
-use crate::partition;
-use crate::ray_tracing::primitives::Axis;
-use crate::utility::math::Float;
+use crate::{
+	acceleration::{aabb::Aabb, PrimitiveInfo},
+	ray_tracing::primitives::Axis,
+	utility::Float,
+};
 
 const NUM_BUCKETS: usize = 12;
 const MAX_IN_NODE: usize = 255;
+
+#[macro_export]
+macro_rules! partition {
+	($array:expr, $closure:expr) => {{
+		let len = $array.len();
+		let (mut left, mut right) = (0, len - 1);
+		let mid_index: usize;
+
+		loop {
+			while left < len && $closure(&$array[left]) {
+				left += 1;
+			}
+
+			while right > 0 && !($closure(&$array[right])) {
+				right -= 1;
+			}
+
+			if left >= right {
+				mid_index = left;
+				break;
+			}
+			$array.swap(left, right);
+		}
+		mid_index
+	}};
+}
 
 pub enum SplitType {
 	Sah,

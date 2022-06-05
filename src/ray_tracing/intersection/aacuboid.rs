@@ -2,7 +2,7 @@ use crate::ray_tracing::{
 	intersection::{Intersect, SurfaceIntersection},
 	material::Scatter,
 	primitives::AACuboid,
-	ray::Ray,
+	Ray,
 };
 
 const AACUBOID_INTERSECTION: AACuboidIntersection = AACuboidIntersection::One;

@@ -1,8 +1,7 @@
 use crate::ray_tracing::{
-	ray::{Colour, Ray},
 	texture::{TextureEnum, TextureTrait},
+	Colour, Ray,
 };
-
 use std::sync::Arc;
 
 pub struct Sky {

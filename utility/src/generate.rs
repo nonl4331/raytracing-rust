@@ -1,9 +1,9 @@
 extern crate cpu_raytracer;
 
 use crate::create_bvh_with_info;
-use cpu_raytracer::acceleration::bvh::Bvh;
 use cpu_raytracer::{
-	image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum, *,
+	acceleration::Bvh, image::camera::RandomSampler, material::MaterialEnum, texture::TextureEnum,
+	*,
 };
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;

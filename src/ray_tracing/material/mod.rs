@@ -1,23 +1,21 @@
-pub mod cook_torrence;
-
-pub mod lambertian;
-
-use crate::utility::{math, math::Float};
-
-use crate::ray_tracing::{
-	intersection::{offset_ray, Hit},
-	ray::Ray,
-	texture::TextureTrait,
+use crate::{
+	ray_tracing::{
+		intersection::{offset_ray, Hit},
+		texture::TextureTrait,
+		Ray,
+	},
+	utility::{random_float, random_unit_vector, vec::Vec3, Float},
 };
-
+use enum_dispatch::enum_dispatch;
 use std::sync::Arc;
 
-use crate::utility::vec::Vec3;
-
+pub use cook_torrence::CookTorrence;
 pub use lambertian::Lambertian;
 
-pub use cook_torrence::CookTorrence;
+mod cook_torrence;
+mod lambertian;
 
+#[enum_dispatch(Scatter)]
 pub enum MaterialEnum<T: TextureTrait> {
 	Lambertian(Lambertian<T>),
 	Reflect(Reflect<T>),
@@ -26,71 +24,7 @@ pub enum MaterialEnum<T: TextureTrait> {
 	CookTorrence(CookTorrence<T>),
 }
 
-impl<T> Scatter for MaterialEnum<T>
-where
-	T: TextureTrait,
-{
-	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		match self {
-			MaterialEnum::Reflect(reflect) => reflect.scatter_ray(ray, hit),
-			MaterialEnum::Lambertian(diffuse) => diffuse.scatter_ray(ray, hit),
-			MaterialEnum::Refract(refract) => refract.scatter_ray(ray, hit),
-			MaterialEnum::Emit(emit) => emit.scatter_ray(ray, hit),
-			MaterialEnum::CookTorrence(cook_torrence) => cook_torrence.scatter_ray(ray, hit),
-		}
-	}
-	fn requires_uv(&self) -> bool {
-		match self {
-			MaterialEnum::Lambertian(diffuse) => diffuse.texture.requires_uv(),
-			MaterialEnum::Reflect(reflect) => reflect.texture.requires_uv(),
-			MaterialEnum::Refract(refract) => refract.texture.requires_uv(),
-			MaterialEnum::Emit(emit) => emit.texture.requires_uv(),
-			MaterialEnum::CookTorrence(cook_torrence) => cook_torrence.texture.requires_uv(),
-		}
-	}
-	fn scattering_pdf(&self, point: Vec3, direction: Vec3, normal: Vec3) -> Float {
-		match self {
-			MaterialEnum::Lambertian(diffuse) => diffuse.scattering_pdf(point, direction, normal),
-			MaterialEnum::Reflect(reflect) => reflect.scattering_pdf(point, direction, normal),
-			MaterialEnum::Refract(refract) => refract.scattering_pdf(point, direction, normal),
-			MaterialEnum::Emit(emit) => emit.scattering_pdf(point, direction, normal),
-			MaterialEnum::CookTorrence(cook_torrence) => {
-				cook_torrence.scattering_pdf(point, direction, normal)
-			}
-		}
-	}
-	fn scattering_albedo(&self, hit: &Hit, old_dir: Vec3, dir: Vec3) -> Vec3 {
-		match self {
-			MaterialEnum::Lambertian(diffuse) => diffuse.scattering_albedo(hit, old_dir, dir),
-			MaterialEnum::Reflect(reflect) => reflect.scattering_albedo(hit, old_dir, dir),
-			MaterialEnum::Refract(refract) => refract.scattering_albedo(hit, old_dir, dir),
-			MaterialEnum::Emit(emit) => emit.scattering_albedo(hit, old_dir, dir),
-			MaterialEnum::CookTorrence(cook_torrence) => {
-				cook_torrence.scattering_albedo(hit, old_dir, dir)
-			}
-		}
-	}
-
-	fn is_light(&self) -> bool {
-		match self {
-			MaterialEnum::Lambertian(diffuse) => diffuse.is_light(),
-			MaterialEnum::Reflect(reflect) => reflect.is_light(),
-			MaterialEnum::Refract(refract) => refract.is_light(),
-			MaterialEnum::Emit(emit) => emit.is_light(),
-			MaterialEnum::CookTorrence(cook_torrence) => cook_torrence.is_light(),
-		}
-	}
-	fn get_emission(&self, hit: &Hit) -> Vec3 {
-		match self {
-			MaterialEnum::Lambertian(diffuse) => diffuse.get_emission(hit),
-			MaterialEnum::Reflect(reflect) => reflect.get_emission(hit),
-			MaterialEnum::Refract(refract) => refract.get_emission(hit),
-			MaterialEnum::Emit(emit) => emit.get_emission(hit),
-			MaterialEnum::CookTorrence(cook_torrence) => cook_torrence.get_emission(hit),
-		}
-	}
-}
-
+#[enum_dispatch]
 pub trait Scatter {
 	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> bool {
 		true
@@ -110,7 +44,7 @@ pub trait Scatter {
 	fn scattering_pdf(&self, _: Vec3, _: Vec3, _: Vec3) -> Float {
 		0.0
 	}
-	fn scattering_albedo(&self, _: &Hit, _: Vec3, _: Vec3) -> Vec3 {
+	fn scattering_albedo(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
 		Vec3::one()
 	}
 	fn get_emission(&self, _: &Hit) -> Vec3 {
@@ -179,14 +113,14 @@ where
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
 		*ray = Ray::new(
 			point,
-			direction + self.fuzz * math::random_unit_vector(),
+			direction + self.fuzz * random_unit_vector(),
 			ray.time,
 		);
 		false
 	}
-	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
+	fn scattering_albedo(&self, hit: &Hit, wo: Vec3, _wi: Vec3) -> Vec3 {
 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
-		self.texture.colour_value(in_dir, point)
+		self.texture.colour_value(wo, point)
 	}
 	fn is_delta(&self) -> bool {
 		true
@@ -209,7 +143,7 @@ where
 		let cannot_refract = eta_fraction * sin_theta > 1.0;
 		let f0 = (1.0 - eta_fraction) / (1.0 + eta_fraction);
 		let f0 = f0 * f0 * Vec3::one();
-		if cannot_refract || fresnel(cos_theta, f0).x > math::random_float() {
+		if cannot_refract || fresnel(cos_theta, f0).x > random_float() {
 			let ref_mat = Reflect::new(&self.texture.clone(), 0.0);
 			return ref_mat.scatter_ray(ray, hit);
 		}
@@ -221,9 +155,9 @@ where
 		*ray = Ray::new(point, direction, ray.time);
 		false
 	}
-	fn scattering_albedo(&self, hit: &Hit, in_dir: Vec3, _: Vec3) -> Vec3 {
+	fn scattering_albedo(&self, hit: &Hit, wo: Vec3, _wi: Vec3) -> Vec3 {
 		let point = offset_ray(hit.point, hit.normal, hit.error, false);
-		self.texture.colour_value(in_dir, point)
+		self.texture.colour_value(wo, point)
 	}
 	fn is_delta(&self) -> bool {
 		true

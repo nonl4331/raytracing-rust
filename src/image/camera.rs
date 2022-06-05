@@ -1,9 +1,7 @@
-use crate::acceleration::bvh::PrimitiveSampling;
-use crate::ray_tracing::intersection::Primitive;
-use crate::ray_tracing::{material::Scatter, ray::Ray, sky::Sky};
-use crate::utility::{
-	math::{random_float, Float},
-	vec::Vec3,
+use crate::{
+	acceleration::PrimitiveSampling,
+	ray_tracing::{intersection::Primitive, material::Scatter, sky::Sky, Ray},
+	utility::{random_float, vec::Vec3, Float},
 };
 use rand::Rng;
 use rayon::prelude::*;

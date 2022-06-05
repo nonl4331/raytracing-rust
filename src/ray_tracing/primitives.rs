@@ -1,10 +1,20 @@
-use crate::ray_tracing::material::Scatter;
-use crate::utility::{
-	math::{rotate_around_point, Float},
-	vec::{Vec2, Vec3},
+use crate::{
+	acceleration::aabb::Aabb,
+	ray_tracing::{
+		intersection::{Hit, Intersect, Primitive, SurfaceIntersection},
+		material::Scatter,
+		Ray,
+	},
+	utility::{
+		rotate_around_point,
+		vec::{Vec2, Vec3},
+		Float,
+	},
 };
+use enum_dispatch::enum_dispatch;
 use std::sync::Arc;
 
+#[enum_dispatch(Intersect<M>, Primitive<M>)]
 pub enum PrimitiveEnum<M: Scatter> {
 	Sphere(Sphere<M>),
 	AARect(AARect<M>),

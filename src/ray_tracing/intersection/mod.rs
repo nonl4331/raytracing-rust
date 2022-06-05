@@ -1,32 +1,24 @@
-pub mod aacuboid;
-pub mod aarect;
-pub mod cuboid;
-pub mod rect;
-pub mod sphere;
-pub mod triangle;
-
-use crate::acceleration::aabb::Aabb;
-use crate::ray_tracing::{
-	intersection::{
-		aacuboid::aacuboid_intersection, aarect::aarect_intersection, cuboid::cuboid_intersection,
-		rect::rect_intersection, sphere::sphere_intersection, triangle::triangle_intersection,
+use crate::{
+	acceleration::aabb::Aabb,
+	ray_tracing::{
+		intersection::{
+			aacuboid::aacuboid_intersection, aarect::aarect_intersection,
+			cuboid::cuboid_intersection, rect::rect_intersection, sphere::sphere_intersection,
+			triangle::triangle_intersection,
+		},
+		material::Scatter,
+		primitives::{AACuboid, AARect, Axis, Cuboid, MeshTriangle, Rect, Sphere, Triangle},
+		Ray,
 	},
-	material::Scatter,
-	primitives::{
-		AACuboid, AARect, Axis, Cuboid, MeshTriangle, PrimitiveEnum, Rect, Sphere, Triangle,
+	utility::{
+		coord::Coordinate,
+		next_float, previous_float, random_float, rotate_around_point,
+		vec::{Vec2, Vec3},
+		Float,
 	},
-	ray::Ray,
 };
-use crate::utility::math::rotate_around_point;
-use crate::utility::{
-	coord::Coordinate,
-	math::{next_float, previous_float, random_float, Float},
-	vec::{Vec2, Vec3},
-};
-use rand::rngs::SmallRng;
-use rand::thread_rng;
-use rand::Rng;
-use rand::SeedableRng;
+use enum_dispatch::enum_dispatch;
+use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use std::sync::Arc;
 
 #[cfg(all(feature = "f64"))]
@@ -34,6 +26,13 @@ use std::f64::consts::PI;
 
 #[cfg(not(feature = "f64"))]
 use std::f32::consts::PI;
+
+mod aacuboid;
+mod aarect;
+mod cuboid;
+mod rect;
+mod sphere;
+mod triangle;
 
 pub struct Hit {
 	pub t: Float,
@@ -76,6 +75,7 @@ where
 	}
 }
 
+#[enum_dispatch]
 pub trait Intersect<M: Scatter> {
 	fn get_int(&self, _: &Ray) -> Option<SurfaceIntersection<M>> {
 		unimplemented!()
@@ -85,6 +85,7 @@ pub trait Intersect<M: Scatter> {
 	}
 }
 
+#[enum_dispatch]
 pub trait Primitive<M>: Intersect<M>
 where
 	M: Scatter,
@@ -150,132 +151,6 @@ pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
 		false
 	} else {
 		true
-	}
-}
-
-impl<M> Intersect<M> for PrimitiveEnum<M>
-where
-	M: Scatter,
-{
-	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.get_int(ray),
-			PrimitiveEnum::AARect(rect) => rect.get_int(ray),
-			PrimitiveEnum::Rect(rect) => rect.get_int(ray),
-			PrimitiveEnum::AACuboid(aab) => aab.get_int(ray),
-			PrimitiveEnum::Cuboid(aab) => aab.get_int(ray),
-			PrimitiveEnum::Triangle(triangle) => triangle.get_int(ray),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.get_int(ray),
-		}
-	}
-
-	fn does_int(&self, ray: &Ray) -> bool {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.does_int(ray),
-			PrimitiveEnum::AARect(rect) => rect.does_int(ray),
-			PrimitiveEnum::Rect(rect) => rect.does_int(ray),
-			PrimitiveEnum::AACuboid(aab) => aab.does_int(ray),
-			PrimitiveEnum::Cuboid(aab) => aab.does_int(ray),
-			PrimitiveEnum::Triangle(triangle) => triangle.does_int(ray),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.does_int(ray),
-		}
-	}
-}
-
-impl<M> Primitive<M> for PrimitiveEnum<M>
-where
-	M: Scatter,
-{
-	fn get_aabb(&self) -> Option<Aabb> {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.get_aabb(),
-			PrimitiveEnum::AARect(rect) => rect.get_aabb(),
-			PrimitiveEnum::Rect(rect) => rect.get_aabb(),
-			PrimitiveEnum::AACuboid(aab) => aab.get_aabb(),
-			PrimitiveEnum::Cuboid(aab) => aab.get_aabb(),
-			PrimitiveEnum::Triangle(triangle) => triangle.get_aabb(),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.get_aabb(),
-		}
-	}
-	fn get_uv(&self, point: Vec3) -> Option<Vec2> {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.get_uv(point),
-			PrimitiveEnum::AARect(rect) => rect.get_uv(point),
-			PrimitiveEnum::Rect(rect) => rect.get_uv(point),
-			PrimitiveEnum::AACuboid(aab) => aab.get_uv(point),
-			PrimitiveEnum::Cuboid(aab) => aab.get_uv(point),
-			PrimitiveEnum::Triangle(triangle) => triangle.get_uv(point),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.get_uv(point),
-		};
-		None
-	}
-	fn requires_uv(&self) -> bool {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => (*sphere.material).requires_uv(),
-			PrimitiveEnum::AARect(rect) => rect.material.requires_uv(),
-			PrimitiveEnum::Rect(rect) => rect.aarect.material.requires_uv(),
-			PrimitiveEnum::AACuboid(aab) => aab.material.requires_uv(),
-			PrimitiveEnum::Cuboid(aab) => aab.material.requires_uv(),
-			PrimitiveEnum::Triangle(triangle) => triangle.material.requires_uv(),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.material.requires_uv(),
-		}
-	}
-	fn get_sample(&self) -> Vec3 {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.get_sample(),
-			PrimitiveEnum::AARect(rect) => rect.get_sample(),
-			PrimitiveEnum::Rect(rect) => rect.get_sample(),
-			PrimitiveEnum::AACuboid(aab) => aab.get_sample(),
-			PrimitiveEnum::Cuboid(aab) => aab.get_sample(),
-			PrimitiveEnum::Triangle(triangle) => triangle.get_sample(),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.get_sample(),
-		}
-	}
-	fn sample_visible_from_point(&self, point: Vec3) -> (Vec3, Vec3, Vec3) {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.sample_visible_from_point(point),
-			PrimitiveEnum::AARect(rect) => rect.sample_visible_from_point(point),
-			PrimitiveEnum::Rect(rect) => rect.sample_visible_from_point(point),
-			PrimitiveEnum::AACuboid(aab) => aab.sample_visible_from_point(point),
-			PrimitiveEnum::Cuboid(aab) => aab.sample_visible_from_point(point),
-			PrimitiveEnum::Triangle(triangle) => triangle.sample_visible_from_point(point),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.sample_visible_from_point(point),
-		}
-	}
-	fn area(&self) -> Float {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.area(),
-			PrimitiveEnum::AARect(rect) => rect.area(),
-			PrimitiveEnum::Rect(rect) => rect.area(),
-			PrimitiveEnum::AACuboid(aab) => aab.area(),
-			PrimitiveEnum::Cuboid(aab) => aab.area(),
-			PrimitiveEnum::Triangle(triangle) => triangle.area(),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.area(),
-		}
-	}
-	fn scattering_pdf(&self, hit: &Hit, out_dir: Vec3, light_point: Vec3) -> Float {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.scattering_pdf(hit, out_dir, light_point),
-			PrimitiveEnum::AARect(rect) => rect.scattering_pdf(hit, out_dir, light_point),
-			PrimitiveEnum::Rect(rect) => rect.scattering_pdf(hit, out_dir, light_point),
-			PrimitiveEnum::AACuboid(aab) => aab.scattering_pdf(hit, out_dir, light_point),
-			PrimitiveEnum::Cuboid(aab) => aab.scattering_pdf(hit, out_dir, light_point),
-			PrimitiveEnum::Triangle(triangle) => triangle.scattering_pdf(hit, out_dir, light_point),
-			PrimitiveEnum::MeshTriangle(triangle) => {
-				triangle.scattering_pdf(hit, out_dir, light_point)
-			}
-		}
-	}
-	fn material_is_light(&self) -> bool {
-		match self {
-			PrimitiveEnum::Sphere(sphere) => sphere.material.is_light(),
-			PrimitiveEnum::AARect(rect) => rect.material.is_light(),
-			PrimitiveEnum::Rect(rect) => rect.aarect.material.is_light(),
-			PrimitiveEnum::AACuboid(aab) => aab.material.is_light(),
-			PrimitiveEnum::Cuboid(aab) => aab.material.is_light(),
-			PrimitiveEnum::Triangle(triangle) => triangle.material.is_light(),
-			PrimitiveEnum::MeshTriangle(triangle) => triangle.material.is_light(),
-		}
 	}
 }
 
