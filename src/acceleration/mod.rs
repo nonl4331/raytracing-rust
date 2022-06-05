@@ -325,7 +325,7 @@ where
 		let ray = Ray::new(hit.point, dir, 0.0);
 
 		let li = match self.check_hit_index(&ray, index) {
-			Some(int) => Some(int.material.get_emission(hit)),
+			Some(int) => Some(int.material.get_emission(hit, dir)),
 			None => return (Vec3::zero(), None, Vec3::zero()),
 		};
 
@@ -375,7 +375,7 @@ impl Node {
 #[cfg(test)]
 mod tests {
 
-	use crate::acceleration::bvh::PrimitiveInfo;
+	use crate::acceleration::PrimitiveInfo;
 	use crate::material::MaterialEnum;
 	use crate::ray_tracing::{intersection::Primitive, primitives::PrimitiveEnum};
 	use crate::texture::TextureEnum;

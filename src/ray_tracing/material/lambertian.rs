@@ -49,8 +49,8 @@ where
 
 		false
 	}
-	fn scattering_pdf(&self, _: Vec3, direction: Vec3, normal: Vec3) -> Float {
-		normal.dot(direction).max(0.0) / PI
+	fn scattering_pdf(&self, _: Vec3, wi: Vec3, normal: Vec3) -> Float {
+		normal.dot(wi).max(0.0) / PI
 	}
 	fn scattering_albedo(&self, hit: &Hit, wo: Vec3, _wi: Vec3) -> Vec3 {
 		self.texture.colour_value(wo, hit.point) * (1.0 - self.absorption)

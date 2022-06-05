@@ -26,7 +26,7 @@ pub enum MaterialEnum<T: TextureTrait> {
 
 #[enum_dispatch]
 pub trait Scatter {
-	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> bool {
+	fn scatter_ray(&self, _ray: &mut Ray, _hit: &Hit) -> bool {
 		true
 	}
 	fn requires_uv(&self) -> bool {
@@ -47,7 +47,7 @@ pub trait Scatter {
 	fn scattering_albedo(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
 		Vec3::one()
 	}
-	fn get_emission(&self, _: &Hit) -> Vec3 {
+	fn get_emission(&self, _hit: &Hit, _wo: Vec3) -> Vec3 {
 		Vec3::zero()
 	}
 }
@@ -168,7 +168,7 @@ impl<T> Scatter for Emit<T>
 where
 	T: TextureTrait,
 {
-	fn get_emission(&self, hit: &Hit) -> Vec3 {
+	fn get_emission(&self, hit: &Hit, _wo: Vec3) -> Vec3 {
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
 		//TODO
 		self.strength * self.texture.colour_value(Vec3::zero(), point)

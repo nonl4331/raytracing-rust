@@ -55,7 +55,7 @@ impl Ray {
 	}
 
 	fn get_light_contribution<A: PrimitiveSampling<P, M>, P: Primitive<M>, M: Scatter>(
-		old_dir: Vec3,
+		wo: Vec3,
 		hit: &Hit,
 		surface_intersection: &SurfaceIntersection<M>,
 		bvh: &A,
@@ -76,31 +76,30 @@ impl Ray {
 		let light_obj = bvh.get_object(light_index).unwrap();
 
 		// sample light
-		let (light_dir, light_colour, light_point) = bvh.sample_object(&hit, light_index);
+		let (wi, light_colour, light_point) = bvh.sample_object(&hit, light_index);
 
-		let pdf_light = light_obj.scattering_pdf(&hit, light_dir, light_point);
+		let pdf_light = light_obj.scattering_pdf(&hit, wi, light_point);
 		if !(pdf_light == 0.0 || light_colour.is_none()) {
 			let light_colour = light_colour.unwrap();
 
-			let scattering_pdf = mat.scattering_pdf(hit.point, light_dir, hit.normal);
+			let scattering_pdf = mat.scattering_pdf(hit.point, wi, hit.normal);
 
 			let weight = power_heuristic(pdf_light, scattering_pdf);
 
 			if light_colour != Vec3::zero() {
-				direct_lighting += light_colour
-					* mat.scattering_albedo(&hit, old_dir, light_dir)
-					* scattering_pdf * weight
-					/ pdf_light;
+				direct_lighting +=
+					light_colour * mat.scattering_albedo(&hit, wo, wi) * scattering_pdf * weight
+						/ pdf_light;
 			}
 		}
 
 		// sample bxdf
-		let mut ray = Ray::new(surface_intersection.hit.point, old_dir, 0.0);
+		let mut ray = Ray::new(surface_intersection.hit.point, wo, 0.0);
 		mat.scatter_ray(&mut ray, &surface_intersection.hit);
 
 		// check light intersection & get colour
 		let (int_point, li) = match bvh.check_hit_index(&ray, light_index) {
-			Some(int) => (int.hit.point, int.material.get_emission(hit)),
+			Some(int) => (int.hit.point, int.material.get_emission(hit, wo)),
 			None => return direct_lighting,
 		};
 
@@ -111,8 +110,7 @@ impl Ray {
 			if light_pdf != 0.0 {
 				let weight = power_heuristic(scattering_pdf, light_pdf);
 
-				direct_lighting +=
-					li * mat.scattering_albedo(&hit, old_dir, ray.direction) * weight;
+				direct_lighting += li * mat.scattering_albedo(&hit, wo, ray.direction) * weight;
 			}
 		}
 
@@ -136,9 +134,9 @@ impl Ray {
 			if let Some((surface_intersection, _index)) = hit_info {
 				let (hit, mat) = (&surface_intersection.hit, &surface_intersection.material);
 
-				let old_dir = ray.direction;
+				let wo = ray.direction;
 
-				let emission = mat.get_emission(&hit);
+				let emission = mat.get_emission(&hit, wo);
 
 				let exit = mat.scatter_ray(ray, &hit);
 
@@ -152,11 +150,11 @@ impl Ray {
 
 				//add light contribution
 				ray_count += 1;
-				output += throughput
-					* Ray::get_light_contribution(old_dir, &hit, &surface_intersection, bvh);
+				output +=
+					throughput * Ray::get_light_contribution(wo, &hit, &surface_intersection, bvh);
 
 				// add bxdf contribution
-				throughput *= mat.scattering_albedo(&hit, old_dir, ray.direction);
+				throughput *= mat.scattering_albedo(&hit, wo, ray.direction);
 
 				// russian roulette
 				if depth > RUSSIAN_ROULETTE_THRESHOLD {

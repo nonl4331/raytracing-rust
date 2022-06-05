@@ -242,6 +242,9 @@ where
 	fn area(&self) -> Float {
 		4.0 * PI * self.radius * self.radius
 	}
+	fn material_is_light(&self) -> bool {
+		self.material.is_light()
+	}
 }
 
 impl<M> Intersect<M> for AARect<M>
@@ -307,6 +310,9 @@ where
 		let a = self.max - self.min;
 		a.x * a.y
 	}
+	fn material_is_light(&self) -> bool {
+		self.material.is_light()
+	}
 }
 
 impl<M> Intersect<M> for AACuboid<M>
@@ -337,6 +343,9 @@ where
 	fn area(&self) -> Float {
 		(self.max.x - self.min.x) * (self.max.y - self.min.y) * (self.max.z - self.min.z)
 	}
+	fn material_is_light(&self) -> bool {
+		self.material.is_light()
+	}
 }
 
 impl<M> Intersect<M> for Triangle<M>
@@ -360,6 +369,9 @@ where
 	}
 	fn area(&self) -> Float {
 		todo!()
+	}
+	fn material_is_light(&self) -> bool {
+		self.material.is_light()
 	}
 }
 
@@ -390,6 +402,9 @@ where
 	}
 	fn area(&self) -> Float {
 		todo!()
+	}
+	fn material_is_light(&self) -> bool {
+		self.material.is_light()
 	}
 }
 
@@ -469,6 +484,9 @@ where
 	fn area(&self) -> Float {
 		(self.aarect.max.x - self.aarect.min.x) * (self.aarect.max.y - self.aarect.min.y)
 	}
+	fn material_is_light(&self) -> bool {
+		self.aarect.material.is_light()
+	}
 }
 
 impl<M> Intersect<M> for Cuboid<M>
@@ -499,5 +517,8 @@ where
 	fn area(&self) -> Float {
 		todo!()
 		//(self.max.x - self.min.x) * (self.max.y - self.min.y) * (self.max.z - self.min.z)
+	}
+	fn material_is_light(&self) -> bool {
+		self.material.is_light()
 	}
 }
