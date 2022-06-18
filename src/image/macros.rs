@@ -37,9 +37,9 @@ macro_rules! colour {
 macro_rules! rotation {
 	($x:expr, $y:expr, $z:expr, D) => {
 		$crate::utility::vec::Vec3::new(
-			$x as $crate::utility::Float * 3.1415926535 / 180.0,
-			$y as $crate::utility::Float * 3.1415926535 / 180.0,
-			$z as $crate::utility::Float * 3.1415926535 / 180.0,
+			$x as $crate::utility::Float * $crate::utility::PI / 180.0,
+			$y as $crate::utility::Float * $crate::utility::PI / 180.0,
+			$z as $crate::utility::Float * $crate::utility::PI / 180.0,
 		)
 	};
 	($x:expr, $y:expr, $z:expr, R) => {

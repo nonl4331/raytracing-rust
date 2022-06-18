@@ -4,12 +4,12 @@ use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 #[cfg(all(feature = "f64"))]
 pub type Float = f64;
 #[cfg(all(feature = "f64"))]
-use std::f64::consts::PI;
+pub use std::f64::consts::PI;
 
 #[cfg(not(feature = "f64"))]
 pub type Float = f32;
 #[cfg(not(feature = "f64"))]
-use std::f32::consts::PI;
+pub use std::f32::consts::PI;
 
 pub mod coord;
 pub mod interval;

@@ -43,7 +43,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
 	};
 
 	println!("\tseed: {}", seed);
-	let mut rng: SmallRng = Seeder::from(seed.clone()).make_rng();
+	let mut rng: SmallRng = Seeder::from(seed).make_rng();
 
 	for a in -11..11 {
 		for b in -11..11 {
@@ -110,7 +110,7 @@ pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 		position!(0, 0, 0),
 		position!(0, 0, 1),
 		position!(0, 1, 0),
-		2.116813733 * 180.0 / 3.1415926532897932,
+		2.116_813_7 * 180.0 / PI,
 		aspect_ratio,
 		0,
 		1

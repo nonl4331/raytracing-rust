@@ -150,7 +150,7 @@ pub fn print_final_statistics(start: Instant, ray_count: u64, samples: Option<u6
 	match samples {
 		Some(samples) => println!("\tSamples: {}", samples),
 		None => {
-			println!("")
+			println!()
 		}
 	}
 
@@ -167,7 +167,7 @@ pub fn print_render_start(width: u64, height: u64, samples: Option<u64>) -> Inst
 	println!("\tHeight: {}", height);
 	match samples {
 		Some(samples) => println!("\tSamples per pixel: {}\n", samples),
-		None => println!(""),
+		None => println!(),
 	}
 	Instant::now()
 }
