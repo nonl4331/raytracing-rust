@@ -47,6 +47,9 @@ pub trait Scatter {
 	fn scattering_albedo(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
 		Vec3::one()
 	}
+	fn eval(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
+		Vec3::one()
+	}
 	fn get_emission(&self, _hit: &Hit, _wo: Vec3) -> Vec3 {
 		Vec3::zero()
 	}

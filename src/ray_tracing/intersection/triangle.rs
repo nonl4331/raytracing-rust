@@ -127,12 +127,12 @@ fn triangle_intersection_one<T: TriangleTrait<M>, M: Scatter>(
 	let delta_x = gamma(5) * (max_x_t + max_z_t);
 	let delta_y = gamma(5) * (max_y_t + max_z_t);
 
-	let delta_e = 2.0 * (gamma(2) * max_x_t * max_y_t + delta_y * max_x_t + delta_x + max_x_t);
+	let delta_e = 2.0 * (gamma(2) * max_x_t * max_y_t + delta_y * max_x_t + delta_x * max_y_t);
 
 	let max_e = Vec3::new(e0.abs(), e1.abs(), e2.abs()).component_max();
 
 	let delta_t =
-		3.0 * (gamma(3) * max_e * max_z_t + delta_e * max_z_t + delta_z * max_e * inv_det.abs());
+		3.0 * (gamma(3) * max_e * max_z_t + delta_e * max_z_t + delta_z * max_e) * inv_det.abs();
 
 	if t < delta_t {
 		return None;
@@ -145,9 +145,15 @@ fn triangle_intersection_one<T: TriangleTrait<M>, M: Scatter>(
 
 	let out = check_side(&mut normal, &ray.direction);
 
-	let x_abs_sum = (b0 * triangle.get_point(0).x).abs() + (b1 * triangle.get_point(1).x).abs();
-	let y_abs_sum = (b0 * triangle.get_point(0).y).abs() + (b1 * triangle.get_point(1).y).abs();
-	let z_abs_sum = (b0 * triangle.get_point(0).z).abs() + (b1 * triangle.get_point(1).z).abs();
+	let x_abs_sum = (b0 * triangle.get_point(0).x).abs()
+		+ (b1 * triangle.get_point(1).x).abs()
+		+ (b2 * triangle.get_point(2).x).abs();
+	let y_abs_sum = (b0 * triangle.get_point(0).y).abs()
+		+ (b1 * triangle.get_point(1).y).abs()
+		+ (b2 * triangle.get_point(2).y).abs();
+	let z_abs_sum = (b0 * triangle.get_point(0).z).abs()
+		+ (b1 * triangle.get_point(1).z).abs()
+		+ (b2 * triangle.get_point(2).z).abs();
 
 	let point_error = gamma(7) * Vec3::new(x_abs_sum, y_abs_sum, z_abs_sum)
 		+ gamma(6)

@@ -363,7 +363,8 @@ where
 {
 	fn get_aabb(&self) -> Option<Aabb> {
 		Some(Aabb::new(
-			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
+			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2]))
+				- Vec3::one() * 0.001,
 			self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
 		))
 	}
@@ -396,7 +397,7 @@ where
 		];
 
 		Some(Aabb::new(
-			points[0].min_by_component(points[1].min_by_component(points[2])),
+			points[0].min_by_component(points[1].min_by_component(points[2])) - Vec3::one() * 0.001,
 			points[0].max_by_component(points[1].max_by_component(points[2])),
 		))
 	}

@@ -86,10 +86,10 @@ impl Ray {
 
 			let weight = power_heuristic(pdf_light, scattering_pdf);
 
+			let f = mat.eval(&hit, wo, wi);
+
 			if light_colour != Vec3::zero() {
-				direct_lighting +=
-					light_colour * mat.scattering_albedo(&hit, wo, wi) * scattering_pdf * weight
-						/ pdf_light;
+				direct_lighting += light_colour * f * weight / pdf_light;
 			}
 		}
 
@@ -110,7 +110,7 @@ impl Ray {
 			if light_pdf != 0.0 {
 				let weight = power_heuristic(scattering_pdf, light_pdf);
 
-				direct_lighting += li * mat.scattering_albedo(&hit, wo, ray.direction) * weight;
+				direct_lighting += li * weight * mat.eval(&hit, wo, ray.direction) / scattering_pdf;
 			}
 		}
 
@@ -154,7 +154,12 @@ impl Ray {
 					throughput * Ray::get_light_contribution(wo, &hit, &surface_intersection, bvh);
 
 				// add bxdf contribution
-				throughput *= mat.scattering_albedo(&hit, wo, ray.direction);
+				if !mat.is_delta() {
+					throughput *= mat.eval(&hit, wo, ray.direction)
+						/ mat.scattering_pdf(wo, ray.direction, hit.normal);
+				} else {
+					throughput *= mat.eval(&hit, wo, ray.direction);
+				}
 
 				// russian roulette
 				if depth > RUSSIAN_ROULETTE_THRESHOLD {
@@ -171,7 +176,7 @@ impl Ray {
 				break;
 			}
 		}
-		if output.contains_nan() {
+		if output.contains_nan() || !output.is_finite() {
 			return (Vec3::zero(), ray_count);
 		}
 		(output, ray_count)

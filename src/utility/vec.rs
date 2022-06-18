@@ -210,6 +210,10 @@ impl Vec3 {
 	pub fn contains_nan(&self) -> bool {
 		self.x.is_nan() || self.y.is_nan() || self.z.is_nan()
 	}
+	#[inline]
+	pub fn is_finite(&self) -> bool {
+		self.x.is_finite() || self.y.is_finite() || self.z.is_finite()
+	}
 }
 
 impl Vec2 {

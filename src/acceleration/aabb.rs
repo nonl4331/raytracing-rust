@@ -11,7 +11,7 @@ pub struct Aabb {
 
 impl Aabb {
 	pub fn new(min: Vec3, max: Vec3) -> Self {
-		if min.x > max.x || min.y > max.y || min.z > max.z {
+		if (min.x >= max.x || min.y >= max.y || min.z >= max.z) && (min != max) {
 			panic!("Maximum value in AABB must be greater or equal to minimum!");
 		}
 		Aabb { min, max }
