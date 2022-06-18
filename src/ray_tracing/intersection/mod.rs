@@ -369,7 +369,26 @@ where
 		))
 	}
 	fn area(&self) -> Float {
-		todo!()
+		0.5 * (self.points[1] - self.points[0])
+			.cross(self.points[2] - self.points[0])
+			.mag()
+	}
+	fn sample_visible_from_point(&self, in_point: Vec3) -> (Vec3, Vec3, Vec3) {
+		let mut rng = thread_rng();
+		let uv = rng.gen::<Float>().sqrt();
+		let uv = (1.0 - uv, uv * rng.gen::<Float>().sqrt());
+
+		let point =
+			uv.0 * self.points[0] + uv.1 * self.points[1] + (1.0 - uv.0 - uv.1) * self.points[2];
+
+		let normal =
+			uv.0 * self.normals[0] + uv.1 * self.normals[1] + (1.0 - uv.0 - uv.1) * self.normals[2];
+
+		let dir = (point - in_point).normalised();
+		(point, dir, normal)
+	}
+	fn scattering_pdf(&self, hit: &Hit, wi: Vec3, light_point: Vec3) -> Float {
+		(light_point - hit.point).mag_sq() / (hit.normal.dot(-wi).abs() * self.area())
 	}
 	fn material_is_light(&self) -> bool {
 		self.material.is_light()
@@ -402,7 +421,32 @@ where
 		))
 	}
 	fn area(&self) -> Float {
-		todo!()
+		0.5 * ((*self.mesh).vertices[self.point_indices[1]]
+			- (*self.mesh).vertices[self.point_indices[0]])
+			.cross(
+				(*self.mesh).vertices[self.point_indices[2]]
+					- (*self.mesh).vertices[self.point_indices[0]],
+			)
+			.mag()
+	}
+	fn sample_visible_from_point(&self, in_point: Vec3) -> (Vec3, Vec3, Vec3) {
+		let mut rng = thread_rng();
+		let uv = rng.gen::<Float>().sqrt();
+		let uv = (1.0 - uv, uv * rng.gen::<Float>().sqrt());
+
+		let point = uv.0 * (*self.mesh).vertices[self.point_indices[0]]
+			+ uv.1 * (*self.mesh).vertices[self.point_indices[1]]
+			+ (1.0 - uv.0 - uv.1) * (*self.mesh).vertices[self.point_indices[2]];
+
+		let normal = uv.0 * (*self.mesh).vertices[self.normal_indices[0]]
+			+ uv.1 * (*self.mesh).vertices[self.normal_indices[1]]
+			+ (1.0 - uv.0 - uv.1) * (*self.mesh).vertices[self.normal_indices[2]];
+
+		let dir = (point - in_point).normalised();
+		(point, dir, normal)
+	}
+	fn scattering_pdf(&self, hit: &Hit, wi: Vec3, light_point: Vec3) -> Float {
+		(light_point - hit.point).mag_sq() / (hit.normal.dot(-wi).abs() * self.area())
 	}
 	fn material_is_light(&self) -> bool {
 		self.material.is_light()
