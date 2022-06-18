@@ -76,20 +76,20 @@ impl Ray {
 		let light_obj = bvh.get_object(light_index).unwrap();
 
 		// sample light
-		let (wi, light_colour, light_point) = bvh.sample_object(&hit, light_index);
+		let (wi, light_colour, light_point) = bvh.sample_object(hit, light_index);
 
-		let pdf_light = light_obj.scattering_pdf(&hit, wi, light_point);
-		if !(pdf_light == 0.0 || light_colour.is_none()) {
-			let light_colour = light_colour.unwrap();
+		let pdf_light = light_obj.scattering_pdf(hit, wi, light_point);
+		if let Some(light_colour) = light_colour {
+			if pdf_light != 0.0 {
+				let scattering_pdf = mat.scattering_pdf(hit.point, wi, hit.normal);
 
-			let scattering_pdf = mat.scattering_pdf(hit.point, wi, hit.normal);
+				let weight = power_heuristic(pdf_light, scattering_pdf);
 
-			let weight = power_heuristic(pdf_light, scattering_pdf);
+				let f = mat.eval(hit, wo, wi);
 
-			let f = mat.eval(&hit, wo, wi);
-
-			if light_colour != Vec3::zero() {
-				direct_lighting += light_colour * f * weight / pdf_light;
+				if light_colour != Vec3::zero() {
+					direct_lighting += light_colour * f * weight / pdf_light;
+				}
 			}
 		}
 
@@ -106,11 +106,11 @@ impl Ray {
 		// calculate pdfs
 		let scattering_pdf = mat.scattering_pdf(hit.point, ray.direction, hit.normal);
 		if scattering_pdf != 0.0 {
-			let light_pdf = light_obj.scattering_pdf(&hit, ray.direction, int_point);
+			let light_pdf = light_obj.scattering_pdf(hit, ray.direction, int_point);
 			if light_pdf != 0.0 {
 				let weight = power_heuristic(scattering_pdf, light_pdf);
 
-				direct_lighting += li * weight * mat.eval(&hit, wo, ray.direction) / scattering_pdf;
+				direct_lighting += li * weight * mat.eval(hit, wo, ray.direction) / scattering_pdf;
 			}
 		}
 
@@ -136,9 +136,9 @@ impl Ray {
 
 				let wo = ray.direction;
 
-				let emission = mat.get_emission(&hit, wo);
+				let emission = mat.get_emission(hit, wo);
 
-				let exit = mat.scatter_ray(ray, &hit);
+				let exit = mat.scatter_ray(ray, hit);
 
 				if depth == 0 {
 					output += throughput * emission;
@@ -151,14 +151,14 @@ impl Ray {
 				//add light contribution
 				ray_count += 1;
 				output +=
-					throughput * Ray::get_light_contribution(wo, &hit, &surface_intersection, bvh);
+					throughput * Ray::get_light_contribution(wo, hit, &surface_intersection, bvh);
 
 				// add bxdf contribution
 				if !mat.is_delta() {
-					throughput *= mat.eval(&hit, wo, ray.direction)
+					throughput *= mat.eval(hit, wo, ray.direction)
 						/ mat.scattering_pdf(wo, ray.direction, hit.normal);
 				} else {
-					throughput *= mat.eval(&hit, wo, ray.direction);
+					throughput *= mat.eval(hit, wo, ray.direction);
 				}
 
 				// russian roulette

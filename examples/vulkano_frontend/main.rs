@@ -18,14 +18,14 @@ use vulkano::{
 	device::{Device, Queue},
 	image::StorageImage,
 	instance::Instance,
-	sync::{self, FenceSignalFuture, GpuFuture},
+	sync::{self, GpuFuture},
 	Version,
 };
 use winit::event_loop::EventLoopProxy;
 
 use std::sync::{
 	atomic::{AtomicBool, AtomicU64, Ordering},
-	Arc, Mutex,
+	Arc,
 };
 
 use std::env;
@@ -36,8 +36,8 @@ mod rendering;
 struct Data {
 	queue: Arc<Queue>,
 	device: Arc<Device>,
-	to_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
-	from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+	to_sc: rendering::Future,
+	from_sc: rendering::Future,
 	command_buffers: [Arc<PrimaryAutoCommandBuffer>; 2],
 	buffer: Arc<CpuAccessibleBuffer<[f32]>>,
 	sc_index: Arc<AtomicBool>,
@@ -51,8 +51,8 @@ impl Data {
 	pub fn new(
 		queue: Arc<Queue>,
 		device: Arc<Device>,
-		to_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
-		from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+		to_sc: rendering::Future,
+		from_sc: rendering::Future,
 		command_buffers: [Arc<PrimaryAutoCommandBuffer>; 2],
 		buffer: Arc<CpuAccessibleBuffer<[f32]>>,
 		sc_index: Arc<AtomicBool>,
@@ -85,7 +85,7 @@ fn main() {
 			parameters.width,
 			parameters.height,
 			parameters.samples,
-			parameters.filename.clone(),
+			parameters.filename,
 		);
 
 		let required_extensions = vulkano_win::required_extensions();
@@ -93,12 +93,8 @@ fn main() {
 		let gui = GUI::new(&instance, width as u32, height as u32);
 
 		let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
-			if let Some(ref el) = gui.event_loop {
-				Some(el.create_proxy())
-			} else {
-				None
-			};
-		let iter = [0.0 as f32, 0.0, 0.0, 0.0]
+			gui.event_loop.as_ref().map(|el| el.create_proxy());
+		let iter = [0.0f32, 0.0, 0.0, 0.0]
 			.repeat((width * height) as usize)
 			.into_iter();
 		let buffer = CpuAccessibleBuffer::from_iter(
@@ -204,7 +200,7 @@ fn create_command_buffers(
 ) -> [Arc<PrimaryAutoCommandBuffer>; 2] {
 	let mut command_buffer_0 = None;
 	let mut command_buffer_1 = None;
-	for i in 0..2 {
+	for (i, sc_image) in sc.iter().enumerate() {
 		let mut builder = AutoCommandBufferBuilder::primary(
 			device.clone(),
 			queue.family(),
@@ -213,7 +209,7 @@ fn create_command_buffers(
 		.unwrap();
 
 		builder
-			.copy_buffer_to_image(buffer.clone(), sc[i].clone())
+			.copy_buffer_to_image(buffer.clone(), sc_image.clone())
 			.unwrap();
 		if i == 0 {
 			command_buffer_0 = Some(builder.build().unwrap());
@@ -307,7 +303,7 @@ fn save_file(
 	width: u64,
 	height: u64,
 	buffer: &[f32],
-	image_fence: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+	image_fence: rendering::Future,
 ) {
 	match filename {
 		Some(filename) => {

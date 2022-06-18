@@ -186,17 +186,11 @@ impl PartialEq for Interval {
 	fn eq(&self, rhs: &Self) -> bool {
 		self.min == rhs.min && self.max == rhs.max
 	}
-	fn ne(&self, rhs: &Self) -> bool {
-		self.min != rhs.min || self.max != rhs.max
-	}
 }
 
 impl PartialEq<Float> for Interval {
 	fn eq(&self, rhs: &Float) -> bool {
 		rhs >= &self.min && rhs <= &self.max
-	}
-	fn ne(&self, rhs: &Float) -> bool {
-		rhs < &self.min || rhs > &self.max
 	}
 }
 

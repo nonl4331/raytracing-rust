@@ -71,6 +71,12 @@ pub struct Perlin {
 	perm_z: [u32; PERLIN_RVECS],
 }
 
+impl Default for Perlin {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl Perlin {
 	pub fn new() -> Self {
 		let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
@@ -104,11 +110,11 @@ impl Perlin {
 		let k = point.z.floor() as i32;
 		let mut c: [Vec3; 8] = [Vec3::one(); 8];
 
-		for index in 0..8 {
+		for (index, c_item) in c.iter_mut().enumerate() {
 			let di = (index / 4) as i32;
 			let dj = ((index / 2) % 2) as i32;
 			let dk = (index % 2) as i32;
-			c[index] = self.ran_vecs[(self.perm_x[((i + di) & 255) as usize]
+			*c_item = self.ran_vecs[(self.perm_x[((i + di) & 255) as usize]
 				^ self.perm_y[((j + dj) & 255) as usize]
 				^ self.perm_z[((k + dk) & 255) as usize]) as usize];
 		}
@@ -148,7 +154,7 @@ impl Perlin {
 			value += (i as Float * uu + (1.0 - i as Float) * (1.0 - uu))
 				* (j as Float * vv + (1.0 - j as Float) * (1.0 - vv))
 				* (k as Float * ww + (1.0 - k as Float) * (1.0 - ww))
-				* c[i * 4 + j * 2 + k * 1].dot(weight);
+				* c[i * 4 + j * 2 + k].dot(weight);
 		}
 		value
 	}

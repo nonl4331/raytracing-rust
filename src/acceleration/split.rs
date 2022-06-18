@@ -55,6 +55,12 @@ pub struct BucketInfo {
 	bounds: Option<Aabb>,
 }
 
+impl Default for BucketInfo {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl BucketInfo {
 	pub fn new() -> Self {
 		BucketInfo {
@@ -110,7 +116,7 @@ impl Split for SplitType {
 				let centroid_extent = max_val - min_val;
 
 				for primitive_info in primitives_info.iter() {
-					let b = calculate_b(&axis, &primitive_info, min_val, centroid_extent);
+					let b = calculate_b(axis, primitive_info, min_val, centroid_extent);
 
 					buckets[b].count += 1;
 
@@ -164,7 +170,7 @@ impl Split for SplitType {
 
 				if len > MAX_IN_NODE || min_cost < len as Float {
 					let closure = |primitive_info: &PrimitiveInfo| -> bool {
-						calculate_b(&axis, &primitive_info, min_val, centroid_extent)
+						calculate_b(axis, primitive_info, min_val, centroid_extent)
 							<= min_cost_index
 					};
 					return partition!(primitives_info, closure);

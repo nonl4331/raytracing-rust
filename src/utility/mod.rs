@@ -120,7 +120,7 @@ pub fn previous_float(mut float: Float) -> Float {
 
 pub fn gamma(n: u32) -> Float {
 	let nm = n as Float * 0.5 * Float::EPSILON;
-	return (nm) / (1.0 - nm);
+	nm / (1.0 - nm)
 }
 
 pub fn sort_by_indices<T>(vec: &mut [T], mut indices: Vec<usize>) {
@@ -181,6 +181,11 @@ mod tests {
 
 	use super::rotate_around_point;
 
+	#[cfg(not(feature = "f64"))]
+	use std::f32::consts::PI;
+	#[cfg(all(feature = "f64"))]
+	use std::f64::consts::PI;
+
 	#[test]
 	fn sort_vec_by_indices() {
 		let indices = vec![0, 4, 2, 1, 3];
@@ -197,13 +202,13 @@ mod tests {
 
 		let mut point = Vec3::new(2.0, 0.0, 0.0);
 
-		let angles = Vec3::new(0.0, 45.0 * 3.141592 / 180.0, 0.0);
+		let angles = Vec3::new(0.0, 45.0 * PI / 180.0, 0.0);
 
 		let cos_angles = Vec3::new(angles.x.cos(), angles.y.cos(), angles.z.cos());
 		let sin_angles = Vec3::new(angles.x.sin(), angles.y.sin(), angles.z.sin());
 
 		rotate_around_point(&mut point, center_point, sin_angles, cos_angles);
 
-		assert!((point - Vec3::new(1.7071069, 0.0, 0.7071069)).abs().mag() < 0.000001);
+		assert!((point - Vec3::new(1.707107, 0.0, 0.7071069)).abs().mag() < 0.000001);
 	}
 }

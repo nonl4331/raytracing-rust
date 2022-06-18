@@ -7,6 +7,8 @@ use vulkano::{
 
 use std::sync::{atomic::AtomicBool, Arc, Mutex};
 
+pub type Future = Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>;
+
 pub struct RenderInfo {
 	pub render_width: u32,
 	pub render_height: u32,
@@ -23,8 +25,8 @@ impl RenderInfo {
 
 pub struct CpuRendering {
 	pub cpu_swapchain: [Arc<StorageImage>; 2],
-	pub to_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
-	pub from_sc: Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>,
+	pub to_sc: Future,
+	pub from_sc: Future,
 	pub copy_to_first: Arc<AtomicBool>,
 }
 
@@ -55,7 +57,7 @@ impl CpuRendering {
 			)
 			.unwrap(),
 			StorageImage::with_usage(
-				device.clone(),
+				device,
 				Dim2d {
 					width,
 					height,

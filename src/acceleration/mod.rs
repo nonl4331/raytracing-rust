@@ -241,9 +241,9 @@ where
 	fn check_hit_index(&self, ray: &Ray, index: usize) -> Option<SurfaceIntersection<M>> {
 		let object = &self.primitives[index];
 
-		let offset_lens = self.get_intersection_candidates(&ray);
+		let offset_lens = self.get_intersection_candidates(ray);
 
-		let intersection = object.get_int(&ray);
+		let intersection = object.get_int(ray);
 
 		let light_t = match intersection {
 			Some(ref hit) => {
@@ -266,7 +266,7 @@ where
 				}
 				let tobject = &self.primitives[current_index];
 				// check for hit
-				if let Some(current_hit) = tobject.get_int(&ray) {
+				if let Some(current_hit) = tobject.get_int(ray) {
 					// make sure ray is going forwards
 					if current_hit.hit.t > 0.0 && current_hit.hit.t < light_t {
 						return None;
@@ -422,7 +422,7 @@ mod tests {
 			.collect();
 
 		println!("\tseed: {}", seed);
-		let mut rng: SmallRng = Seeder::from(seed.clone()).make_rng();
+		let mut rng: SmallRng = Seeder::from(seed).make_rng();
 
 		for a in -11..11 {
 			for b in -11..11 {

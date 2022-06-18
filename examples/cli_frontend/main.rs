@@ -3,7 +3,6 @@ extern crate utility;
 
 use cpu_raytracer::{Float, SamplerProgress};
 use std::env;
-//use utility::save_u8_to_image_ppm;
 
 use utility::{
 	get_progress_output, line_break, parameters, print_final_statistics, print_render_start,
@@ -64,13 +63,7 @@ fn main() {
 
 		match filename {
 			Some(filename) => {
-				save_u8_to_image(width, height, output.clone(), filename.clone(), false);
-				/*save_u8_to_image_ppm(
-					width,
-					height,
-					output,
-					filename[0..(filename.len() - 3)].to_owned() + "ppm",
-				)*/
+				save_u8_to_image(width, height, output, filename, false);
 			}
 			None => {}
 		}

@@ -145,8 +145,8 @@ impl GUI {
 
 		mod cs {
 			vulkano_shaders::shader! {
-																														ty: "compute",
-																														src:
+																																																												ty: "compute",
+																																																												src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -172,7 +172,7 @@ void main() {
 		)
 		.unwrap();
 		let compute_command_buffers = to_combined_buffer_command_buffers(
-			compute_pipeline.clone(),
+			compute_pipeline,
 			queue.clone(),
 			device.clone(),
 			cpu_rendering.cpu_swapchain.clone(),
@@ -194,7 +194,6 @@ void main() {
 			render_info.render_height as i32,
 			sc_width as i32,
 			sc_height as i32,
-			images.len(),
 		);
 
 		GUI {
@@ -223,12 +222,11 @@ void main() {
 					event: winit::event::DeviceEvent::Key(key),
 					..
 				} => match key.virtual_keycode {
-					Some(code) => match code {
-						winit::event::VirtualKeyCode::Escape => {
+					Some(code) => {
+						if code == winit::event::VirtualKeyCode::Escape {
 							*control_flow = ControlFlow::Exit;
 						}
-						_ => {}
-					},
+					}
 					None => {}
 				},
 				Event::WindowEvent {
@@ -366,7 +364,6 @@ void main() {
 			self.render_info.render_height as i32,
 			sc_width as i32,
 			sc_height as i32,
-			self.images.len(),
 		);
 	}
 }
@@ -444,10 +441,9 @@ fn blit_to_swapchain_command_buffer(
 	input_height: i32,
 	sc_width: i32,
 	sc_height: i32,
-	image_count: usize,
 ) -> Vec<Arc<PrimaryAutoCommandBuffer>> {
 	let mut command_buffers = Vec::new();
-	for i in 0..image_count {
+	for image in images {
 		let mut builder = AutoCommandBufferBuilder::primary(
 			device.clone(),
 			queue.family(),
@@ -462,7 +458,7 @@ fn blit_to_swapchain_command_buffer(
 				[input_width, input_height, 1],
 				0,
 				0,
-				images[i].clone(),
+				image.clone(),
 				[0, 0, 0],
 				[sc_width, sc_height, 1],
 				0,

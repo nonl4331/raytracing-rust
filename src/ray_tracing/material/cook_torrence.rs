@@ -33,13 +33,13 @@ where
 		specular_chance: Float,
 		f0: Vec3,
 	) -> Self {
-		if alpha < 0.0 || alpha > 1.0 {
+		if !(0.0..=1.0).contains(&alpha) {
 			panic!("Alpha value for CookTorrence must be between 0 and 1 inclusive")
 		}
-		if absorbtion < 0.0 || absorbtion > 1.0 {
+		if !(0.0..=1.0).contains(&absorbtion) {
 			panic!("absorbtion value for CookTorrence must be between 0 and 1 inclusive")
 		}
-		if specular_chance < 0.0 || specular_chance > 1.0 {
+		if !(0.0..=1.0).contains(&specular_chance) {
 			panic!("specular_chance value for CookTorrence must be between 0 and 1 inclusive")
 		}
 		if f0.component_min() < 0.0 {

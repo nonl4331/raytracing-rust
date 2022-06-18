@@ -126,7 +126,7 @@ pub fn sphere_intersection_two<M: Scatter>(
 		let mut point = oc + direction * t;
 		point *= radius / point.mag();
 		let mut normal = point / radius;
-		point = point + center;
+		point += center;
 		let mut out = true;
 		if normal.dot(direction) > 0.0 {
 			normal *= -1.0;
