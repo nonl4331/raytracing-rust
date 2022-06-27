@@ -1,0 +1,71 @@
+use implementations::Texture;
+
+use rt_core::SamplerProgress;
+use std::sync::Arc;
+
+use implementations::SimpleCamera;
+
+use implementations::Sky;
+
+use std::marker::PhantomData;
+
+use rt_core::Scatter;
+
+use rt_core::Sampler;
+
+use rt_core::Primitive;
+
+use rt_core::PrimitiveSampling;
+
+pub struct Scene<P: Primitive<M>, M: Scatter, S: Sampler, A: PrimitiveSampling<P, M>, T: Texture> {
+	pub acceleration_structure: Arc<A>,
+	pub camera: Arc<SimpleCamera>,
+	pub sampler: Arc<S>,
+	pub sky: Arc<Sky<T>>,
+	phantom_data: PhantomData<(M, P)>,
+}
+
+impl<P, M, S, A, T> Scene<P, M, S, A, T>
+where
+	P: Primitive<M> + Send + Sync + 'static,
+	M: Scatter + Send + Sync + 'static,
+	S: Sampler,
+	A: PrimitiveSampling<P, M> + Send + Sync,
+	T: Texture + Send + Sync,
+{
+	pub fn new(
+		camera: Arc<SimpleCamera>,
+		sky: Arc<Sky<T>>,
+		sampler: Arc<S>,
+		acceleration_structure: Arc<A>,
+	) -> Self {
+		Scene {
+			acceleration_structure,
+			camera,
+			sampler,
+			sky,
+			phantom_data: PhantomData,
+		}
+	}
+	pub fn generate_image_threaded<D>(
+		&self,
+		width: u64,
+		height: u64,
+		samples: u64,
+		presentation_update: Option<impl Fn(&mut Option<D>, &SamplerProgress, u64) + Send + Sync>,
+		data: &mut Option<D>,
+	) where
+		D: Send,
+	{
+		self.sampler.sample_image(
+			samples,
+			width,
+			height,
+			&*self.camera,
+			&*self.sky,
+			&*self.acceleration_structure,
+			presentation_update,
+			data,
+		)
+	}
+}
