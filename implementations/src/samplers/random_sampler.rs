@@ -8,7 +8,7 @@ use rt_core::Camera;
 
 use rt_core::Primitive;
 
-use rt_core::PrimitiveSampling;
+use rt_core::AccelerationStructure;
 
 use rt_core::NoHit;
 
@@ -34,7 +34,7 @@ impl Sampler for RandomSampler {
 		P: Primitive<M> + Sync + Send + 'static,
 		M: Scatter + Send + Sync + 'static,
 		F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
-		A: PrimitiveSampling<P, M> + Send + Sync,
+		A: AccelerationStructure<P, M> + Send + Sync,
 		S: NoHit + Send + Sync,
 		T: Send,
 	{

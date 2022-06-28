@@ -1,4 +1,4 @@
-use crate::{Float, Primitive, PrimitiveSampling, Ray, Scatter, Vec3};
+use crate::{AccelerationStructure, Float, Primitive, Ray, Scatter, Vec3};
 
 pub trait Sampler {
 	fn sample_image<C, P, M, T, F, A, S>(
@@ -16,7 +16,7 @@ pub trait Sampler {
 		P: Primitive<M> + Sync + Send + 'static,
 		M: Scatter + Send + Sync + 'static,
 		F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
-		A: PrimitiveSampling<P, M> + Send + Sync,
+		A: AccelerationStructure<P, M> + Send + Sync,
 		S: NoHit + Send + Sync,
 		T: Send;
 }

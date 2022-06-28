@@ -15,9 +15,15 @@ use rt_core::Sampler;
 
 use rt_core::Primitive;
 
-use rt_core::PrimitiveSampling;
+use rt_core::AccelerationStructure;
 
-pub struct Scene<P: Primitive<M>, M: Scatter, S: Sampler, A: PrimitiveSampling<P, M>, T: Texture> {
+pub struct Scene<
+	P: Primitive<M>,
+	M: Scatter,
+	S: Sampler,
+	A: AccelerationStructure<P, M>,
+	T: Texture,
+> {
 	pub acceleration_structure: Arc<A>,
 	pub camera: Arc<SimpleCamera>,
 	pub sampler: Arc<S>,
@@ -30,7 +36,7 @@ where
 	P: Primitive<M> + Send + Sync + 'static,
 	M: Scatter + Send + Sync + 'static,
 	S: Sampler,
-	A: PrimitiveSampling<P, M> + Send + Sync,
+	A: AccelerationStructure<P, M> + Send + Sync,
 	T: Texture + Send + Sync,
 {
 	pub fn new(

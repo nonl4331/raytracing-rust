@@ -2,8 +2,7 @@ use crate::acceleration::split::{Split, SplitType};
 use crate::utility::sort_by_indices;
 use crate::Axis;
 use rt_core::{
-	Aabb, AccelerationStructure, Hit, Primitive, PrimitiveSampling, Ray, Scatter,
-	SurfaceIntersection, Vec3,
+	Aabb, AccelerationStructure, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec3,
 };
 use std::{collections::VecDeque, marker::PhantomData};
 
@@ -177,7 +176,7 @@ where
 	}
 }
 
-impl<M, P> AccelerationStructure<M> for Bvh<P, M>
+impl<P, M> AccelerationStructure<P, M> for Bvh<P, M>
 where
 	P: Primitive<M>,
 	M: Scatter,
@@ -282,13 +281,6 @@ where
 	fn number_nodes(&self) -> usize {
 		self.nodes.len()
 	}
-}
-
-impl<P, M> PrimitiveSampling<P, M> for Bvh<P, M>
-where
-	P: Primitive<M>,
-	M: Scatter,
-{
 	fn sample_object(&self, hit: &Hit, index: usize) -> (Vec3, Option<Vec3>, Vec3) {
 		let object = &self.primitives[index];
 		let (object_point, dir, _normal) = object.sample_visible_from_point(hit.point);

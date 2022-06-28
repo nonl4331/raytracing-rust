@@ -1,6 +1,6 @@
 use crate::{
-	power_heuristic, Float, Hit, NoHit, Primitive, PrimitiveSampling, Scatter, SurfaceIntersection,
-	Vec3,
+	power_heuristic, AccelerationStructure, Float, Hit, NoHit, Primitive, Scatter,
+	SurfaceIntersection, Vec3,
 };
 
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
@@ -59,7 +59,7 @@ impl Ray {
 		self.origin + self.direction * t
 	}
 
-	fn get_light_contribution<A: PrimitiveSampling<P, M>, P: Primitive<M>, M: Scatter>(
+	fn get_light_contribution<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter>(
 		wo: Vec3,
 		hit: &Hit,
 		surface_intersection: &SurfaceIntersection<M>,
@@ -122,7 +122,7 @@ impl Ray {
 		direct_lighting
 	}
 
-	pub fn get_colour<A: PrimitiveSampling<P, M>, P: Primitive<M>, M: Scatter, S: NoHit>(
+	pub fn get_colour<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter, S: NoHit>(
 		ray: &mut Ray,
 		sky: &S,
 		bvh: &A,
