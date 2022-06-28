@@ -1,8 +1,7 @@
 use crate::utility::{coord::Coordinate, random_float};
 
 use rt_core::{
-	Aabb, Float, Hit, Intersect, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON,
-	PI,
+	Aabb, Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON, PI,
 };
 use std::sync::Arc;
 
@@ -101,20 +100,14 @@ pub fn sphere_intersection<M: Scatter>(
 	}
 }
 
-impl<M> Intersect<M> for Sphere<M>
+#[allow(clippy::suspicious_operation_groupings)]
+impl<M> Primitive<M> for Sphere<M>
 where
 	M: Scatter,
 {
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		sphere_intersection(self, ray)
 	}
-}
-
-#[allow(clippy::suspicious_operation_groupings)]
-impl<M> Primitive<M> for Sphere<M>
-where
-	M: Scatter,
-{
 	fn get_uv(&self, point: Vec3) -> Option<Vec2> {
 		if self.material.requires_uv() {
 			let x = (self.center.x - point.x) / self.radius;

@@ -1,7 +1,7 @@
 use crate::primitives::Axis;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rt_core::{
-	Aabb, Float, Hit, Intersect, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON,
+	Aabb, Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON,
 };
 use std::sync::Arc;
 
@@ -66,7 +66,7 @@ pub fn aarect_intersection<M: Scatter>(
 	}
 }
 
-impl<M> Intersect<M> for AARect<M>
+impl<M> Primitive<M> for AARect<M>
 where
 	M: Scatter,
 {
@@ -86,12 +86,6 @@ where
 			&& point_2d.y > self.min.y
 			&& point_2d.y < self.max.y
 	}
-}
-
-impl<M> Primitive<M> for AARect<M>
-where
-	M: Scatter,
-{
 	fn get_uv(&self, point: Vec3) -> Option<Vec2> {
 		if self.material.requires_uv() {
 			let pwa = self.axis.point_without_axis(point);

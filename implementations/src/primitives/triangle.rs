@@ -3,9 +3,7 @@ use crate::{
 	utility::{check_side, gamma},
 };
 use rand::{thread_rng, Rng};
-use rt_core::{
-	Aabb, Float, Hit, Intersect, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3,
-};
+use rt_core::{Aabb, Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -222,19 +220,13 @@ pub fn triangle_intersection<T: TriangleTrait<M>, M: Scatter>(
 	))
 }
 
-impl<M> Intersect<M> for Triangle<M>
+impl<M> Primitive<M> for Triangle<M>
 where
 	M: Scatter,
 {
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		triangle_intersection(self, ray)
 	}
-}
-
-impl<M> Primitive<M> for Triangle<M>
-where
-	M: Scatter,
-{
 	fn get_aabb(&self) -> Option<Aabb> {
 		Some(Aabb::new(
 			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2]))
@@ -269,19 +261,13 @@ where
 	}
 }
 
-impl<M> Intersect<M> for MeshTriangle<M>
+impl<M> Primitive<M> for MeshTriangle<M>
 where
 	M: Scatter,
 {
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		triangle_intersection(self, ray)
 	}
-}
-
-impl<M> Primitive<M> for MeshTriangle<M>
-where
-	M: Scatter,
-{
 	fn get_aabb(&self) -> Option<Aabb> {
 		let points = [
 			(*self.mesh).vertices[self.point_indices[0]],

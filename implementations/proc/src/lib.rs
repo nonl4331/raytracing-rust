@@ -120,7 +120,7 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 		}
 	};
 
-	let func_names_intersect = [
+	let func_names_primitive = [
 		(
 			quote!(get_int(&self, __one: &Ray) -> Option<SurfaceIntersection #ty_generics>),
 			quote!(get_int(__one)),
@@ -129,10 +129,6 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 			quote!(does_int(&self, __one: &Ray) -> bool),
 			quote!(does_int(__one)),
 		),
-	]
-	.into_iter();
-
-	let func_names_primitive = [
 		(quote!(get_aabb(&self) -> Option<Aabb>), quote!(get_aabb())),
 		(quote!(requires_uv(&self) -> bool), quote!(requires_uv())),
 		(
@@ -161,16 +157,6 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 		.map(move |field| &field.ident)
 		.collect::<Vec<_>>();
 
-	let functions_intersect = func_names_intersect.map(|(f_name, f_used)| {
-		quote! {
-			fn #f_name {
-				match self {
-					#( #enum_name::#variant_names (a) => a.#f_used, )*
-				}
-			}
-		}
-	});
-
 	let functions_primitive = func_names_primitive.map(|(f_name, f_used)| {
 		quote! {
 			fn #f_name {
@@ -182,7 +168,6 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 	});
 
 	quote! {
-		impl #impl_generics Intersect #ty_generics for #enum_name #ty_generics #where_clause {#( #functions_intersect )*}
 		impl #impl_generics Primitive #ty_generics for #enum_name #ty_generics #where_clause {#( #functions_primitive )*}
 	}
 	.into()

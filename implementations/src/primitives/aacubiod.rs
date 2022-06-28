@@ -1,5 +1,5 @@
 use crate::primitives::{AARect, Axis};
-use rt_core::{Aabb, Float, Intersect, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
+use rt_core::{Aabb, Float, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
 use std::sync::Arc;
 
 pub struct AACuboid<M: Scatter> {
@@ -99,7 +99,7 @@ fn aacuboid_intersection<M: Scatter>(
 	hit
 }
 
-impl<M> Intersect<M> for AACuboid<M>
+impl<M> Primitive<M> for AACuboid<M>
 where
 	M: Scatter,
 {
@@ -115,12 +115,6 @@ where
 		}
 		false
 	}
-}
-
-impl<M> Primitive<M> for AACuboid<M>
-where
-	M: Scatter,
-{
 	fn get_aabb(&self) -> Option<Aabb> {
 		Some(Aabb::new(self.min, self.max))
 	}

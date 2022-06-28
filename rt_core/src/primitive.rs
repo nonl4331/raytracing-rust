@@ -42,19 +42,13 @@ where
 	}
 }
 
-pub trait Intersect<M: Scatter> {
+pub trait Primitive<M: Scatter> {
 	fn get_int(&self, _: &Ray) -> Option<SurfaceIntersection<M>> {
 		unimplemented!()
 	}
 	fn does_int(&self, ray: &Ray) -> bool {
 		self.get_int(ray).is_some()
 	}
-}
-
-pub trait Primitive<M>: Intersect<M>
-where
-	M: Scatter,
-{
 	fn get_aabb(&self) -> Option<Aabb> {
 		unimplemented!()
 	}

@@ -2,7 +2,7 @@ use crate::{
 	primitives::{aacubiod::AACuboid, rect::Rect, AARect, Axis},
 	utility::rotate_around_point,
 };
-use rt_core::{Aabb, Float, Intersect, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
+use rt_core::{Aabb, Float, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
 use std::sync::Arc;
 
 pub struct Cuboid<M: Scatter> {
@@ -168,7 +168,7 @@ fn cuboid_intersection<M: Scatter>(
 	hit
 }
 
-impl<M> Intersect<M> for Cuboid<M>
+impl<M> Primitive<M> for Cuboid<M>
 where
 	M: Scatter,
 {
@@ -184,12 +184,6 @@ where
 		}
 		false
 	}
-}
-
-impl<M> Primitive<M> for Cuboid<M>
-where
-	M: Scatter,
-{
 	fn get_aabb(&self) -> Option<Aabb> {
 		Some(Aabb::new(self.min - Vec3::one(), self.max + Vec3::one()))
 	}

@@ -6,7 +6,6 @@ use crate::primitives::triangle::MeshTriangle;
 use crate::primitives::triangle::Triangle;
 use rt_core::Aabb;
 use rt_core::Hit;
-use rt_core::Intersect;
 use rt_core::Primitive;
 use rt_core::Ray;
 use rt_core::Scatter;

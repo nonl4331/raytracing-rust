@@ -2,7 +2,7 @@ use crate::{
 	primitives::{aarect_intersection, AARect, Axis},
 	utility::rotate_around_point,
 };
-use rt_core::{Aabb, Float, Intersect, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
+use rt_core::{Aabb, Float, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 
 pub struct Rect<M: Scatter> {
 	pub aarect: AARect<M>,
@@ -79,7 +79,7 @@ fn rect_intersection<M: Scatter>(rect: &Rect<M>, ray: &Ray) -> Option<SurfaceInt
 	Some(intersection)
 }
 
-impl<M> Intersect<M> for Rect<M>
+impl<M> Primitive<M> for Rect<M>
 where
 	M: Scatter,
 {
@@ -99,12 +99,6 @@ where
 			&& point_2d.y > self.aarect.min.y
 			&& point_2d.y < self.aarect.max.y
 	}
-}
-
-impl<M> Primitive<M> for Rect<M>
-where
-	M: Scatter,
-{
 	fn get_uv(&self, point: Vec3) -> Option<Vec2> {
 		if self.aarect.material.requires_uv() {
 			let pwa = self.aarect.axis.point_without_axis(point);
