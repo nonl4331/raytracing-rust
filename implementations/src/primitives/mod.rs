@@ -1,7 +1,8 @@
+use crate::aabb::AABound;
+use crate::aabb::AABB;
 pub use crate::primitives::sphere::Sphere;
 pub use crate::primitives::triangle::MeshTriangle;
 pub use crate::primitives::triangle::Triangle;
-use rt_core::Aabb;
 use rt_core::Hit;
 use rt_core::Primitive;
 use rt_core::Ray;

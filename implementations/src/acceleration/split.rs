@@ -1,6 +1,6 @@
+use crate::aabb::AABB;
 use crate::acceleration::PrimitiveInfo;
 use crate::Axis;
-use rt_core::Aabb;
 use rt_core::Float;
 
 const NUM_BUCKETS: usize = 12;
@@ -41,8 +41,8 @@ pub enum SplitType {
 pub trait Split {
 	fn split(
 		&self,
-		bounds: &Aabb,
-		center_bounds: &Aabb,
+		bounds: &AABB,
+		center_bounds: &AABB,
 		axis: &Axis,
 		primitives_info: &mut [PrimitiveInfo],
 	) -> usize;
@@ -51,7 +51,7 @@ pub trait Split {
 #[derive(Copy, Clone)]
 pub struct BucketInfo {
 	count: u32,
-	bounds: Option<Aabb>,
+	bounds: Option<AABB>,
 }
 
 impl Default for BucketInfo {
@@ -72,8 +72,8 @@ impl BucketInfo {
 impl Split for SplitType {
 	fn split(
 		&self,
-		bounds: &Aabb,
-		center_bounds: &Aabb,
+		bounds: &AABB,
+		center_bounds: &AABB,
 		axis: &Axis,
 		primitives_info: &mut [PrimitiveInfo],
 	) -> usize {
@@ -119,9 +119,9 @@ impl Split for SplitType {
 
 					buckets[b].count += 1;
 
-					Aabb::merge(
+					AABB::merge(
 						&mut buckets[b].bounds,
-						Aabb::new(primitive_info.min, primitive_info.max),
+						AABB::new(primitive_info.min, primitive_info.max),
 					);
 				}
 
@@ -132,24 +132,24 @@ impl Split for SplitType {
 
 					for bucket in buckets.iter().take(i + 1) {
 						if bucket.bounds.is_some() {
-							Aabb::merge(&mut bounds_left, bucket.bounds.unwrap());
+							AABB::merge(&mut bounds_left, bucket.bounds.unwrap());
 							count_left += bucket.count;
 						}
 					}
 
 					for bucket in buckets.iter().take(NUM_BUCKETS).skip(i + 1) {
 						if bucket.bounds.is_some() {
-							Aabb::merge(&mut bounds_right, bucket.bounds.unwrap());
+							AABB::merge(&mut bounds_right, bucket.bounds.unwrap());
 							count_right += bucket.count;
 						}
 					}
 
 					let left_sa = bounds_left
-						.map(|bounds: Aabb| bounds.surface_area())
+						.map(|bounds: AABB| bounds.surface_area())
 						.unwrap_or(0.0);
 
 					let right_sa = bounds_right
-						.map(|bounds: Aabb| bounds.surface_area())
+						.map(|bounds: AABB| bounds.surface_area())
 						.unwrap_or(0.0);
 
 					*cost = 0.125

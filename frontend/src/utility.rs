@@ -1,3 +1,4 @@
+use implementations::aabb::AABound;
 use rt_core::Primitive;
 use rt_core::Scatter;
 use std::io::stdout;
@@ -65,7 +66,7 @@ pub fn get_readable_duration(duration: Duration) -> String {
 	days_string + &hours_string + &minutes_string + &seconds_string
 }
 
-pub fn create_bvh_with_info<P: Primitive<M>, M: Scatter>(
+pub fn create_bvh_with_info<P: Primitive<M> + AABound, M: Scatter>(
 	primitives: Vec<P>,
 	bvh_type: SplitType,
 ) -> Arc<Bvh<P, M>> {

@@ -1,19 +1,8 @@
-use crate::*;
-
-use crate::scene::Scene;
-use crate::utility::create_bvh_with_info;
-use implementations::random_sampler::RandomSampler;
-use implementations::split::SplitType;
-use implementations::AllMaterials;
-use implementations::AllPrimitives;
-use implementations::AllTextures;
-use implementations::Bvh;
-
-use rand::distributions::Alphanumeric;
-use rand::rngs::SmallRng;
-use rand::thread_rng;
-use rand::Rng;
-use rand::SeedableRng;
+use crate::{scene::Scene, utility::create_bvh_with_info, *};
+use implementations::{
+	random_sampler::RandomSampler, split::SplitType, AllMaterials, AllPrimitives, AllTextures, Bvh,
+};
+use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
 use rt_core::Float;
 

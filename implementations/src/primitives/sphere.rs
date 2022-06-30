@@ -1,8 +1,7 @@
+use crate::aabb::{AABound, AABB};
 use crate::utility::{coord::Coordinate, random_float};
 
-use rt_core::{
-	Aabb, Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON, PI,
-};
+use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON, PI};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -121,12 +120,6 @@ where
 		}
 		None
 	}
-	fn get_aabb(&self) -> Option<Aabb> {
-		Some(Aabb::new(
-			self.center - self.radius * Vec3::one(),
-			self.center + self.radius * Vec3::one(),
-		))
-	}
 	fn get_sample(&self) -> Vec3 {
 		let z = 1.0 - 2.0 * random_float();
 		let a = (1.0 - z * z).max(0.0).sqrt();
@@ -185,5 +178,14 @@ where
 	}
 	fn material_is_light(&self) -> bool {
 		self.material.is_light()
+	}
+}
+
+impl<M: Scatter> AABound for Sphere<M> {
+	fn get_aabb(&self) -> Option<AABB> {
+		Some(AABB::new(
+			self.center - self.radius * Vec3::one(),
+			self.center + self.radius * Vec3::one(),
+		))
 	}
 }

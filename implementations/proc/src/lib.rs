@@ -129,7 +129,6 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 			quote!(does_int(&self, __one: &Ray) -> bool),
 			quote!(does_int(__one)),
 		),
-		(quote!(get_aabb(&self) -> Option<Aabb>), quote!(get_aabb())),
 		(quote!(requires_uv(&self) -> bool), quote!(requires_uv())),
 		(
 			quote!(get_uv(&self, __one: Vec3) -> Option<Vec2>),
@@ -152,6 +151,8 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 	]
 	.into_iter();
 
+	let func_name_aabound = [(quote!(get_aabb(&self) -> Option<AABB>), quote!(get_aabb()))];
+
 	let variant_names = fields
 		.iter()
 		.map(move |field| &field.ident)
@@ -166,9 +167,19 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 			}
 		}
 	});
+	let functions_aabound = func_name_aabound.map(|(f_name, f_used)| {
+		quote! {
+			fn #f_name {
+				match self {
+					#( #enum_name::#variant_names (a) => a.#f_used, )*
+				}
+			}
+		}
+	});
 
 	quote! {
 		impl #impl_generics Primitive #ty_generics for #enum_name #ty_generics #where_clause {#( #functions_primitive )*}
+		impl #impl_generics AABound for #enum_name #ty_generics #where_clause { #( #functions_aabound )*}
 	}
 	.into()
 }

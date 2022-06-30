@@ -1,9 +1,11 @@
+use crate::aabb::AABound;
+use crate::aabb::AABB;
 use crate::{
 	primitives::Axis,
 	utility::{check_side, gamma},
 };
 use rand::{thread_rng, Rng};
-use rt_core::{Aabb, Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
+use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -229,13 +231,7 @@ where
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		triangle_intersection(self, ray)
 	}
-	fn get_aabb(&self) -> Option<Aabb> {
-		Some(Aabb::new(
-			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2]))
-				- Vec3::one() * 0.001,
-			self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
-		))
-	}
+
 	fn area(&self) -> Float {
 		0.5 * (self.points[1] - self.points[0])
 			.cross(self.points[2] - self.points[0])
@@ -270,18 +266,6 @@ where
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		triangle_intersection(self, ray)
 	}
-	fn get_aabb(&self) -> Option<Aabb> {
-		let points = [
-			(*self.mesh).vertices[self.point_indices[0]],
-			(*self.mesh).vertices[self.point_indices[1]],
-			(*self.mesh).vertices[self.point_indices[2]],
-		];
-
-		Some(Aabb::new(
-			points[0].min_by_component(points[1].min_by_component(points[2])) - Vec3::one() * 0.001,
-			points[0].max_by_component(points[1].max_by_component(points[2])),
-		))
-	}
 	fn area(&self) -> Float {
 		0.5 * ((*self.mesh).vertices[self.point_indices[1]]
 			- (*self.mesh).vertices[self.point_indices[0]])
@@ -312,5 +296,29 @@ where
 	}
 	fn material_is_light(&self) -> bool {
 		self.material.is_light()
+	}
+}
+impl<M: Scatter> AABound for Triangle<M> {
+	fn get_aabb(&self) -> Option<AABB> {
+		Some(AABB::new(
+			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2]))
+				- Vec3::one() * 0.001,
+			self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
+		))
+	}
+}
+
+impl<M: Scatter> AABound for MeshTriangle<M> {
+	fn get_aabb(&self) -> Option<AABB> {
+		let points = [
+			(*self.mesh).vertices[self.point_indices[0]],
+			(*self.mesh).vertices[self.point_indices[1]],
+			(*self.mesh).vertices[self.point_indices[2]],
+		];
+
+		Some(AABB::new(
+			points[0].min_by_component(points[1].min_by_component(points[2])) - Vec3::one() * 0.001,
+			points[0].max_by_component(points[1].max_by_component(points[2])),
+		))
 	}
 }

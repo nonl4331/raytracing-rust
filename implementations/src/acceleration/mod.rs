@@ -1,9 +1,9 @@
+use crate::aabb::AABound;
+use crate::aabb::AABB;
 use crate::acceleration::split::{Split, SplitType};
 use crate::utility::sort_by_indices;
 use crate::Axis;
-use rt_core::{
-	Aabb, AccelerationStructure, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec3,
-};
+use rt_core::{AccelerationStructure, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
 use std::{collections::VecDeque, marker::PhantomData};
 
 #[cfg(all(feature = "f64"))]
@@ -12,6 +12,7 @@ use std::f64::EPSILON;
 #[cfg(not(feature = "f64"))]
 use std::f32::EPSILON;
 
+pub mod aabb;
 pub mod split;
 
 #[derive(Debug, Clone, Copy)]
@@ -23,7 +24,7 @@ pub struct PrimitiveInfo {
 }
 
 impl PrimitiveInfo {
-	fn new<P: Primitive<M>, M: Scatter>(index: usize, primitive: &P) -> PrimitiveInfo {
+	fn new<P: Primitive<M> + AABound, M: Scatter>(index: usize, primitive: &P) -> PrimitiveInfo {
 		let aabb = primitive.get_aabb().unwrap();
 		let min = aabb.min;
 		let max = aabb.max;
@@ -46,7 +47,7 @@ pub struct Bvh<P: Primitive<M>, M: Scatter> {
 
 impl<P, M> Bvh<P, M>
 where
-	P: Primitive<M>,
+	P: Primitive<M> + AABound,
 	M: Scatter,
 {
 	pub fn new(primitives: Vec<P>, split_type: SplitType) -> Self {
@@ -90,7 +91,7 @@ where
 
 		let mut bounds = None;
 		for info in primitives_info.iter() {
-			Aabb::merge(&mut bounds, Aabb::new(info.min, info.max));
+			AABB::merge(&mut bounds, AABB::new(info.min, info.max));
 		}
 
 		let mut children = None;
@@ -105,7 +106,7 @@ where
 		} else {
 			let mut center_bounds = None;
 			for info in primitives_info[0..number_primitives].iter() {
-				Aabb::extend_contains(&mut center_bounds, info.center);
+				AABB::extend_contains(&mut center_bounds, info.center);
 			}
 
 			let center_bounds = center_bounds.unwrap();
@@ -304,14 +305,14 @@ where
 
 #[derive(Debug)]
 pub struct Node {
-	bounds: Aabb,
+	bounds: AABB,
 	children: Option<[usize; 2]>,
 	primitive_offset: usize,
 	number_primitives: usize,
 }
 
 impl Node {
-	fn new(bounds: Aabb, primitive_offset: usize, number_primitives: usize) -> Self {
+	fn new(bounds: AABB, primitive_offset: usize, number_primitives: usize) -> Self {
 		Node {
 			bounds,
 			children: None,
