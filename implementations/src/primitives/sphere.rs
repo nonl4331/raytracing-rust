@@ -5,6 +5,7 @@ use rt_core::{
 };
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Sphere<M: Scatter> {
 	pub center: Vec3,
 	pub radius: Float,
@@ -66,10 +67,10 @@ pub fn sphere_intersection<M: Scatter>(
 		let t = if t0 > 0.0 {
 			t0
 		} else {
-			if t1 > 0.0 {
+			if t1 <= 0.0 {
 				return None;
 			}
-			t0
+			t1
 		};
 
 		// Get point at "t"

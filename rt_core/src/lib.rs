@@ -17,14 +17,14 @@ pub type Float = f64;
 #[cfg(all(feature = "f64"))]
 pub use std::f64::consts::PI;
 #[cfg(all(feature = "f64"))]
-pub const EPSILON: Float = 5.58E-17;
+pub const EPSILON: Float = 5.58E-8;
 
 #[cfg(not(feature = "f64"))]
 pub type Float = f32;
 #[cfg(not(feature = "f64"))]
 pub use std::f32::consts::PI;
 #[cfg(not(feature = "f64"))]
-pub const EPSILON: Float = 3.0E-8;
+pub const EPSILON: Float = 3.0E-4;
 
 #[inline]
 pub fn power_heuristic(pdf_a: Float, pdf_b: Float) -> Float {

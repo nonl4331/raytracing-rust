@@ -5,6 +5,7 @@ use crate::{
 use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Lambertian<T: Texture> {
 	pub texture: Arc<T>,
 	pub absorption: Float,

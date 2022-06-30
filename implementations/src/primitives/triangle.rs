@@ -6,7 +6,7 @@ use rand::{thread_rng, Rng};
 use rt_core::{Aabb, Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Triangle<M: Scatter> {
 	pub points: [Vec3; 3],
 	pub normals: [Vec3; 3],
@@ -26,6 +26,7 @@ where
 	}
 }
 
+#[derive(Debug)]
 pub struct MeshTriangle<M: Scatter> {
 	pub point_indices: [usize; 3],
 	pub normal_indices: [usize; 3],
@@ -52,6 +53,7 @@ where
 	}
 }
 
+#[derive(Debug)]
 pub struct MeshData<M: Scatter> {
 	pub vertices: Vec<Vec3>,
 	pub normals: Vec<Vec3>,

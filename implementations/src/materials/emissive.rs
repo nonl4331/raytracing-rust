@@ -2,6 +2,7 @@ use crate::{textures::Texture, utility::offset_ray};
 use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Emit<T> {
 	pub texture: Arc<T>,
 	pub strength: Float,

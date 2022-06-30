@@ -1,9 +1,6 @@
-use crate::primitives::aacubiod::AACuboid;
-use crate::primitives::cubiod::Cuboid;
-use crate::primitives::rect::Rect;
-use crate::primitives::sphere::Sphere;
-use crate::primitives::triangle::MeshTriangle;
-use crate::primitives::triangle::Triangle;
+pub use crate::primitives::sphere::Sphere;
+pub use crate::primitives::triangle::MeshTriangle;
+pub use crate::primitives::triangle::Triangle;
 use rt_core::Aabb;
 use rt_core::Hit;
 use rt_core::Primitive;
@@ -14,22 +11,12 @@ use rt_core::{Float, Vec2, Vec3};
 
 use proc::Primitive;
 
-pub mod aacubiod;
-pub mod aarect;
-pub mod cubiod;
-pub mod rect;
 pub mod sphere;
 pub mod triangle;
 
-pub use aarect::*;
-
-#[derive(Primitive)]
+#[derive(Primitive, Debug)]
 pub enum AllPrimitives<M: Scatter> {
 	Sphere(Sphere<M>),
-	AARect(AARect<M>),
-	Rect(Rect<M>),
-	AACuboid(AACuboid<M>),
-	Cuboid(Cuboid<M>),
 	Triangle(Triangle<M>),
 	MeshTriangle(MeshTriangle<M>),
 }

@@ -31,23 +31,6 @@ pub fn get_seed(length: usize) -> String {
 		.collect()
 }
 
-/*pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, _seed: Option<String>) -> SceneType {
-	let primitives = Vec::new();
-	let sky = Arc::new(Sky::new(None));
-	let sampler = Arc::new(RandomSampler {});
-	let bvh = create_bvh_with_info(primitives, bvh_type);
-	let camera = Arc::new(SimpleCamera::new(
-		Vec3::new(0.0, -1.0, 0.0),
-		Vec3::new(0.0, 0.0, 0.0),
-		Vec3::new(0.0, 0.0, 1.0),
-		60.0,
-		aspect_ratio,
-		1.0,
-		0.0,
-	));
-	Scene::new(camera, sky, sampler, bvh)
-}*/
-
 pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> SceneType {
 	let mut primitives = Vec::new();
 
@@ -118,76 +101,28 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-/*pub fn scene_two(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+pub fn scene_nine(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
-	let mat = diffuse!(1.0, 1.0, 1.0, 0.5);
+	let inner = &diffuse!(1, 1, 1, 0.9);
+	let emit = &emit!(&solid_colour!(colour!(1)), 1);
 
-	let ground = sphere!(0, -100.5, 1, 100, &mat);
+	primitives.push(sphere!(0, 0, 0, 0.5, inner));
+	primitives.push(sphere!(0, 0, 0, 10, emit));
 
-	let sphere_one = sphere!(0, 0, 1, 0.5, &mat);
-
-	primitives.push(ground);
-	primitives.push(sphere_one);
-
-	let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
+	let sky = sky!();
 
 	let camera = camera!(
+		position!(3, 0, 0),
 		position!(0, 0, 0),
-		position!(0, 0, 1),
 		position!(0, 1, 0),
-		2.116_813_7 * 180.0 / PI,
-		aspect_ratio,
-		0,
-		1
-	);
-
-	let bvh = create_bvh_with_info(primitives, bvh_type);
-
-	scene!(camera, sky, random_sampler!(), bvh)
-}
-
-pub fn scene_three(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
-	let mut primitives = Vec::new();
-
-	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
-
-	let box_left = aacuboid!(-1.6, 1, -0.5, -0.6, 2, 0.5, &diffuse!(1, 0, 0, 0.5));
-
-	let box_middle = aacuboid!(
-		-0.5,
-		1,
-		-0.5,
-		0.5,
-		2,
-		0.5,
-		&reflect!(&solid_colour!(1, 1, 1), 0)
-	);
-
-	let sphere_middle = sphere!(0, 2.5, 0, 0.3, &reflect!(&solid_colour!(1, 1, 1), 0));
-
-	let box_right = aacuboid!(0.6, 1, -0.5, 1.6, 2, 0.5, &diffuse!(0, 0, 1, 0.5));
-
-	primitives.push(ground);
-	primitives.push(box_left);
-	primitives.push(box_middle);
-	primitives.push(sphere_middle);
-	primitives.push(box_right);
-
-	let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
-
-	let camera = camera!(
-		position!(-5, 3, -3),
-		position!(0, 1.5, 0),
-		position!(0, 1, 0),
-		34,
+		40,
 		aspect_ratio,
 		0,
 		10
 	);
 
 	let bvh = create_bvh_with_info(primitives, bvh_type);
-
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
@@ -210,7 +145,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 
 	primitives.push(ground);
 	primitives.push(glowy);
-	primitives.push(cube);
+	primitives.extend(cube);
 
 	let camera = camera!(
 		position!(-5, 3, -3),
@@ -227,7 +162,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }
 
-pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+/*pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(
@@ -292,43 +227,6 @@ pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }
 
-pub fn scene_seven(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
-	let mut primitives = Vec::new();
-
-	let ground_mat = &diffuse!(
-		&checkered!(
-			242.0 / 256.0,
-			242.0 / 256.0,
-			242.0 / 256.0,
-			109.0 / 256.0,
-			112.0 / 256.0,
-			117.0 / 256.0
-		),
-		0.5
-	);
-
-	let ground = aarect!(-10, -10, 10, 10, -0.3, axis!(Y), ground_mat);
-
-	primitives.push(ground);
-	primitives.extend(model!("res/bunny.obj", &diffuse!(0.5, 0.5, 0.5, 0.5)));
-
-	let sky = sky!(&image!("res/sky.png"));
-
-	let camera = camera!(
-		position!(-7, 1.5, -7),
-		position!(0, 1.5, 0),
-		position!(0, 1, 0),
-		34,
-		aspect_ratio,
-		0,
-		10
-	);
-
-	let bvh = create_bvh_with_info(primitives, bvh_type);
-
-	scene!(camera, sky, random_sampler!(), bvh)
-}
-
 pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
@@ -385,27 +283,4 @@ pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_nine(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
-	let mut primitives = Vec::new();
-
-	let inner = &diffuse!(1, 1, 1, 0.9);
-	let emit = &emit!(&solid_colour!(colour!(1)), 1);
-
-	primitives.push(sphere!(0, 0, 0, 0.5, inner));
-	primitives.push(sphere!(0, 0, 0, 10, emit));
-
-	let sky = sky!();
-
-	let camera = camera!(
-		position!(3, 0, 0),
-		position!(0, 0, 0),
-		position!(0, 1, 0),
-		40,
-		aspect_ratio,
-		0,
-		10
-	);
-
-	let bvh = create_bvh_with_info(primitives, bvh_type);
-	scene!(camera, sky, random_sampler!(), bvh)
-}*/
+*/

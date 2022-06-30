@@ -6,6 +6,7 @@ use crate::{
 use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct Refract<T: Texture> {
 	pub texture: Arc<T>,
 	pub eta: Float,

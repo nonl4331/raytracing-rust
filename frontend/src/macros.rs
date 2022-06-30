@@ -85,7 +85,7 @@ macro_rules! solid_colour {
 macro_rules! image {
 	($filepath:expr) => {
 		std::sync::Arc::new(implementations::AllTextures::ImageTexture(
-			rt_core::ImageTexture::new($filepath),
+			implementations::ImageTexture::new($filepath),
 		))
 	};
 }
@@ -197,25 +197,8 @@ macro_rules! emit {
 		)));
 	};
 	($texture:expr,$strength:expr) => {
-		std::sync::Arc::new($crate::implementations::AllMaterials::Emit(
-			$crate::rt_core::Emit::new($texture, $strength as rt_core::Float),
-		))
-	};
-}
-
-#[macro_export]
-macro_rules! cook_torrence {
-	($r:expr,$g:expr,$b:expr, $alpha:expr, $absorption:expr, $specular_chance:expr, $f0:expr) => {
-		std::sync::Arc::new(implementations::AllMaterials::CookTorrence(
-			rt_core::CookTorrence::new(
-				&std::sync::Arc::new(implementations::AllTextures::SolidColour(
-					rt_core::SolidColour::new(colour!($r, $g, $b)),
-				)),
-				$alpha as rt_core::Float,
-				$absorption as rt_core::Float,
-				$specular_chance as rt_core::Float,
-				$f0,
-			),
+		std::sync::Arc::new(implementations::AllMaterials::Emit(
+			implementations::Emit::new($texture, $strength as rt_core::Float),
 		))
 	};
 }
@@ -243,24 +226,41 @@ macro_rules! sphere {
 
 #[macro_export]
 macro_rules! aarect {
-	($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr,  $material:expr) => {
-		rt_core::AllPrimitives::AARect(rt_core::AARect::new(
-			$point_one,
-			$point_two,
-			$axis_value as rt_core::Float,
+	($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr,  $material:expr) => {{
+		let point_three = implementations::Axis::point_from_2d(
+			rt_core::Vec2::new($point_one.x, $point_two.y),
 			$axis,
-			$material,
-		))
-	};
-	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr) => {
-		rt_core::AllPrimitives::AARect(rt_core::AARect::new(
-			position!($x1, $y1),
-			position!($x2, $y2),
-			$axis_value as rt_core::Float,
+			$axis_value,
+		);
+		let point_four = implementations::Axis::point_from_2d(
+			rt_core::Vec2::new($point_two.x, $point_one.y),
 			$axis,
-			$material,
-		))
-	};
+			$axis_value,
+		);
+		let point_one = implementations::Axis::point_from_2d($point_one, $axis, $axis_value);
+		let point_two = implementations::Axis::point_from_2d($point_two, $axis, $axis_value);
+		let mut vec = Vec::new();
+		vec.push(triangle!(point_one, point_two, point_three, $material));
+		vec.push(triangle!(point_one, point_two, point_four, $material));
+
+		vec
+	}};
+	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr) => {{
+		let point_three =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
+		let point_four =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
+		let point_one =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
+		let point_two =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+
+		let mut vec = Vec::new();
+		vec.push(triangle!(point_one, point_two, point_three, $material));
+		vec.push(triangle!(point_one, point_two, point_four, $material));
+
+		vec
+	}};
 }
 
 #[macro_export]
@@ -295,16 +295,126 @@ macro_rules! rect {
 
 #[macro_export]
 macro_rules! aacuboid {
-	($point_one:expr, $point_two:expr, $material:expr) => {
-		rt_core::AllPrimitives::AACubiod(rt_core::AACuboid::new($point_one, $point_two, $material))
-	};
-	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $material:expr) => {
-		rt_core::AllPrimitives::AACuboid(rt_core::AACuboid::new(
-			position!($x1, $y1, $z1),
-			position!($x2, $y2, $z2),
-			$material,
-		))
-	};
+	($point_one:expr, $point_two:expr, $material:expr) => {{
+		let mut vec = Vec::new();
+		vec.extend(aarect!(
+			$point_one.x,
+			$point_one.y,
+			$point_two.x,
+			$point_two.y,
+			$point_one.z,
+			implementations::Axis::Z,
+			$material
+		));
+		vec.extend(aarect!(
+			$point_one.x,
+			$point_one.y,
+			$point_two.x,
+			$point_two.y,
+			$point_two.z,
+			implementations::Axis::Z,
+			$material
+		));
+
+		vec.extend(aarect!(
+			$point_one.x,
+			$point_one.z,
+			$point_two.x,
+			$point_two.z,
+			$point_one.y,
+			implementations::Axis::Y,
+			$material
+		));
+		vec.extend(aarect!(
+			$point_one.x,
+			$point_one.z,
+			$point_two.x,
+			$point_two.z,
+			$point_two.y,
+			implementations::Axis::Y,
+			$material
+		));
+
+		vec.extend(aarect!(
+			$point_one.y,
+			$point_one.z,
+			$point_two.y,
+			$point_two.z,
+			$point_one.x,
+			implementations::Axis::X,
+			$material
+		));
+		vec.extend(aarect!(
+			$point_one.y,
+			$point_one.z,
+			$point_two.y,
+			$point_two.z,
+			$point_two.x,
+			implementations::Axis::X,
+			$material
+		));
+		vec
+	}};
+	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $material:expr) => {{
+		let mut vec = Vec::new();
+		vec.extend(aarect!(
+			$x1,
+			$y1,
+			$x2,
+			$y2,
+			$z1,
+			&implementations::Axis::Z,
+			$material
+		));
+		vec.extend(aarect!(
+			$x1,
+			$y1,
+			$x2,
+			$y2,
+			$z2,
+			&implementations::Axis::Z,
+			$material
+		));
+
+		vec.extend(aarect!(
+			$x1,
+			$z1,
+			$x2,
+			$z2,
+			$y1,
+			&implementations::Axis::Y,
+			$material
+		));
+		vec.extend(aarect!(
+			$x1,
+			$z1,
+			$x2,
+			$z2,
+			$y2,
+			&implementations::Axis::Y,
+			$material
+		));
+
+		vec.extend(aarect!(
+			$y1,
+			$z1,
+			$y2,
+			$z2,
+			$x1,
+			&implementations::Axis::X,
+			$material
+		));
+		vec.extend(aarect!(
+			$y1,
+			$z1,
+			$y2,
+			$z2,
+			$x2,
+			&implementations::Axis::X,
+			$material
+		));
+		vec
+	}};
 }
 
 #[macro_export]
@@ -344,10 +454,10 @@ macro_rules! triangle {
 			let b = $point_three - $point_one;
 			a.cross(b)
 		}
-		.normalized();
+		.normalised();
 
-		rt_core::AllPrimitives::Triangle(rt_core::Triangle::new_from_arc(
-			[$point_one, $point_two, $point_two],
+		implementations::AllPrimitives::Triangle(implementations::Triangle::new(
+			[$point_one, $point_two, $point_three],
 			[normal; 3],
 			$material,
 		))
@@ -365,7 +475,7 @@ macro_rules! triangle {
 		.normalized();
 
 		rt_core::AllPrimitives::Triangle(rt_core::Triangle::new_from_arc(
-			[point_one, point_two, point_two],
+			[point_one, point_two, point_three],
 			[normal; 3],
 			$material,
 		))

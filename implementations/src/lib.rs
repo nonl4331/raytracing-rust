@@ -14,6 +14,8 @@ pub use proc::*;
 pub use samplers::*;
 pub use textures::*;
 
+pub use primitives::triangle::Triangle;
+
 #[cfg(test)]
 mod tests {
 	#[test]
