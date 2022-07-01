@@ -361,10 +361,10 @@ fn get_scene(
 			}
 			"7" => {
 				scene!(scene_seven, bvh_type, aspect_ratio)
-			}
+			}*/
 			"8" => {
 				scene!(scene_eight, bvh_type, aspect_ratio)
-			}*/
+			}
 			"9" => {
 				scene!(scene_nine, bvh_type, aspect_ratio)
 			}

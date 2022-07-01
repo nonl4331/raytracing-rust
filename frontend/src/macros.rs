@@ -54,13 +54,13 @@ macro_rules! rotation {
 #[macro_export]
 macro_rules! axis {
 	(X) => {
-		rt_core::Axis::X
+		implementations::Axis::X
 	};
 	(Y) => {
-		rt_core::Axis::Y
+		implementations::Axis::Y
 	};
 	(Z) => {
-		rt_core::Axis::Z
+		implementations::Axis::Z
 	};
 }
 
@@ -265,32 +265,90 @@ macro_rules! aarect {
 
 #[macro_export]
 macro_rules! rect {
-	($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr, $rotation:expr, $material:expr) => {
-		rt_core::AllPrimitives::Rect(rt_core::Rect::new(
-			rt_core::AARect::new(
-				$point_one,
-				$point_two,
-				$axis_value as rt_core::Float,
-				$axis,
-				$material,
-			),
-			$rotation,
-			None,
-		))
-	};
-	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr, $rotation:expr, $material:expr) => {
-		rt_core::AllPrimitives::Rect(rt_core::Rect::new(
-			rt_core::AARect::new(
-				position!($x1, $y1),
-				position!($x2, $y2),
-				$axis_value as rt_core::Float,
-				$axis,
-				$material,
-			),
-			$rotation,
-			None,
-		))
-	};
+	($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr, $rotation:expr, $material:expr) => {{
+		let center_point = 0.5 * ($point_one + $point_two);
+		let point_three = implementations::Axis::point_from_2d(
+			rt_core::Vec2::new($point_one.x, $point_two.y),
+			$axis,
+			$axis_value,
+		);
+		let point_four = implementations::Axis::point_from_2d(
+			rt_core::Vec2::new($point_two.x, $point_one.y),
+			$axis,
+			$axis_value,
+		);
+		let point_one = implementations::Axis::point_from_2d($point_one, $axis, $axis_value);
+		let point_two = implementations::Axis::point_from_2d($point_two, $axis, $axis_value);
+
+		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
+		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+
+		let point_one =
+			$crate::utility::rotate_around_point(point_one, center_point, sin_rot, cos_rot);
+		let point_two =
+			$crate::utility::rotate_around_point(point_two, center_point, sin_rot, cos_rot);
+		let point_three =
+			$crate::utility::rotate_around_point(point_three, center_point, sin_rot, cos_rot);
+		let point_four =
+			$crate::utility::rotate_around_point(point_four, center_point, sin_rot, cos_rot);
+
+		let vec = Vec::new();
+		vec.push(triangle!(point_one, point_two, point_three, $material));
+		vec.push(triangle!(point_one, point_two, point_four, $material));
+
+		vec
+	}};
+	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr, $rotation:expr, $material:expr) => {{
+		let mut point_three =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
+		let mut point_four =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
+		let mut point_one =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
+		let mut point_two =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+
+		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
+		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+
+		$crate::utility::rotate_around_point(&mut point_one, center_point, sin_rot, cos_rot);
+
+		$crate::utility::rotate_around_point(&mut point_two, center_point, sin_rot, cos_rot);
+
+		$crate::utility::rotate_around_point(&mut point_three, center_point, sin_rot, cos_rot);
+
+		$crate::utility::rotate_around_point(&mut point_four, center_point, sin_rot, cos_rot);
+
+		let mut vec = Vec::new();
+		vec.push(triangle!(point_one, point_two, point_three, $material));
+		vec.push(triangle!(point_one, point_two, point_four, $material));
+
+		vec
+	}};
+	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr, $center_point:expr, $sin_rot:expr, $cos_rot:expr, $material:expr) => {{
+		let mut point_three =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
+		let mut point_four =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
+		let mut point_one =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
+		let mut point_two =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+
+		$crate::utility::rotate_around_point(&mut point_one, $center_point, $sin_rot, $cos_rot);
+
+		$crate::utility::rotate_around_point(&mut point_two, $center_point, $sin_rot, $cos_rot);
+
+		$crate::utility::rotate_around_point(&mut point_three, $center_point, $sin_rot, $cos_rot);
+
+		$crate::utility::rotate_around_point(&mut point_four, $center_point, $sin_rot, $cos_rot);
+
+		let mut vec = Vec::new();
+		vec.push(triangle!(point_one, point_two, point_three, $material));
+		vec.push(triangle!(point_one, point_two, point_four, $material));
+
+		vec
+	}};
 }
 
 #[macro_export]
@@ -419,23 +477,172 @@ macro_rules! aacuboid {
 
 #[macro_export]
 macro_rules! cuboid {
-	($point_one:expr, $point_two:expr, $rotation:expr) => {
-		rt_core::AllPrimitives::Cubiod(rt_core::Cuboid::new(
-			rt_core::AACuboid::new($point_one, $point_two, $material),
-			$rotation,
-		))
-	};
-	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $rotation:expr, $material:expr) => {
-		rt_core::AllPrimitives::Cuboid(rt_core::Cuboid::new(
-			rt_core::AACuboid::new(
-				position!($x1, $y1, $z1),
-				position!($x2, $y2, $z2),
-				$material,
-			),
-			$rotation,
-			&emit!(&solid_colour!(colour!(1, 0, 0)), 15),
-		))
-	};
+	($point_one:expr, $point_two:expr, $rotation:expr, $material:expr) => {{
+		let center_point = 0.5 * ($point_one + $point_two);
+		let sin_rot = ($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
+		let cos_rot = ($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+
+		let mut vec = Vec::new();
+		vec.extend(rect!(
+			$point_one.x,
+			$point_one.y,
+			$point_two.x,
+			$point_two.y,
+			$point_one.z,
+			implementations::Axis::Z,
+			$center_point,
+			$sin_rot,
+			$cos_rot,
+			$material
+		));
+		vec.extend(rect!(
+			$point_one.x,
+			$point_one.y,
+			$point_two.x,
+			$point_two.y,
+			$point_two.z,
+			implementations::Axis::Z,
+			$center_point,
+			$sin_rot,
+			$cos_rot,
+			$material
+		));
+
+		vec.extend(rect!(
+			$point_one.x,
+			$point_one.z,
+			$point_two.x,
+			$point_two.z,
+			$point_one.y,
+			implementations::Axis::Y,
+			$center_point,
+			$sin_rot,
+			$cos_rot,
+			$material
+		));
+		vec.extend(rect!(
+			$point_one.x,
+			$point_one.z,
+			$point_two.x,
+			$point_two.z,
+			$point_two.y,
+			implementations::Axis::Y,
+			$center_point,
+			$sin_rot,
+			$cos_rot,
+			$material
+		));
+
+		vec.extend(rect!(
+			$point_one.y,
+			$point_one.z,
+			$point_two.y,
+			$point_two.z,
+			$point_one.x,
+			implementations::Axis::X,
+			$center_point,
+			$sin_rot,
+			$cos_rot,
+			$material
+		));
+		vec.extend(rect!(
+			$point_one.y,
+			$point_one.z,
+			$point_two.y,
+			$point_two.z,
+			$point_two.x,
+			implementations::Axis::X,
+			$center_point,
+			$sin_rot,
+			$cos_rot,
+			$material
+		));
+		vec
+	}};
+	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $rotation:expr, $material:expr) => {{
+		let point_one = rt_core::Vec3::new($x1, $y1, $z1);
+		let point_two = rt_core::Vec3::new($x2, $y2, $z1);
+		let center_point = 0.5 * (point_one + point_two);
+		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
+		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+
+		let mut vec = Vec::new();
+		vec.extend(rect!(
+			point_one.x,
+			point_one.y,
+			point_two.x,
+			point_two.y,
+			point_one.z,
+			&implementations::Axis::Z,
+			center_point,
+			sin_rot,
+			cos_rot,
+			$material
+		));
+		vec.extend(rect!(
+			point_one.x,
+			point_one.y,
+			point_two.x,
+			point_two.y,
+			point_two.z,
+			&implementations::Axis::Z,
+			center_point,
+			sin_rot,
+			cos_rot,
+			$material
+		));
+
+		vec.extend(rect!(
+			point_one.x,
+			point_one.z,
+			point_two.x,
+			point_two.z,
+			point_one.y,
+			&implementations::Axis::Y,
+			center_point,
+			sin_rot,
+			cos_rot,
+			$material
+		));
+		vec.extend(rect!(
+			point_one.x,
+			point_one.z,
+			point_two.x,
+			point_two.z,
+			point_two.y,
+			&implementations::Axis::Y,
+			center_point,
+			sin_rot,
+			cos_rot,
+			$material
+		));
+
+		vec.extend(rect!(
+			point_one.y,
+			point_one.z,
+			point_two.y,
+			point_two.z,
+			point_one.x,
+			&implementations::Axis::X,
+			center_point,
+			sin_rot,
+			cos_rot,
+			$material
+		));
+		vec.extend(rect!(
+			point_one.y,
+			point_one.z,
+			point_two.y,
+			point_two.z,
+			point_two.x,
+			&implementations::Axis::X,
+			center_point,
+			sin_rot,
+			cos_rot,
+			$material
+		));
+		vec
+	}};
 }
 
 #[macro_export]

@@ -151,43 +151,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }
 
-/*pub fn scene_five(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
-	let mut primitives = Vec::new();
-
-	let ground = sphere!(
-		0,
-		-1000,
-		0,
-		1000,
-		&diffuse!(&checkered!(colour!(0), colour!(0.5)), 0.5)
-	);
-
-	let cube = aacuboid!(-0.5, 0.1, -0.5, 1, 0.6, 1, &diffuse!(0.5, 0.5, 0.5, 0.5));
-
-	let earth = sphere!(0, 1.2, 0, 0.5, &diffuse!(&image!("res/earth.png"), 0.5));
-
-	primitives.push(ground);
-	primitives.push(cube);
-	primitives.push(earth);
-
-	let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
-
-	let camera = camera!(
-		position!(-5, 4, -3),
-		position!(0, 0.5, 0),
-		position!(0, 1, 0),
-		34,
-		aspect_ratio,
-		0,
-		10
-	);
-
-	let bvh = create_bvh_with_info(primitives, bvh_type);
-
-	scene!(camera, sky, random_sampler!(), bvh)
-}
-
-pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+/*pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -214,7 +178,7 @@ pub fn scene_six(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let bvh = create_bvh_with_info(primitives, bvh_type);
 
 	scene!(camera, sky!(), random_sampler!(), bvh)
-}
+}*/
 
 pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
@@ -224,32 +188,32 @@ pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let green = &diffuse!(0.12, 0.45, 0.15, 0.0);
 	let light = &emit!(&solid_colour!(colour!(1)), 15);
 
-	primitives.push(aarect!(0, 0, 555, 555, 555, axis!(X), green));
-	primitives.push(aarect!(0, 0, 555, 555, 0, axis!(X), red));
+	primitives.extend(aarect!(0.0, 0.0, 555.0, 555.0, 555.0, &axis!(X), green));
+	primitives.extend(aarect!(0.0, 0.0, 555.0, 555.0, 0.0, &axis!(X), red));
 
-	primitives.push(aarect!(0, 0, 555, 555, 555, axis!(Y), white));
-	primitives.push(aarect!(0, 0, 555, 555, 0, axis!(Y), white));
+	primitives.extend(aarect!(0.0, 0.0, 555.0, 555.0, 555.0, &axis!(Y), white));
+	primitives.extend(aarect!(0.0, 0.0, 555.0, 555.0, 0.0, &axis!(Y), white));
 
-	primitives.push(aarect!(0, 0, 555, 555, 555, axis!(Z), white));
-	primitives.push(aarect!(213, 227, 343, 332, 554, axis!(Y), light));
+	primitives.extend(aarect!(0.0, 0.0, 555.0, 555.0, 555.0, &axis!(Z), white));
+	primitives.extend(aarect!(213.0, 227.0, 343.0, 332.0, 554.0, &axis!(Y), light));
 
-	primitives.push(cuboid!(
-		265,
-		0,
-		295,
-		430,
-		330,
+	primitives.extend(cuboid!(
+		265.0,
+		0.0,
+		295.0,
+		430.0,
+		330.0,
 		460,
 		rotation!(0, 15, 0, D),
 		white
 	));
 
-	primitives.push(cuboid!(
-		130,
-		0,
-		65,
-		295,
-		165,
+	primitives.extend(cuboid!(
+		130.0,
+		0.0,
+		65.0,
+		295.0,
+		165.0,
 		230,
 		rotation!(0, -18, 0, D),
 		white
@@ -271,5 +235,3 @@ pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 
 	scene!(camera, sky, random_sampler!(), bvh)
 }
-
-*/
