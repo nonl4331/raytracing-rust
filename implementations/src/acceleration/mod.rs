@@ -1,8 +1,9 @@
-use crate::aabb::AABound;
-use crate::aabb::AABB;
-use crate::acceleration::split::{Split, SplitType};
-use crate::utility::sort_by_indices;
-use crate::Axis;
+use crate::{
+	aabb::{AABound, AABB},
+	acceleration::split::{Split, SplitType},
+	utility::sort_by_indices,
+	Axis,
+};
 use rt_core::{AccelerationStructure, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
 use std::{collections::VecDeque, marker::PhantomData};
 

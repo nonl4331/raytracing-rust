@@ -1,7 +1,5 @@
 use crate::textures::Texture;
-use rt_core::NoHit;
-use rt_core::Ray;
-use rt_core::Vec3;
+use rt_core::{NoHit, Ray, Vec3};
 use std::sync::Arc;
 
 pub mod random_sampler;

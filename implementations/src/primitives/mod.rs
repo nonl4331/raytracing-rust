@@ -1,16 +1,12 @@
-use crate::aabb::AABound;
-use crate::aabb::AABB;
-pub use crate::primitives::sphere::Sphere;
-pub use crate::primitives::triangle::MeshTriangle;
-pub use crate::primitives::triangle::Triangle;
-use rt_core::Hit;
-use rt_core::Primitive;
-use rt_core::Ray;
-use rt_core::Scatter;
-use rt_core::SurfaceIntersection;
-use rt_core::{Float, Vec2, Vec3};
-
+use crate::{
+	aabb::{AABound, AABB},
+	primitives::{
+		sphere::Sphere,
+		triangle::{MeshTriangle, Triangle},
+	},
+};
 use proc::Primitive;
+use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 
 pub mod sphere;
 pub mod triangle;

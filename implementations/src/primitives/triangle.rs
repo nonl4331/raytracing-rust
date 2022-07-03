@@ -1,6 +1,5 @@
-use crate::aabb::AABound;
-use crate::aabb::AABB;
 use crate::{
+	aabb::{AABound, AABB},
 	primitives::Axis,
 	utility::{check_side, gamma},
 };

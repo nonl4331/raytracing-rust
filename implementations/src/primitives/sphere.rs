@@ -1,6 +1,7 @@
-use crate::aabb::{AABound, AABB};
-use crate::utility::{coord::Coordinate, random_float};
-
+use crate::{
+	aabb::{AABound, AABB},
+	utility::{coord::Coordinate, random_float},
+};
 use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON, PI};
 use std::sync::Arc;
 

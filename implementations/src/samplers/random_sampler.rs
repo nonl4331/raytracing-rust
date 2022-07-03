@@ -1,20 +1,8 @@
 use rand::Rng;
-use rt_core::Sampler;
-use rt_core::SamplerProgress;
-use rt_core::Scatter;
-
 use rayon::prelude::*;
-use rt_core::Camera;
-
-use rt_core::Primitive;
-
-use rt_core::AccelerationStructure;
-
-use rt_core::NoHit;
-
-use rt_core::Float;
-
-use rt_core::Ray;
+use rt_core::{
+	AccelerationStructure, Camera, Float, NoHit, Primitive, Ray, Sampler, SamplerProgress, Scatter,
+};
 
 pub struct RandomSampler;
 
