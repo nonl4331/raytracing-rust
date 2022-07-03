@@ -1,6 +1,5 @@
 use crate::rendering::*;
-
-use vulkano::pipeline::ComputePipeline;
+use std::sync::Arc;
 use vulkano::{
 	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
 	descriptor_set::{PersistentDescriptorSet, WriteDescriptorSet},
@@ -11,28 +10,24 @@ use vulkano::{
 	format::Format,
 	image::{view::ImageView, ImageDimensions::Dim2d, ImageUsage, StorageImage, SwapchainImage},
 	instance::Instance,
-	pipeline::{Pipeline, PipelineBindPoint},
+	pipeline::{ComputePipeline, Pipeline, PipelineBindPoint},
 	sampler::Filter,
 	swapchain::{self, AcquireError, Surface, Swapchain, SwapchainCreationError},
 	sync::{self, FlushError, GpuFuture},
 };
-
+use vulkano_win::VkSurfaceBuild;
 use winit::{
 	event::{Event, WindowEvent},
 	event_loop::{ControlFlow, EventLoop},
 	window::{Window, WindowBuilder},
 };
 
-use vulkano_win::VkSurfaceBuild;
-
-use std::sync::Arc;
-
 #[derive(Debug)]
 pub enum RenderEvent {
 	SampleCompleted,
 }
 
-pub struct GUI {
+pub struct Gui {
 	pub event_loop: Option<EventLoop<RenderEvent>>,
 	surface: Arc<Surface<Window>>,
 	pub device: Arc<Device>,
@@ -47,7 +42,7 @@ pub struct GUI {
 	presentation_finished: Option<Box<dyn GpuFuture + 'static>>,
 }
 
-impl GUI {
+impl Gui {
 	pub fn new(instance: &Arc<Instance>, width: u32, height: u32) -> Self {
 		let event_loop: EventLoop<RenderEvent> = EventLoop::with_user_event();
 		let surface = WindowBuilder::new()
@@ -145,8 +140,8 @@ impl GUI {
 
 		mod cs {
 			vulkano_shaders::shader! {
-																																																															ty: "compute",
-																																																															src:
+			ty: "compute",
+			src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;
@@ -182,8 +177,6 @@ void main() {
 		);
 
 		let extent: [u32; 2] = surface.window().inner_size().into();
-		let sc_width = extent[0];
-		let sc_height = extent[1];
 
 		let presentation_command_buffers = blit_to_swapchain_command_buffer(
 			device.clone(),
@@ -192,11 +185,10 @@ void main() {
 			&images,
 			render_info.render_width as i32,
 			render_info.render_height as i32,
-			sc_width as i32,
-			sc_height as i32,
+			extent,
 		);
 
-		GUI {
+		Gui {
 			event_loop,
 			surface,
 			device,
@@ -350,8 +342,6 @@ void main() {
 				Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
 			};
 		let extent: [u32; 2] = self.surface.window().inner_size().into();
-		let sc_width = extent[0];
-		let sc_height = extent[1];
 
 		self.swapchain = new_swapchain;
 		self.images = new_images;
@@ -362,8 +352,7 @@ void main() {
 			&self.images,
 			self.render_info.render_width as i32,
 			self.render_info.render_height as i32,
-			sc_width as i32,
-			sc_height as i32,
+			extent,
 		);
 	}
 }
@@ -380,14 +369,14 @@ fn to_combined_buffer_command_buffers(
 	let mut command_buffer_0 = None;
 	let mut command_buffer_1 = None;
 
-	for i in 0..2 {
+	for (i, image) in cpu_swapchain.iter().enumerate() {
 		let layout = compute_pipeline
 			.layout()
 			.descriptor_set_layouts()
 			.get(0)
 			.unwrap();
 
-		let image_view = ImageView::new(cpu_swapchain[i].clone()).unwrap();
+		let image_view = ImageView::new(image.clone()).unwrap();
 
 		let image_view_combined_buffer = ImageView::new(combined_buffer.clone()).unwrap();
 		let set = PersistentDescriptorSet::new(
@@ -439,8 +428,7 @@ fn blit_to_swapchain_command_buffer(
 	images: &[Arc<SwapchainImage<Window>>],
 	input_width: i32,
 	input_height: i32,
-	sc_width: i32,
-	sc_height: i32,
+	sc_extent: [u32; 2],
 ) -> Vec<Arc<PrimaryAutoCommandBuffer>> {
 	let mut command_buffers = Vec::new();
 	for image in images {
@@ -460,7 +448,7 @@ fn blit_to_swapchain_command_buffer(
 				0,
 				image.clone(),
 				[0, 0, 0],
-				[sc_width, sc_height, 1],
+				[sc_extent[0] as i32, sc_extent[1] as i32, 1],
 				0,
 				0,
 				1,

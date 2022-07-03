@@ -1,11 +1,10 @@
+use std::sync::{atomic::AtomicBool, Arc, Mutex};
 use vulkano::{
 	device::{physical::PhysicalDevice, Device},
 	format::Format,
 	image::{ImageDimensions::Dim2d, StorageImage},
 	sync::{FenceSignalFuture, GpuFuture},
 };
-
-use std::sync::{atomic::AtomicBool, Arc, Mutex};
 
 pub type Future = Arc<Mutex<Option<FenceSignalFuture<Box<dyn GpuFuture + Send + Sync + 'static>>>>>;
 

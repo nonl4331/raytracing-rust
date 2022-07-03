@@ -1,18 +1,19 @@
-use crate::parameters::line_break;
-use crate::utility::get_progress_output;
-use crate::utility::print_final_statistics;
-use crate::utility::print_render_start;
-use crate::utility::save_u8_to_image;
-use rt_core::Float;
-use rt_core::SamplerProgress;
-use std::env;
-use vulkano::command_buffer::PrimaryAutoCommandBuffer;
-
-use crate::gui::{RenderEvent, GUI};
-
+use crate::{
+	gui::{Gui, RenderEvent},
+	parameters::line_break,
+	utility::{get_progress_output, print_final_statistics, print_render_start, save_u8_to_image},
+};
+use rt_core::{Float, SamplerProgress};
+use std::{
+	env,
+	sync::{
+		atomic::{AtomicBool, AtomicU64, Ordering},
+		Arc,
+	},
+};
 use vulkano::{
 	buffer::CpuAccessibleBuffer,
-	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage},
+	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
 	device::{Device, Queue},
 	image::StorageImage,
 	instance::Instance,
@@ -20,11 +21,6 @@ use vulkano::{
 	Version,
 };
 use winit::event_loop::EventLoopProxy;
-
-use std::sync::{
-	atomic::{AtomicBool, AtomicU64, Ordering},
-	Arc,
-};
 
 mod generate;
 mod gui;
@@ -147,7 +143,7 @@ fn main() {
 
 			let required_extensions = vulkano_win::required_extensions();
 			let instance = Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
-			let gui = GUI::new(&instance, width as u32, height as u32);
+			let gui = Gui::new(&instance, width as u32, height as u32);
 
 			let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
 				gui.event_loop.as_ref().map(|el| el.create_proxy());

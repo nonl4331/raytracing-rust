@@ -1,22 +1,12 @@
-use implementations::aabb::AABound;
-use implementations::Axis;
-use rt_core::Float;
-use rt_core::Primitive;
-use rt_core::Scatter;
-use rt_core::Vec3;
-use std::io::stdout;
-use std::io::Write;
-use std::process;
-use std::sync::Arc;
-use std::time::Duration;
-
-use implementations::Bvh;
-
 use chrono::Local;
-
-use std::time::Instant;
-
-use implementations::split::SplitType;
+use implementations::{aabb::AABound, split::SplitType, Axis, Bvh};
+use rt_core::{Float, Primitive, Scatter, Vec3};
+use std::{
+	io::{stdout, Write},
+	process,
+	sync::Arc,
+	time::{Duration, Instant},
+};
 
 const BAR_LENGTH: u32 = 30;
 

@@ -1,21 +1,6 @@
-use implementations::Texture;
-
-use rt_core::SamplerProgress;
-use std::sync::Arc;
-
-use implementations::SimpleCamera;
-
-use implementations::Sky;
-
-use std::marker::PhantomData;
-
-use rt_core::Scatter;
-
-use rt_core::Sampler;
-
-use rt_core::Primitive;
-
-use rt_core::AccelerationStructure;
+use implementations::{SimpleCamera, Sky, Texture};
+use rt_core::{AccelerationStructure, Primitive, Sampler, SamplerProgress, Scatter};
+use std::{marker::PhantomData, sync::Arc};
 
 pub struct Scene<
 	P: Primitive<M>,

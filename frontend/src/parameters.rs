@@ -1,9 +1,7 @@
 use crate::generate::SceneType;
 use chrono::Local;
 use implementations::split::SplitType;
-
 use rt_core::Float;
-
 use std::process;
 
 const SAMPLES_DEFAULT: u64 = 30;
