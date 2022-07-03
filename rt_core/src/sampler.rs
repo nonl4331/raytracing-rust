@@ -3,14 +3,14 @@ use crate::{AccelerationStructure, Float, Primitive, Ray, Scatter, Vec3};
 pub trait Sampler {
 	fn sample_image<C, P, M, T, F, A, S>(
 		&self,
-		_: u64,
-		_: u64,
-		_: u64,
-		_: &C,
-		_: &S,
-		_: &A,
-		_: Option<F>,
-		_: &mut Option<T>,
+		_samples_per_pixel: u64,
+		_image_width: u64,
+		_image_height: u64,
+		_camera: &C,
+		_sky: &S,
+		_acceleration_structure: &A,
+		_update_function: Option<F>,
+		_data: &mut Option<T>,
 	) where
 		C: Camera + Send + Sync,
 		P: Primitive<M> + Sync + Send + 'static,

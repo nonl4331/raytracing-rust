@@ -2,7 +2,6 @@ use crate::{
 	power_heuristic, AccelerationStructure, Float, Hit, NoHit, Primitive, Scatter,
 	SurfaceIntersection, Vec3,
 };
-
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 const RUSSIAN_ROULETTE_THRESHOLD: u32 = 3;
