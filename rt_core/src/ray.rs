@@ -73,9 +73,13 @@ impl Ray {
 			return direct_lighting;
 		}
 
-		let light_index = match bvh.get_samplable().get(0) {
-			Some(index) => *index,
-			None => return direct_lighting,
+		let lights = bvh.get_samplable();
+		let num_lights = lights.len();
+		let light_index = if num_lights == 0 {
+			return direct_lighting;
+		} else {
+			let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+			lights[rng.gen_range(0..num_lights)]
 		};
 
 		let light_obj = bvh.get_object(light_index).unwrap();
