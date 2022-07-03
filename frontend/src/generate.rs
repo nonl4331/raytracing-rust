@@ -203,7 +203,7 @@ pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 		295.0,
 		430.0,
 		330.0,
-		460,
+		460.0,
 		rotation!(0, 15, 0, D),
 		white
 	));
@@ -214,7 +214,7 @@ pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 		65.0,
 		295.0,
 		165.0,
-		230,
+		230.0,
 		rotation!(0, -18, 0, D),
 		white
 	));

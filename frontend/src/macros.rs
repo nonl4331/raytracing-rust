@@ -561,7 +561,7 @@ macro_rules! cuboid {
 	}};
 	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $rotation:expr, $material:expr) => {{
 		let point_one = rt_core::Vec3::new($x1, $y1, $z1);
-		let point_two = rt_core::Vec3::new($x2, $y2, $z1);
+		let point_two = rt_core::Vec3::new($x2, $y2, $z2);
 		let center_point = 0.5 * (point_one + point_two);
 		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
 		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
