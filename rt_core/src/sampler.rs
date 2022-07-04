@@ -9,16 +9,14 @@ pub trait Sampler {
 		_camera: &C,
 		_sky: &S,
 		_acceleration_structure: &A,
-		_update_function: Option<F>,
-		_data: &mut Option<T>,
+		_update_function: Option<(&mut T, F)>,
 	) where
 		C: Camera + Send + Sync,
 		P: Primitive<M> + Sync + Send + 'static,
 		M: Scatter + Send + Sync + 'static,
-		F: Fn(&mut Option<T>, &SamplerProgress, u64) + Send + Sync,
+		F: Fn(&mut T, &SamplerProgress, u64),
 		A: AccelerationStructure<P, M> + Send + Sync,
-		S: NoHit + Send + Sync,
-		T: Send;
+		S: NoHit + Send + Sync;
 }
 
 pub struct SamplerProgress {

@@ -15,13 +15,12 @@ impl Sampler for RandomSampler {
 		camera: &C,
 		sky: &S,
 		acceleration_structure: &A,
-		presentation_update: Option<F>,
-		data: &mut Option<T>,
+		mut presentation_update: Option<(&mut T, F)>,
 	) where
 		C: Camera + Send + Sync,
 		P: Primitive<M> + Sync + Send + 'static,
 		M: Scatter + Send + Sync + 'static,
-		F: Fn(&mut Option<T>, &SamplerProgress, u64),
+		F: Fn(&mut T, &SamplerProgress, u64),
 		A: AccelerationStructure<P, M> + Send + Sync,
 		S: NoHit + Send + Sync,
 	{
@@ -75,8 +74,8 @@ impl Sampler for RandomSampler {
 				});
 			});
 			if i != 0 {
-				match presentation_update.as_ref() {
-					Some(f) => f(data, previous, i),
+				match presentation_update.as_mut() {
+					Some((ref mut data, f)) => f(data, previous, i),
 					None => (),
 				};
 			}
@@ -87,8 +86,8 @@ impl Sampler for RandomSampler {
 		} else {
 			(&accumulator_buffers.1, &mut accumulator_buffers.0)
 		};
-		match presentation_update.as_ref() {
-			Some(f) => f(data, previous, samples_per_pixel),
+		match presentation_update.as_mut() {
+			Some((ref mut data, f)) => f(data, previous, samples_per_pixel),
 			None => (),
 		}
 	}

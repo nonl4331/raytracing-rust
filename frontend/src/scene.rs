@@ -43,11 +43,8 @@ where
 		width: u64,
 		height: u64,
 		samples: u64,
-		presentation_update: Option<impl Fn(&mut Option<D>, &SamplerProgress, u64) + Send + Sync>,
-		data: &mut Option<D>,
-	) where
-		D: Send,
-	{
+		presentation_update: Option<(&mut D, impl Fn(&mut D, &SamplerProgress, u64))>,
+	) {
 		self.sampler.sample_image(
 			samples,
 			width,
@@ -56,7 +53,6 @@ where
 			&*self.sky,
 			&*self.acceleration_structure,
 			presentation_update,
-			data,
 		)
 	}
 }

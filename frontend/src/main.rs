@@ -88,33 +88,30 @@ fn main() {
 
 			let start = print_render_start(width, height, Some(samples));
 
-			let mut image = Some(SamplerProgress::new(width * height, 3));
+			let mut image = SamplerProgress::new(width * height, 3);
 			let progress_bar_output =
-				|sp: &mut Option<SamplerProgress>, previous: &SamplerProgress, i: u64| {
-					if let Some(sp) = sp {
-						sp.samples_completed += 1;
-						sp.rays_shot += previous.rays_shot;
+				|sp: &mut SamplerProgress, previous: &SamplerProgress, i: u64| {
+					sp.samples_completed += 1;
+					sp.rays_shot += previous.rays_shot;
 
-						sp.current_image
-							.iter_mut()
-							.zip(previous.current_image.iter())
-							.for_each(|(pres, acc)| {
-								*pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
-							});
+					sp.current_image
+						.iter_mut()
+						.zip(previous.current_image.iter())
+						.for_each(|(pres, acc)| {
+							*pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
+						});
 
-						get_progress_output(sp.samples_completed, parameters.samples);
-					}
+					get_progress_output(sp.samples_completed, parameters.samples);
 				};
 
 			scene.generate_image_threaded(
 				width,
 				height,
 				samples,
-				Some(progress_bar_output),
-				&mut image,
+				Some((&mut image, progress_bar_output)),
 			);
 
-			let output = image.unwrap();
+			let output = &image;
 
 			let ray_count = output.rays_shot;
 
@@ -168,7 +165,7 @@ fn main() {
 				gui.cpu_rendering.cpu_swapchain.clone(),
 			);
 
-			let data = Data::new(
+			let mut data = Data::new(
 				gui.queue.clone(),
 				gui.device.clone(),
 				gui.cpu_rendering.to_sc.clone(),
@@ -201,12 +198,12 @@ fn main() {
 					width,
 					height,
 					total_samples,
-					Some(
-						|data: &mut Option<Data>, previous: &SamplerProgress, i: u64| {
+					Some((
+						&mut data,
+						|data: &mut Data, previous: &SamplerProgress, i: u64| {
 							sample_update(data, previous, i);
 						},
-					),
-					&mut Some(data),
+					)),
 				);
 
 				let ray_count = ray_count.load(Ordering::Relaxed);
@@ -278,78 +275,73 @@ fn create_command_buffers(
 	]
 }
 
-fn sample_update(data: &mut Option<Data>, previous: &SamplerProgress, i: u64) {
-	// in this example data should always be Some(_)
-	if let Some(data) = data {
-		// update infomation about the rays shot and samples completed in the current render
-		data.samples.fetch_add(1, Ordering::Relaxed);
-		data.rays_shot
-			.fetch_add(previous.rays_shot, Ordering::Relaxed);
+fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) {
+	// update infomation about the rays shot and samples completed in the current render
+	data.samples.fetch_add(1, Ordering::Relaxed);
+	data.rays_shot
+		.fetch_add(previous.rays_shot, Ordering::Relaxed);
 
-		// wait on from_sc future if is_some()
-		match &*data.from_sc.lock().unwrap() {
-			Some(future) => {
-				future.wait(None).unwrap();
-			}
-			None => {}
+	// wait on from_sc future if is_some()
+	match &*data.from_sc.lock().unwrap() {
+		Some(future) => {
+			future.wait(None).unwrap();
 		}
-		match &*data.to_sc.lock().unwrap() {
-			Some(future) => {
-				future.wait(None).unwrap();
-			}
-			None => {}
-		}
-
-		{
-			// get access to CpuAccessibleBuffer
-			let mut buf = data.buffer.write().unwrap();
-			buf.chunks_mut(4)
-				.zip(previous.current_image.chunks(3))
-				.for_each(|(pres, acc)| {
-					pres[0] += (acc[0] as f32 - pres[0]) / i as f32;
-					pres[1] += (acc[1] as f32 - pres[1]) / i as f32;
-					pres[2] += (acc[2] as f32 - pres[2]) / i as f32;
-					pres[3] = 1.0;
-				});
-		}
-
-		// copy to cpu swapchain
-		let command_buffer =
-			data.command_buffers[data.sc_index.load(Ordering::Relaxed) as usize].clone();
-
-		// copy to swapchain and store op in to_sc future
-		{
-			let to_sc = &mut *data.to_sc.lock().unwrap();
-			*to_sc = Some(
-				match to_sc.take() {
-					Some(future) => future
-						.then_execute(data.queue.clone(), command_buffer)
-						.unwrap()
-						.boxed_send_sync(),
-					None => sync::now(data.device.clone())
-						.then_execute(data.queue.clone(), command_buffer)
-						.unwrap()
-						.boxed_send_sync(),
-				}
-				.then_signal_fence_and_flush()
-				.unwrap(), // change to match
-			);
-		}
-
-		// modify sc_index to !sc_index
-		data.sc_index
-			.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| Some(!x))
-			.unwrap();
-
-		get_progress_output(i, data.total_samples);
-
-		// signal sample is ready to be presented
-		data.event_proxy
-			.send_event(RenderEvent::SampleCompleted)
-			.unwrap();
-	} else {
-		unreachable!();
+		None => {}
 	}
+	match &*data.to_sc.lock().unwrap() {
+		Some(future) => {
+			future.wait(None).unwrap();
+		}
+		None => {}
+	}
+
+	{
+		// get access to CpuAccessibleBuffer
+		let mut buf = data.buffer.write().unwrap();
+		buf.chunks_mut(4)
+			.zip(previous.current_image.chunks(3))
+			.for_each(|(pres, acc)| {
+				pres[0] += (acc[0] as f32 - pres[0]) / i as f32;
+				pres[1] += (acc[1] as f32 - pres[1]) / i as f32;
+				pres[2] += (acc[2] as f32 - pres[2]) / i as f32;
+				pres[3] = 1.0;
+			});
+	}
+
+	// copy to cpu swapchain
+	let command_buffer =
+		data.command_buffers[data.sc_index.load(Ordering::Relaxed) as usize].clone();
+
+	// copy to swapchain and store op in to_sc future
+	{
+		let to_sc = &mut *data.to_sc.lock().unwrap();
+		*to_sc = Some(
+			match to_sc.take() {
+				Some(future) => future
+					.then_execute(data.queue.clone(), command_buffer)
+					.unwrap()
+					.boxed_send_sync(),
+				None => sync::now(data.device.clone())
+					.then_execute(data.queue.clone(), command_buffer)
+					.unwrap()
+					.boxed_send_sync(),
+			}
+			.then_signal_fence_and_flush()
+			.unwrap(), // change to match
+		);
+	}
+
+	// modify sc_index to !sc_index
+	data.sc_index
+		.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| Some(!x))
+		.unwrap();
+
+	get_progress_output(i, data.total_samples);
+
+	// signal sample is ready to be presented
+	data.event_proxy
+		.send_event(RenderEvent::SampleCompleted)
+		.unwrap();
 }
 
 fn save_file(
