@@ -29,10 +29,6 @@ pub fn derive_scatter(tokens: TokenStream) -> TokenStream {
 			quote!(scattering_pdf(__one, __two, __three)),
 		),
 		(
-			quote!(scattering_albedo(&self, __one: &Hit, __two: Vec3, __three: Vec3) -> Vec3),
-			quote!(scattering_albedo(__one, __two, __three)),
-		),
-		(
 			quote!(eval(&self, __one: &Hit, __two: Vec3, __three: Vec3) -> Vec3),
 			quote!(eval(__one, __two, __three)),
 		),

@@ -19,12 +19,7 @@ pub trait Scatter {
 	fn scattering_pdf(&self, _: Vec3, _: Vec3, _: Vec3) -> Float {
 		0.0
 	}
-	fn scattering_albedo(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
-		Vec3::one()
-	}
-	fn eval(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
-		Vec3::one()
-	}
+	fn eval(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3;
 	fn get_emission(&self, _hit: &Hit, _wo: Vec3) -> Vec3 {
 		Vec3::zero()
 	}

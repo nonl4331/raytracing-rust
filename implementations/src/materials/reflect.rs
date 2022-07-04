@@ -38,9 +38,8 @@ where
 		);
 		false
 	}
-	fn scattering_albedo(&self, hit: &Hit, wo: Vec3, _wi: Vec3) -> Vec3 {
-		let point = offset_ray(hit.point, hit.normal, hit.error, false);
-		self.texture.colour_value(wo, point)
+	fn eval(&self, hit: &Hit, wo: Vec3, _wi: Vec3) -> Vec3 {
+		self.texture.colour_value(wo, hit.point)
 	}
 	fn is_delta(&self) -> bool {
 		true

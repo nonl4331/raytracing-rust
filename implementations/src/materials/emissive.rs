@@ -32,6 +32,9 @@ where
 	fn is_light(&self) -> bool {
 		true
 	}
+	fn eval(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3 {
+		unreachable!()
+	}
 	fn scatter_ray(&self, _: &mut Ray, _: &Hit) -> bool {
 		true
 	}
