@@ -20,7 +20,7 @@ pub fn get_seed(length: usize) -> String {
 		.collect()
 }
 
-pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> SceneType {
+pub fn classic(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -90,7 +90,7 @@ pub fn scene_one(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>)
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_nine(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+pub fn furnace(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let inner = &diffuse!(1, 1, 1, 0.9);
@@ -115,7 +115,7 @@ pub fn scene_nine(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky, random_sampler!(), bvh)
 }
 
-pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+pub fn overshadowed(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
@@ -180,7 +180,7 @@ pub fn scene_four(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }*/
 
-pub fn scene_eight(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+pub fn cornell(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 
 	let red = &diffuse!(0.65, 0.05, 0.05, 0.0);

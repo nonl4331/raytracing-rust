@@ -339,8 +339,8 @@ fn get_scene(
 		}
 
 		Some(string) => match &string[..] {
-			"1" => {
-				scene!(scene_one, bvh_type, aspect_ratio, seed)
+			"classic" => {
+				scene!(classic, bvh_type, aspect_ratio, seed)
 			}
 			/*"2" => {
 				scene!(scene_two, bvh_type, aspect_ratio)
@@ -348,8 +348,8 @@ fn get_scene(
 			"3" => {
 				scene!(scene_three, bvh_type, aspect_ratio)
 			}*/
-			"4" => {
-				scene!(scene_four, bvh_type, aspect_ratio)
+			"overshadowed" => {
+				scene!(overshadowed, bvh_type, aspect_ratio)
 			}
 			/*"5" => {
 				scene!(scene_five, bvh_type, aspect_ratio)
@@ -360,11 +360,11 @@ fn get_scene(
 			"7" => {
 				scene!(scene_seven, bvh_type, aspect_ratio)
 			}*/
-			"8" => {
-				scene!(scene_eight, bvh_type, aspect_ratio)
+			"cornell" => {
+				scene!(cornell, bvh_type, aspect_ratio)
 			}
-			"9" => {
-				scene!(scene_nine, bvh_type, aspect_ratio)
+			"furnace" => {
+				scene!(furnace, bvh_type, aspect_ratio)
 			}
 			_ => {
 				println!("{} is not a valid scene index!", string);
