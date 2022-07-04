@@ -244,8 +244,7 @@ where
 		let point =
 			uv.0 * self.points[0] + uv.1 * self.points[1] + (1.0 - uv.0 - uv.1) * self.points[2];
 
-		let dir = (point - in_point).normalised();
-		dir
+		(point - in_point).normalised()
 	}
 	fn scattering_pdf(&self, hit: &Hit, wi: Vec3, light_point: Vec3) -> Float {
 		(light_point - hit.point).mag_sq() / (hit.normal.dot(-wi).abs() * self.area())

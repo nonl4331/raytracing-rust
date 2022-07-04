@@ -1,4 +1,4 @@
-use crate::{Hit, Primitive, Ray, Scatter, SurfaceIntersection};
+use crate::{Primitive, Ray, Scatter, SurfaceIntersection};
 
 pub trait AccelerationStructure<P, M>
 where
@@ -12,10 +12,6 @@ where
 	fn check_hit(&self, ray: &Ray) -> Option<(SurfaceIntersection<M>, usize)>;
 
 	fn number_nodes(&self) -> usize;
-
-	fn sample_object(&self, _hit: &Hit, _index: usize) -> Option<SurfaceIntersection<M>> {
-		unimplemented!()
-	}
 
 	fn get_samplable(&self) -> &[usize] {
 		unimplemented!()

@@ -4,7 +4,7 @@ use crate::{
 	utility::sort_by_indices,
 	Axis,
 };
-use rt_core::{AccelerationStructure, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
+use rt_core::{AccelerationStructure, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
 use std::{collections::VecDeque, marker::PhantomData};
 
 #[cfg(all(feature = "f64"))]
@@ -282,14 +282,6 @@ where
 	}
 	fn number_nodes(&self) -> usize {
 		self.nodes.len()
-	}
-	fn sample_object(&self, hit: &Hit, index: usize) -> Option<SurfaceIntersection<M>> {
-		let object = &self.primitives[index];
-		let dir = object.sample_visible_from_point(hit.point);
-
-		let ray = Ray::new(hit.point, dir, 0.0);
-
-		self.check_hit_index(&ray, index)
 	}
 	fn get_samplable(&self) -> &[usize] {
 		&self.lights
