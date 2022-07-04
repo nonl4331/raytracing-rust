@@ -25,89 +25,82 @@ where
 	}
 }
 
-pub fn sphere_intersection<M: Scatter>(
-	sphere: &Sphere<M>,
-	ray: &Ray,
-) -> Option<SurfaceIntersection<M>> {
-	let dir = ray.direction;
-	let center = sphere.center;
-	let radius = sphere.radius;
-	let orig = ray.origin;
-
-	// simplified terms for algorithm below
-	let deltap = center - orig;
-	let ddp = dir.dot(deltap);
-	let deltapdot = deltap.dot(deltap);
-
-	let remedy_term = deltap - ddp * dir;
-	let discriminant = radius * radius - remedy_term.dot(remedy_term);
-
-	// check if any solutions exist
-	if discriminant > 0.0 {
-		// the square root of the discriminant
-		let sqrt_val = discriminant.sqrt();
-
-		// Get intermediate q value based on ddp sign
-		let q = if ddp > 0.0 {
-			ddp + sqrt_val
-		} else {
-			ddp - sqrt_val
-		};
-
-		// Get two solutions of quadratic formula
-		let mut t0 = q;
-		let mut t1 = (deltapdot - radius * radius) / q;
-
-		// Make sure t1 > t0 (for sorting purposes)
-		if t1 < t0 {
-			std::mem::swap(&mut t0, &mut t1);
-		};
-
-		// Get smallest t value that is above 0
-		let t = if t0 > 0.0 {
-			t0
-		} else {
-			if t1 <= 0.0 {
-				return None;
-			}
-			t1
-		};
-
-		// Get point at "t"
-		let point = ray.at(t);
-
-		// Get normal from intersection point
-		let mut normal = (point - center) / radius;
-
-		// Make sure normal faces outward and make note of what side of the object the ray is on
-		let mut out = true;
-		if normal.dot(dir) > 0.0 {
-			out = false;
-			normal = -normal;
-		}
-
-		// fill in details about intersection point
-		Some(SurfaceIntersection::new(
-			t,
-			point,
-			EPSILON * Vec3::one(),
-			normal,
-			sphere.get_uv(point),
-			out,
-			&sphere.material,
-		))
-	} else {
-		None
-	}
-}
-
 #[allow(clippy::suspicious_operation_groupings)]
 impl<M> Primitive<M> for Sphere<M>
 where
 	M: Scatter,
 {
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
-		sphere_intersection(self, ray)
+		let dir = ray.direction;
+		let center = self.center;
+		let radius = self.radius;
+		let orig = ray.origin;
+
+		// simplified terms for algorithm below
+		let deltap = center - orig;
+		let ddp = dir.dot(deltap);
+		let deltapdot = deltap.dot(deltap);
+
+		let remedy_term = deltap - ddp * dir;
+		let discriminant = radius * radius - remedy_term.dot(remedy_term);
+
+		// check if any solutions exist
+		if discriminant > 0.0 {
+			// the square root of the discriminant
+			let sqrt_val = discriminant.sqrt();
+
+			// Get intermediate q value based on ddp sign
+			let q = if ddp > 0.0 {
+				ddp + sqrt_val
+			} else {
+				ddp - sqrt_val
+			};
+
+			// Get two solutions of quadratic formula
+			let mut t0 = q;
+			let mut t1 = (deltapdot - radius * radius) / q;
+
+			// Make sure t1 > t0 (for sorting purposes)
+			if t1 < t0 {
+				std::mem::swap(&mut t0, &mut t1);
+			};
+
+			// Get smallest t value that is above 0
+			let t = if t0 > 0.0 {
+				t0
+			} else {
+				if t1 <= 0.0 {
+					return None;
+				}
+				t1
+			};
+
+			// Get point at "t"
+			let point = ray.at(t);
+
+			// Get normal from intersection point
+			let mut normal = (point - center) / radius;
+
+			// Make sure normal faces outward and make note of what side of the object the ray is on
+			let mut out = true;
+			if normal.dot(dir) > 0.0 {
+				out = false;
+				normal = -normal;
+			}
+
+			// fill in details about intersection point
+			Some(SurfaceIntersection::new(
+				t,
+				point,
+				EPSILON * Vec3::one(),
+				normal,
+				self.get_uv(point),
+				out,
+				&self.material,
+			))
+		} else {
+			None
+		}
 	}
 	fn get_uv(&self, point: Vec3) -> Option<Vec2> {
 		if self.material.requires_uv() {
