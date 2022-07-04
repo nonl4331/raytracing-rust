@@ -16,7 +16,7 @@ pub trait Scatter {
 	fn is_delta(&self) -> bool {
 		false
 	}
-	fn scattering_pdf(&self, _: Vec3, _: Vec3, _: Vec3) -> Float {
+	fn scattering_pdf(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Float {
 		0.0
 	}
 	fn eval(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3;

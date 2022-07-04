@@ -52,7 +52,7 @@ where
 		*ray = Ray::new(point, direction, ray.time);
 		false
 	}
-	fn eval(&self, hit: &Hit, wo: Vec3, _wi: Vec3) -> Vec3 {
+	fn eval(&self, hit: &Hit, wo: Vec3, _: Vec3) -> Vec3 {
 		self.texture.colour_value(wo, hit.point)
 	}
 	fn is_delta(&self) -> bool {

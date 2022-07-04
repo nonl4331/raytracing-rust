@@ -127,7 +127,7 @@ where
 		let b = 2.0 * PI * random_float();
 		self.center + self.radius * Vec3::new(a * b.cos(), a * b.sin(), z)
 	}
-	fn sample_visible_from_point(&self, in_point: Vec3) -> (Vec3, Vec3, Vec3) {
+	fn sample_visible_from_point(&self, in_point: Vec3) -> Vec3 {
 		let distance_sq = (in_point - self.center).mag_sq();
 		let point = if distance_sq <= self.radius * self.radius {
 			self.get_sample()
@@ -156,18 +156,14 @@ where
 
 			self.center + self.radius * vec
 		};
-		(
-			point,
-			(point - in_point).normalised(),
-			(point - self.center).normalised(),
-		)
+
+		(point - in_point).normalised()
 	}
-	fn scattering_pdf(&self, hit: &Hit, out_dir: Vec3, light_point: Vec3) -> Float {
+	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, light_point: Vec3) -> Float {
 		let rsq = self.radius * self.radius;
 		let dsq = (hit.point - self.center).mag_sq();
 		if dsq <= rsq {
-			return (light_point - hit.point).mag_sq()
-				/ (out_dir.dot(-hit.normal).abs() * self.area());
+			return (light_point - hit.point).mag_sq() / (wo.dot(-hit.normal).abs() * self.area());
 		}
 		let sin_theta_max_sq = rsq / dsq;
 		let cos_theta_max = (1.0 - sin_theta_max_sq).max(0.0).sqrt();

@@ -1,4 +1,4 @@
-use crate::{Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec3};
+use crate::{Hit, Primitive, Ray, Scatter, SurfaceIntersection};
 
 pub trait AccelerationStructure<P, M>
 where
@@ -13,7 +13,7 @@ where
 
 	fn number_nodes(&self) -> usize;
 
-	fn sample_object(&self, _hit: &Hit, _index: usize) -> (Vec3, Option<Vec3>, Vec3) {
+	fn sample_object(&self, _hit: &Hit, _index: usize) -> Option<SurfaceIntersection<M>> {
 		unimplemented!()
 	}
 

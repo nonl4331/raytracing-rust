@@ -283,18 +283,13 @@ where
 	fn number_nodes(&self) -> usize {
 		self.nodes.len()
 	}
-	fn sample_object(&self, hit: &Hit, index: usize) -> (Vec3, Option<Vec3>, Vec3) {
+	fn sample_object(&self, hit: &Hit, index: usize) -> Option<SurfaceIntersection<M>> {
 		let object = &self.primitives[index];
-		let (object_point, dir, _normal) = object.sample_visible_from_point(hit.point);
+		let dir = object.sample_visible_from_point(hit.point);
 
 		let ray = Ray::new(hit.point, dir, 0.0);
 
-		let li = match self.check_hit_index(&ray, index) {
-			Some(int) => Some(int.material.get_emission(hit, dir)),
-			None => return (Vec3::zero(), None, Vec3::zero()),
-		};
-
-		(dir, li, object_point)
+		self.check_hit_index(&ray, index)
 	}
 	fn get_samplable(&self) -> &[usize] {
 		&self.lights

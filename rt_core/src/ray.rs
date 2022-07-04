@@ -82,22 +82,19 @@ impl Ray {
 		};
 
 		let light_obj = bvh.get_object(light_index).unwrap();
+		let wi = light_obj.sample_visible_from_point(hit.point);
+		let ray = Ray::new(hit.point, wi, 0.0);
 
 		// sample light
-		let (wi, light_colour, light_point) = bvh.sample_object(hit, light_index);
-
-		let pdf_light = light_obj.scattering_pdf(hit, wi, light_point);
-		if let Some(light_colour) = light_colour {
+		if let Some(si) = bvh.check_hit_index(&ray, light_index) {
+			let pdf_light = light_obj.scattering_pdf(hit, wi, si.hit.point);
 			if pdf_light != 0.0 {
-				let scattering_pdf = mat.scattering_pdf(hit.point, wi, hit.normal);
+				let scattering_pdf = mat.scattering_pdf(hit, wo, wi);
 
 				let weight = power_heuristic(pdf_light, scattering_pdf);
-
 				let f = mat.eval(hit, wo, wi);
 
-				if light_colour != Vec3::zero() {
-					direct_lighting += light_colour * f * weight / pdf_light;
-				}
+				direct_lighting += si.material.get_emission(&si.hit, wi) * f * weight / pdf_light;
 			}
 		}
 
@@ -112,7 +109,7 @@ impl Ray {
 		};
 
 		// calculate pdfs
-		let scattering_pdf = mat.scattering_pdf(hit.point, ray.direction, hit.normal);
+		let scattering_pdf = mat.scattering_pdf(hit, wo, ray.direction);
 		if scattering_pdf != 0.0 {
 			let light_pdf = light_obj.scattering_pdf(hit, ray.direction, int_point);
 			if light_pdf != 0.0 {
@@ -164,7 +161,7 @@ impl Ray {
 				// add bxdf contribution
 				if !mat.is_delta() {
 					throughput *= mat.eval(hit, wo, ray.direction)
-						/ mat.scattering_pdf(wo, ray.direction, hit.normal);
+						/ mat.scattering_pdf(hit, wo, ray.direction);
 				} else {
 					throughput *= mat.eval(hit, wo, ray.direction);
 				}

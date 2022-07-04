@@ -47,8 +47,8 @@ where
 
 		false
 	}
-	fn scattering_pdf(&self, _: Vec3, wi: Vec3, normal: Vec3) -> Float {
-		normal.dot(wi).max(0.0) / PI
+	fn scattering_pdf(&self, hit: &Hit, _: Vec3, wi: Vec3) -> Float {
+		hit.normal.dot(wi).max(0.0) / PI
 	}
 	fn eval(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
 		self.texture.colour_value(wo, hit.point)

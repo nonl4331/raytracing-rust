@@ -25,7 +25,7 @@ pub fn derive_scatter(tokens: TokenStream) -> TokenStream {
 		(quote!(ls_chance(&self) -> Float), quote!(ls_chance())),
 		(quote!(is_delta(&self) -> bool), quote!(is_delta())),
 		(
-			quote!(scattering_pdf(&self, __one: Vec3, __two: Vec3, __three: Vec3) -> Float),
+			quote!(scattering_pdf(&self, __one: &Hit, __two: Vec3, __three: Vec3) -> Float),
 			quote!(scattering_pdf(__one, __two, __three)),
 		),
 		(
@@ -125,14 +125,13 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 			quote!(does_int(&self, __one: &Ray) -> bool),
 			quote!(does_int(__one)),
 		),
-		(quote!(requires_uv(&self) -> bool), quote!(requires_uv())),
 		(
 			quote!(get_uv(&self, __one: Vec3) -> Option<Vec2>),
 			quote!(get_uv(__one)),
 		),
 		(quote!(get_sample(&self) -> Vec3), quote!(get_sample())),
 		(
-			quote!(sample_visible_from_point(&self, __one: Vec3) -> (Vec3, Vec3, Vec3)),
+			quote!(sample_visible_from_point(&self, __one: Vec3) -> Vec3),
 			quote!(sample_visible_from_point(__one)),
 		),
 		(quote!(area(&self) -> Float), quote!(area())),
