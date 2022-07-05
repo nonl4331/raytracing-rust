@@ -1,7 +1,8 @@
 use rand::Rng;
 use rayon::prelude::*;
 use rt_core::{
-	AccelerationStructure, Camera, Float, NoHit, Primitive, Ray, Sampler, SamplerProgress, Scatter,
+	AccelerationStructure, Camera, Float, NoHit, Primitive, Ray, RenderMethod, RenderOptions,
+	Sampler, SamplerProgress, Scatter,
 };
 
 pub struct RandomSampler;
@@ -9,8 +10,7 @@ pub struct RandomSampler;
 impl Sampler for RandomSampler {
 	fn sample_image<C, P, M, T, F, A, S>(
 		&self,
-		samples_per_pixel: u64,
-		dimensions: (u64, u64),
+		render_options: RenderOptions,
 		camera: &C,
 		sky: &S,
 		acceleration_structure: &A,
@@ -24,7 +24,7 @@ impl Sampler for RandomSampler {
 		S: NoHit + Send + Sync,
 	{
 		let channels = 3;
-		let pixel_num = dimensions.0 * dimensions.1;
+		let pixel_num = render_options.width * render_options.height;
 
 		let mut accumulator_buffers = (
 			SamplerProgress::new(pixel_num, channels),
@@ -34,7 +34,7 @@ impl Sampler for RandomSampler {
 		let pixel_chunk_size = 10000;
 		let chunk_size = pixel_chunk_size * channels;
 
-		for i in 0..samples_per_pixel {
+		for i in 0..render_options.samples_per_pixel {
 			let (previous, current) = if i % 2 == 0 {
 				(&accumulator_buffers.0, &mut accumulator_buffers.1)
 			} else {
@@ -53,16 +53,23 @@ impl Sampler for RandomSampler {
 							for chunk_pixel_i in 0..(chunk.len() / 3) {
 								let pixel_i =
 									chunk_pixel_i as u64 + pixel_chunk_size * chunk_i as u64;
-								let x = pixel_i as u64 % dimensions.0;
-								let y = (pixel_i as u64 - x) / dimensions.0;
-								let u =
-									(rng.gen_range(0.0..1.0) + x as Float) / dimensions.0 as Float;
+								let x = pixel_i as u64 % render_options.width;
+								let y = (pixel_i as u64 - x) / render_options.width;
+								let u = (rng.gen_range(0.0..1.0) + x as Float)
+									/ render_options.width as Float;
 								let v = 1.0
 									- (rng.gen_range(0.0..1.0) + y as Float)
-										/ dimensions.1 as Float;
+										/ render_options.height as Float;
 
 								let mut ray = camera.get_ray(u, v); // remember to add le DOF
-								let result = Ray::get_colour(&mut ray, sky, acceleration_structure);
+								let result = match render_options.render_method {
+									RenderMethod::Naive => {
+										Ray::get_colour_naive(&mut ray, sky, acceleration_structure)
+									}
+									RenderMethod::MIS => {
+										Ray::get_colour(&mut ray, sky, acceleration_structure)
+									}
+								};
 
 								chunk[chunk_pixel_i * channels as usize] = result.0.x;
 								chunk[chunk_pixel_i * channels as usize + 1] = result.0.y;
@@ -82,13 +89,13 @@ impl Sampler for RandomSampler {
 			}
 		}
 
-		let (previous, _) = if samples_per_pixel % 2 == 0 {
+		let (previous, _) = if render_options.samples_per_pixel % 2 == 0 {
 			(&accumulator_buffers.0, &mut accumulator_buffers.1)
 		} else {
 			(&accumulator_buffers.1, &mut accumulator_buffers.0)
 		};
 		match presentation_update.as_mut() {
-			Some((ref mut data, f)) => f(data, previous, samples_per_pixel),
+			Some((ref mut data, f)) => f(data, previous, render_options.samples_per_pixel),
 			None => (),
 		}
 	}

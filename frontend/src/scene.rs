@@ -1,5 +1,5 @@
 use implementations::{SimpleCamera, Sky, Texture};
-use rt_core::{AccelerationStructure, Primitive, Sampler, SamplerProgress, Scatter};
+use rt_core::{AccelerationStructure, Primitive, RenderOptions, Sampler, SamplerProgress, Scatter};
 use std::{marker::PhantomData, sync::Arc};
 
 pub struct Scene<
@@ -40,14 +40,11 @@ where
 	}
 	pub fn generate_image_threaded<D>(
 		&self,
-		width: u64,
-		height: u64,
-		samples: u64,
+		render_options: RenderOptions,
 		presentation_update: Option<(&mut D, impl Fn(&mut D, &SamplerProgress, u64))>,
 	) {
 		self.sampler.sample_image(
-			samples,
-			(width, height),
+			render_options,
 			&*self.camera,
 			&*self.sky,
 			&*self.acceleration_structure,

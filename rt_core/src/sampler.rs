@@ -3,8 +3,7 @@ use crate::{AccelerationStructure, Float, Primitive, Ray, Scatter, Vec3};
 pub trait Sampler {
 	fn sample_image<C, P, M, T, F, A, S>(
 		&self,
-		_samples_per_pixel: u64,
-		_image_dimensions: (u64, u64),
+		_render_options: RenderOptions,
 		_camera: &C,
 		_sky: &S,
 		_acceleration_structure: &A,
@@ -16,6 +15,31 @@ pub trait Sampler {
 		F: Fn(&mut T, &SamplerProgress, u64),
 		A: AccelerationStructure<P, M> + Send + Sync,
 		S: NoHit + Send + Sync;
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct RenderOptions {
+	pub samples_per_pixel: u64,
+	pub render_method: RenderMethod,
+	pub width: u64,
+	pub height: u64,
+}
+
+impl Default for RenderOptions {
+	fn default() -> Self {
+		Self {
+			samples_per_pixel: 100,
+			render_method: RenderMethod::MIS,
+			width: 1920,
+			height: 1080,
+		}
+	}
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum RenderMethod {
+	Naive,
+	MIS,
 }
 
 pub struct SamplerProgress {

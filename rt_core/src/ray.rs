@@ -189,4 +189,74 @@ impl Ray {
 		}
 		(output, ray_count)
 	}
+
+	pub fn get_colour_naive<
+		A: AccelerationStructure<P, M>,
+		P: Primitive<M>,
+		M: Scatter,
+		S: NoHit,
+	>(
+		ray: &mut Ray,
+		sky: &S,
+		bvh: &A,
+	) -> (Colour, u64) {
+		let (mut throughput, mut output) = (Colour::one(), Colour::zero());
+		let mut depth = 0;
+		let mut ray_count = 0;
+
+		while depth < MAX_DEPTH {
+			let hit_info = bvh.check_hit(ray);
+
+			ray_count += 1;
+
+			if let Some((surface_intersection, _index)) = hit_info {
+				let (hit, mat) = (&surface_intersection.hit, &surface_intersection.material);
+
+				let wo = ray.direction;
+
+				let emission = mat.get_emission(hit, wo);
+
+				let exit = mat.scatter_ray(ray, hit);
+
+				if depth == 0 {
+					output += throughput * emission;
+				}
+
+				if exit {
+					output += throughput * emission;
+					break;
+				}
+
+				//add light contribution
+				ray_count += 1;
+
+				// add bxdf contribution
+				if !mat.is_delta() {
+					throughput *= mat.eval(hit, wo, ray.direction)
+						/ mat.scattering_pdf(hit, wo, ray.direction);
+				} else {
+					throughput *= mat.eval(hit, wo, ray.direction);
+				}
+
+				// russian roulette
+				if depth > RUSSIAN_ROULETTE_THRESHOLD {
+					let p = throughput.component_max();
+					let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+					if rng.gen::<Float>() > p {
+						break;
+					}
+					throughput /= p;
+				}
+
+				depth += 1;
+			} else {
+				output += throughput * sky.get_colour(ray);
+				break;
+			}
+		}
+		if output.contains_nan() || !output.is_finite() {
+			return (Vec3::zero(), ray_count);
+		}
+		(output, ray_count)
+	}
 }

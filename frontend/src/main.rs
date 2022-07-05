@@ -78,17 +78,15 @@ fn main() {
 	let args: Vec<String> = env::args().collect();
 
 	if let Some((scene, parameters)) = parameters::process_args(args) {
+		let (render_options, filename) = (parameters.render_options, parameters.filename.clone());
 		if !parameters.gui {
-			let (width, height, samples, filename) = (
-				parameters.width,
-				parameters.height,
-				parameters.samples,
-				parameters.filename.clone(),
+			let start = print_render_start(
+				render_options.width,
+				render_options.height,
+				Some(render_options.samples_per_pixel),
 			);
 
-			let start = print_render_start(width, height, Some(samples));
-
-			let mut image = SamplerProgress::new(width * height, 3);
+			let mut image = SamplerProgress::new(render_options.width * render_options.height, 3);
 			let progress_bar_output =
 				|sp: &mut SamplerProgress, previous: &SamplerProgress, i: u64| {
 					sp.samples_completed += 1;
@@ -101,15 +99,10 @@ fn main() {
 							*pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
 						});
 
-					get_progress_output(sp.samples_completed, parameters.samples);
+					get_progress_output(sp.samples_completed, render_options.samples_per_pixel);
 				};
 
-			scene.generate_image_threaded(
-				width,
-				height,
-				samples,
-				Some((&mut image, progress_bar_output)),
-			);
+			scene.generate_image_threaded(render_options, Some((&mut image, progress_bar_output)));
 
 			let output = &image;
 
@@ -126,26 +119,29 @@ fn main() {
 
 			match filename {
 				Some(filename) => {
-					save_u8_to_image(width, height, output, filename, false);
+					save_u8_to_image(
+						render_options.width,
+						render_options.height,
+						output,
+						filename,
+						false,
+					);
 				}
 				None => {}
 			}
 		} else {
-			let (width, height, total_samples, filename) = (
-				parameters.width,
-				parameters.height,
-				parameters.samples,
-				parameters.filename,
-			);
-
 			let required_extensions = vulkano_win::required_extensions();
 			let instance = Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
-			let gui = Gui::new(&instance, width as u32, height as u32);
+			let gui = Gui::new(
+				&instance,
+				render_options.width as u32,
+				render_options.height as u32,
+			);
 
 			let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
 				gui.event_loop.as_ref().map(|el| el.create_proxy());
 			let iter = [0.0f32, 0.0, 0.0, 0.0]
-				.repeat((width * height) as usize)
+				.repeat((render_options.width * render_options.height) as usize)
 				.into_iter();
 			let buffer = CpuAccessibleBuffer::from_iter(
 				gui.device.clone(),
@@ -174,14 +170,14 @@ fn main() {
 				buffer.clone(),
 				gui.cpu_rendering.copy_to_first.clone(),
 				samples.clone(),
-				total_samples,
+				render_options.samples_per_pixel,
 				ray_count.clone(),
 				event_loop_proxy.unwrap(),
 			);
 
 			let image_copy_finished = data.to_sc.clone();
 
-			let start = print_render_start(width, height, None);
+			let start = print_render_start(render_options.width, render_options.height, None);
 
 			let render_canceled = Arc::new(AtomicBool::new(true));
 
@@ -195,9 +191,7 @@ fn main() {
 				let to_sc = data.to_sc.clone();
 
 				scene.generate_image_threaded(
-					width,
-					height,
-					total_samples,
+					render_options,
 					Some((
 						&mut data,
 						|data: &mut Data, previous: &SamplerProgress, i: u64| {
@@ -216,8 +210,8 @@ fn main() {
 
 				save_file(
 					moved_filename,
-					width,
-					height,
+					render_options.width,
+					render_options.height,
 					&*buffer.read().unwrap(),
 					to_sc,
 				);
@@ -233,8 +227,8 @@ fn main() {
 
 				save_file(
 					filename,
-					width,
-					height,
+					render_options.width,
+					render_options.height,
 					&*buffer.read().unwrap(),
 					image_copy_finished,
 				);

@@ -1,39 +1,21 @@
 use crate::generate::SceneType;
 use chrono::Local;
 use implementations::split::SplitType;
-use rt_core::Float;
+use rt_core::{Float, RenderMethod, RenderOptions};
 use std::process;
 
-const SAMPLES_DEFAULT: u64 = 30;
-const WIDTH_DEFAULT: u64 = 800;
-const HEIGHT_DEFAULT: u64 = 600;
 const BVH_DEFAULT: SplitType = SplitType::Sah;
 
 pub struct Parameters {
-	pub samples: u64,
-	pub width: u64,
-	pub height: u64,
+	pub render_options: RenderOptions,
 	pub gui: bool,
 	pub filename: Option<String>,
 }
 
 impl Parameters {
-	pub fn new(
-		samples: Option<u64>,
-		width: Option<u64>,
-		height: Option<u64>,
-		gui: bool,
-		filename: Option<String>,
-	) -> Self {
-		let samples = match samples.unwrap_or(SAMPLES_DEFAULT) {
-			0 => u64::MAX,
-			_ => samples.unwrap_or(SAMPLES_DEFAULT),
-		};
-
-		Parameters {
-			samples,
-			width: width.unwrap_or(WIDTH_DEFAULT),
-			height: height.unwrap_or(HEIGHT_DEFAULT),
+	pub fn new(render_options: RenderOptions, gui: bool, filename: Option<String>) -> Self {
+		Self {
+			render_options,
 			gui,
 			filename,
 		}
@@ -67,6 +49,7 @@ pub fn process_args(args: Vec<String>) -> Option<(SceneType, Parameters)> {
 	let mut filename = None;
 	let mut bvh_type = None;
 	let mut seed = None;
+	let mut render_method = None;
 	let mut gui = true;
 
 	if args.len() == 1 {
@@ -143,6 +126,9 @@ pub fn process_args(args: Vec<String>) -> Option<(SceneType, Parameters)> {
 				"--output" => {
 					filename = get_filename(&args, arg_i + 1);
 				}
+				"-R" | "--render_type" => {
+					render_method = get_render_method(&args, arg_i + 1);
+				}
 				"-J" => {
 					seed = Some(get_seed(&args, arg_i + 1));
 				}
@@ -155,12 +141,17 @@ pub fn process_args(args: Vec<String>) -> Option<(SceneType, Parameters)> {
 	}
 	match scene_index {
 		Some(scene_index) => {
-			let aspect_ratio =
-				width.unwrap_or(WIDTH_DEFAULT) as Float / height.unwrap_or(HEIGHT_DEFAULT) as Float;
+			let mut render_options: RenderOptions = Default::default();
+			render_options.samples_per_pixel = samples.unwrap_or(render_options.samples_per_pixel);
+			render_options.width = width.unwrap_or(render_options.width);
+			render_options.height = height.unwrap_or(render_options.height);
+			render_options.render_method = render_method.unwrap_or(render_options.render_method);
+
+			let aspect_ratio = render_options.width as Float / render_options.height as Float;
 			let bvh_type = bvh_type.unwrap_or(BVH_DEFAULT);
 			let scene = get_scene(&args, scene_index, bvh_type, aspect_ratio, seed);
 
-			let parameters = Parameters::new(samples, width, height, gui, filename);
+			let parameters = Parameters::new(render_options, gui, filename);
 			Some((scene, parameters))
 		}
 		None => None,
@@ -385,6 +376,25 @@ fn get_seed(args: &[String], index: usize) -> String {
 			process::exit(0);
 		}
 	}
+}
+
+fn get_render_method(args: &[String], index: usize) -> Option<RenderMethod> {
+	Some(match args.get(index) {
+		Some(string) => match &string.to_ascii_lowercase()[..] {
+			"naive" => RenderMethod::Naive,
+			"mis" => RenderMethod::MIS,
+			_val => {
+				println!("Unsupported render method: {}", _val);
+				println!("Do -H or --help for more information.");
+				process::exit(0);
+			}
+		},
+		None => {
+			println!("Please specify a valid render method!");
+			println!("Do -H or --help for more information.");
+			process::exit(0);
+		}
+	})
 }
 
 fn get_filename(args: &[String], index: usize) -> Option<String> {
