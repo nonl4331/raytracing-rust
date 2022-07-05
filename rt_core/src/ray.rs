@@ -83,7 +83,9 @@ impl Ray {
 
 		let light_obj = bvh.get_object(light_index).unwrap();
 		let wi = light_obj.sample_visible_from_point(hit.point);
-		let ray = Ray::new(hit.point, wi, 0.0);
+		let mut ray = Ray::new(hit.point, wi, 0.0);
+		mat.scatter_ray(&mut ray, hit); // This is done due to error bounds on point
+		ray.direction = wi;
 
 		// sample light
 		if let Some(si) = bvh.check_hit_index(&ray, light_index) {
