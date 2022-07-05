@@ -47,8 +47,7 @@ where
 	) {
 		self.sampler.sample_image(
 			samples,
-			width,
-			height,
+			(width, height),
 			&*self.camera,
 			&*self.sky,
 			&*self.acceleration_structure,

@@ -11,8 +11,6 @@ where
 
 	fn check_hit(&self, ray: &Ray) -> Option<(SurfaceIntersection<M>, usize)>;
 
-	fn number_nodes(&self) -> usize;
-
 	fn get_samplable(&self) -> &[usize] {
 		unimplemented!()
 	}

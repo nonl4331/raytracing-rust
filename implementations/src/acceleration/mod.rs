@@ -81,7 +81,9 @@ where
 
 		bvh
 	}
-
+	pub fn number_nodes(&self) -> usize {
+		self.nodes.len()
+	}
 	fn build_bvh(
 		&mut self,
 		ordered_primitives: &mut Vec<usize>,
@@ -172,9 +174,6 @@ where
 			}
 		}
 		offset_len
-	}
-	pub fn number_nodes(&self) -> usize {
-		self.nodes.len()
 	}
 }
 
@@ -280,9 +279,6 @@ where
 		}
 		hit
 	}
-	fn number_nodes(&self) -> usize {
-		self.nodes.len()
-	}
 	fn get_samplable(&self) -> &[usize] {
 		&self.lights
 	}
@@ -323,113 +319,3 @@ impl Node {
 		}
 	}
 }
-
-/*#[cfg(test)]
-mod tests {
-	use crate::acceleration::PrimitiveInfo;
-	use crate::AllPrimitives;
-	use crate::AllTextures;
-	use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
-	use rand_seeder::Seeder;
-	use rt_core::Float;
-	use rt_core::Vec3;
-
-	#[test]
-	fn primitive_info_new() {
-		let sphere = sphere!(colour!(1), 0.2, &refract!(1, 1, 1, 1.5));
-		let info = PrimitiveInfo::new(3, &sphere);
-		assert!(
-			info.max == 1.2 * Vec3::one()
-				&& info.min == 0.8 * Vec3::one()
-				&& info.center == Vec3::one()
-				&& info.index == 3
-		);
-	}
-
-	#[test]
-	fn node_containment() {
-		let mut primitives: Vec<AllPrimitives<MaterialEnum<AllTextures>>> = Vec::new();
-
-		let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
-
-		let sphere_one = sphere!(0, 1, 0, 1, &refract!(&solid_colour!(colour!(1)), 1.5));
-
-		let sphere_two = sphere!(-4, 1, 0, 1, &diffuse!(0.4, 0.2, 0.1, 0.5));
-
-		let sphere_three = sphere!(4, 1, 0, 1, &reflect!(&solid_colour!(0.7, 0.6, 0.5), 0));
-
-		primitives.push(ground);
-		primitives.push(sphere_one);
-		primitives.push(sphere_two);
-		primitives.push(sphere_three);
-
-		let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-
-		let seed: String = std::iter::repeat(())
-			.map(|()| rng.sample(Alphanumeric))
-			.map(char::from)
-			.take(32)
-			.collect();
-
-		println!("\tseed: {}", seed);
-		let mut rng: SmallRng = Seeder::from(seed).make_rng();
-
-		for a in -11..11 {
-			for b in -11..11 {
-				let center = position!(
-					a as Float + 0.9 * rng.gen::<Float>(),
-					0.2,
-					b as Float + 0.9 * rng.gen::<Float>()
-				);
-
-				if (center - position!(4.0, 0.2, 0.0)).mag() > 0.9 {
-					let choose_material: Float = rng.gen();
-					let colour =
-						colour!(rng.gen::<Float>(), rng.gen::<Float>(), rng.gen::<Float>());
-
-					let sphere;
-
-					if choose_material < 0.8 {
-						sphere = sphere!(center, 0.2, &diffuse!(&solid_colour!(colour), 0.5));
-					} else if choose_material < 0.95 {
-						sphere = sphere!(
-							center,
-							0.2,
-							&reflect!(&solid_colour!(colour), rng.gen::<Float>() / 2.0)
-						);
-					} else {
-						sphere = sphere!(center, 0.2, &refract!(&solid_colour!(colour!(1)), 1.5));
-					}
-					primitives.push(sphere);
-				}
-			}
-		}
-
-		let camera = camera!(
-			position!(13, 2, -3),
-			position!(0, 0, 0),
-			position!(0, 1, 0),
-			29,
-			16.0 / 9.0,
-			0.1,
-			10
-		);
-
-		let bvh = bvh!(primitives, SplitType::Sah);
-
-		let scene = scene!(camera, sky!(), random_sampler!(), bvh);
-
-		let bvh = scene.acceleration_structure;
-
-		for node in &bvh.nodes {
-			for i in node.primitive_offset..(node.primitive_offset + node.number_primitives) {
-				let aabb = bvh.primitives[i].get_aabb().unwrap();
-				assert!(
-					(node.bounds.max - aabb.max).component_min() >= 0.0
-						&& (aabb.min - node.bounds.min).component_min() >= 0.0
-				);
-			}
-		}
-	}
-}
-*/

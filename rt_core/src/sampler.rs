@@ -4,8 +4,7 @@ pub trait Sampler {
 	fn sample_image<C, P, M, T, F, A, S>(
 		&self,
 		_samples_per_pixel: u64,
-		_image_width: u64,
-		_image_height: u64,
+		_image_dimensions: (u64, u64),
 		_camera: &C,
 		_sky: &S,
 		_acceleration_structure: &A,

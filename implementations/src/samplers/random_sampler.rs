@@ -10,8 +10,7 @@ impl Sampler for RandomSampler {
 	fn sample_image<C, P, M, T, F, A, S>(
 		&self,
 		samples_per_pixel: u64,
-		width: u64,
-		height: u64,
+		dimensions: (u64, u64),
 		camera: &C,
 		sky: &S,
 		acceleration_structure: &A,
@@ -25,7 +24,7 @@ impl Sampler for RandomSampler {
 		S: NoHit + Send + Sync,
 	{
 		let channels = 3;
-		let pixel_num = width * height;
+		let pixel_num = dimensions.0 * dimensions.1;
 
 		let mut accumulator_buffers = (
 			SamplerProgress::new(pixel_num, channels),
@@ -54,11 +53,13 @@ impl Sampler for RandomSampler {
 							for chunk_pixel_i in 0..(chunk.len() / 3) {
 								let pixel_i =
 									chunk_pixel_i as u64 + pixel_chunk_size * chunk_i as u64;
-								let x = pixel_i as u64 % width;
-								let y = (pixel_i as u64 - x) / width;
-								let u = (rng.gen_range(0.0..1.0) + x as Float) / width as Float;
-								let v =
-									1.0 - (rng.gen_range(0.0..1.0) + y as Float) / height as Float;
+								let x = pixel_i as u64 % dimensions.0;
+								let y = (pixel_i as u64 - x) / dimensions.0;
+								let u =
+									(rng.gen_range(0.0..1.0) + x as Float) / dimensions.0 as Float;
+								let v = 1.0
+									- (rng.gen_range(0.0..1.0) + y as Float)
+										/ dimensions.1 as Float;
 
 								let mut ray = camera.get_ray(u, v); // remember to add le DOF
 								let result = Ray::get_colour(&mut ray, sky, acceleration_structure);
