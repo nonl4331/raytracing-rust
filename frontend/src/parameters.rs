@@ -156,6 +156,8 @@ fn display_help() {
 	println!("-J [seed], --seed [seed]");
 	println!("-G [true/false] --gui [true/false]");
 	println!("\t Show render preview while rendering");
+	println!("-R [render_method], --render_method [render_method]");
+	println!("\t Possible options: mis, naive");
 	println!("Seed for scene generation (if supported).")
 }
 
@@ -167,17 +169,6 @@ fn get_list() {
 	println!("Sky: Yes");
 	println!("Motion Blur: Yes");
 	println!("-------------------");
-	println!("2: Name goes here");
-	println!("-------------------");
-	println!("Objects: TODO");
-	println!("Sky: Yes");
-	println!("Motion Blur: No");
-	println!("-------------------");
-	println!("3: Name goes here");
-	println!("-------------------");
-	println!("Objects: TODO");
-	println!("Sky: Yes");
-	println!("Motion Blur: No");
 	println!("-------------------");
 	println!("4: Overshadowed");
 	println!("-------------------");
@@ -185,24 +176,11 @@ fn get_list() {
 	println!("Sky: No");
 	println!("Motion Blur: No");
 	println!("-------------------");
-	println!("5: WIP");
-	println!("-------------------");
-	println!("Objects: 3");
-	println!("Sky: Yes");
-	println!("Motion Blur: No");
-	println!("-------------------");
 	println!("-------------------");
 	println!("6: Glass Dragon");
 	println!("-------------------");
 	println!("Objects: 3");
 	println!("Sky: No");
-	println!("Motion Blur: No");
-	println!("-------------------");
-	println!("-------------------");
-	println!("7: Bunny");
-	println!("-------------------");
-	println!("Objects: 2");
-	println!("Sky: Yes");
 	println!("Motion Blur: No");
 	println!("-------------------");
 	println!("-------------------");
@@ -221,57 +199,33 @@ fn get_info(args: &[String], index: usize) {
 			println!("Do -H or --help for more information.");
 			process::exit(0);
 		}
-		Some(string) => match &string[..] {
-			"1" => {
-				println!("1(m): Marbles");
+		Some(string) => match &string.to_ascii_lowercase()[..] {
+			"marbles" => {
+				println!("Marbles");
 				println!("Objects: 4-125");
 				println!("Sky: Yes");
 				println!("Motion Blur: Yes");
 			}
-			"1m" => {
-				println!("1(m): Marbles");
-				println!("Objects: 4-125");
-				println!("Sky: Yes");
-				println!("Motion Blur: Yes");
-			}
-			"2" => {
-				println!("2: TODO");
-				println!("Objects: TODO");
-				println!("Sky: Yes");
-				println!("Motion Blur: No");
-			}
-			"3" => {
-				println!("3: TODO");
-				println!("Objects: TODO");
-				println!("Sky: Yes");
-				println!("Motion Blur: No");
-			}
-			"4" => {
-				println!("4: Overshadowed");
+			"overshadowed" => {
+				println!("Overshadowed");
 				println!("Objects: 3");
 				println!("Sky: No");
 				println!("Motion Blur: No");
 			}
-			"5" => {
-				println!("5: WIP");
-				println!("Objects: 3");
-				println!("Sky: Yes");
-				println!("Motion Blur: No");
-			}
-			"6" => {
-				println!("6: Glass Dragon");
+			"dragon" => {
+				println!("Glass Dragon");
 				println!("Objects: 3");
 				println!("Sky: No");
 				println!("Motion Blur: No");
 			}
-			"7" => {
-				println!("7: Bunny");
-				println!("Objects: 2");
-				println!("Sky: Yes");
+			"cornell" => {
+				println!("Cornell Box");
+				println!("Objects: 6");
+				println!("Sky: No");
 				println!("Motion Blur: No");
 			}
-			"8" => {
-				println!("8: Cornell Box");
+			"furnace" => {
+				println!("Furnace Test");
 				println!("Objects: 6");
 				println!("Sky: No");
 				println!("Motion Blur: No");
@@ -304,24 +258,9 @@ fn get_scene(
 			"classic" => {
 				scene!(classic, bvh_type, aspect_ratio, seed)
 			}
-			/*"2" => {
-				scene!(scene_two, bvh_type, aspect_ratio)
-			}
-			"3" => {
-				scene!(scene_three, bvh_type, aspect_ratio)
-			}*/
 			"overshadowed" => {
 				scene!(overshadowed, bvh_type, aspect_ratio)
 			}
-			/*"5" => {
-				scene!(scene_five, bvh_type, aspect_ratio)
-			}
-			"6" => {
-				scene!(scene_six, bvh_type, aspect_ratio)
-			}
-			"7" => {
-				scene!(scene_seven, bvh_type, aspect_ratio)
-			}*/
 			"cornell" => {
 				scene!(cornell, bvh_type, aspect_ratio)
 			}
