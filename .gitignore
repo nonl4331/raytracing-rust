@@ -8,8 +8,8 @@
 # See https://doc.rust-lang.org/cargo/guide/cargo-toml-vs-cargo-lock.html
 **/Cargo.lock
 
-# Don't include any generated images from root dir
-/*.png
+# Don't include any images
+**/*.png
 
 # files in res can be downloaded with a script
 /res/

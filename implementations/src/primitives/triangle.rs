@@ -289,26 +289,27 @@ where
 	}
 }
 impl<M: Scatter> AABound for Triangle<M> {
-	fn get_aabb(&self) -> Option<AABB> {
-		Some(AABB::new(
+	fn get_aabb(&self) -> AABB {
+		AABB::new(
 			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2]))
-				- Vec3::one() * 0.001,
-			self.points[0].max_by_component(self.points[1].max_by_component(self.points[2])),
-		))
+				- Vec3::one() * 0.1,
+			self.points[0].max_by_component(self.points[1].max_by_component(self.points[2]))
+				+ Vec3::one() * 0.1,
+		)
 	}
 }
 
 impl<M: Scatter> AABound for MeshTriangle<M> {
-	fn get_aabb(&self) -> Option<AABB> {
+	fn get_aabb(&self) -> AABB {
 		let points = [
 			(*self.mesh).vertices[self.point_indices[0]],
 			(*self.mesh).vertices[self.point_indices[1]],
 			(*self.mesh).vertices[self.point_indices[2]],
 		];
 
-		Some(AABB::new(
-			points[0].min_by_component(points[1].min_by_component(points[2])) - Vec3::one() * 0.001,
-			points[0].max_by_component(points[1].max_by_component(points[2])),
-		))
+		AABB::new(
+			points[0].min_by_component(points[1].min_by_component(points[2])) - Vec3::one() * 0.1,
+			points[0].max_by_component(points[1].max_by_component(points[2])) + Vec3::one() * 0.1,
+		)
 	}
 }

@@ -172,10 +172,10 @@ where
 }
 
 impl<M: Scatter> AABound for Sphere<M> {
-	fn get_aabb(&self) -> Option<AABB> {
-		Some(AABB::new(
+	fn get_aabb(&self) -> AABB {
+		AABB::new(
 			self.center - self.radius * Vec3::one(),
 			self.center + self.radius * Vec3::one(),
-		))
+		)
 	}
 }

@@ -26,7 +26,7 @@ pub struct PrimitiveInfo {
 
 impl PrimitiveInfo {
 	fn new<P: Primitive<M> + AABound, M: Scatter>(index: usize, primitive: &P) -> PrimitiveInfo {
-		let aabb = primitive.get_aabb().unwrap();
+		let aabb = primitive.get_aabb();
 		let min = aabb.min;
 		let max = aabb.max;
 		PrimitiveInfo {

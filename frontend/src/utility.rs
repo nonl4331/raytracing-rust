@@ -88,7 +88,7 @@ pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
 
 pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: String, alpha: bool) {
 	let split = filename.split('.').collect::<Vec<_>>();
-	if split.len() != 1 {
+	if split.len() != 2 {
 		println!("Invalid filename: {filename}");
 		process::exit(0);
 	}

@@ -146,7 +146,7 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 	]
 	.into_iter();
 
-	let func_name_aabound = [(quote!(get_aabb(&self) -> Option<AABB>), quote!(get_aabb()))];
+	let func_name_aabound = [(quote!(get_aabb(&self) -> AABB), quote!(get_aabb()))];
 
 	let variant_names = fields
 		.iter()

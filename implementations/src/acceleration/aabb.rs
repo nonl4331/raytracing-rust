@@ -1,7 +1,7 @@
 use rt_core::{Float, Ray, Vec3};
 
 pub trait AABound {
-	fn get_aabb(&self) -> Option<AABB>;
+	fn get_aabb(&self) -> AABB;
 }
 
 #[derive(Copy, Clone, Debug)]

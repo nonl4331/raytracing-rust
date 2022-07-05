@@ -245,6 +245,22 @@ macro_rules! aarect {
 
 		vec
 	}};
+	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr, $cp:expr) => {{
+		let point_three =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
+		let point_four =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
+		let point_one =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
+		let point_two =
+			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+		let mut vec = Vec::new();
+		let nr = 0.5 * (point_one + point_two) - $cp;
+		vec.push(triangle!(point_one, point_two, point_three, $material, nr));
+		vec.push(triangle!(point_one, point_two, point_four, $material, nr));
+
+		vec
+	}};
 	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr) => {{
 		let point_three =
 			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
@@ -354,6 +370,7 @@ macro_rules! rect {
 #[macro_export]
 macro_rules! aacuboid {
 	($point_one:expr, $point_two:expr, $material:expr) => {{
+		let center_point = 0.5 * ($point_one + $point_two);
 		let mut vec = Vec::new();
 		vec.extend(aarect!(
 			$point_one.x,
@@ -363,6 +380,7 @@ macro_rules! aacuboid {
 			$point_one.z,
 			implementations::Axis::Z,
 			$material
+			center_point
 		));
 		vec.extend(aarect!(
 			$point_one.x,
@@ -372,6 +390,7 @@ macro_rules! aacuboid {
 			$point_two.z,
 			implementations::Axis::Z,
 			$material
+			center_point
 		));
 
 		vec.extend(aarect!(
@@ -382,6 +401,7 @@ macro_rules! aacuboid {
 			$point_one.y,
 			implementations::Axis::Y,
 			$material
+			center_point
 		));
 		vec.extend(aarect!(
 			$point_one.x,
@@ -401,6 +421,7 @@ macro_rules! aacuboid {
 			$point_one.x,
 			implementations::Axis::X,
 			$material
+			center_point
 		));
 		vec.extend(aarect!(
 			$point_one.y,
@@ -410,11 +431,13 @@ macro_rules! aacuboid {
 			$point_two.x,
 			implementations::Axis::X,
 			$material
+			center_point
 		));
 		vec
 	}};
 	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $material:expr) => {{
 		let mut vec = Vec::new();
+		let center_point = 0.5 * (rt_core::Vec3::new($x1, $y1, $z1) + rt_core::Vec3::new($x2, $y2, $z2));
 		vec.extend(aarect!(
 			$x1,
 			$y1,
@@ -422,7 +445,8 @@ macro_rules! aacuboid {
 			$y2,
 			$z1,
 			&implementations::Axis::Z,
-			$material
+			$material,
+			center_point
 		));
 		vec.extend(aarect!(
 			$x1,
@@ -431,7 +455,8 @@ macro_rules! aacuboid {
 			$y2,
 			$z2,
 			&implementations::Axis::Z,
-			$material
+			$material,
+			center_point
 		));
 
 		vec.extend(aarect!(
@@ -441,7 +466,8 @@ macro_rules! aacuboid {
 			$z2,
 			$y1,
 			&implementations::Axis::Y,
-			$material
+			$material,
+			center_point
 		));
 		vec.extend(aarect!(
 			$x1,
@@ -450,7 +476,8 @@ macro_rules! aacuboid {
 			$z2,
 			$y2,
 			&implementations::Axis::Y,
-			$material
+			$material,
+			center_point
 		));
 
 		vec.extend(aarect!(
@@ -460,7 +487,8 @@ macro_rules! aacuboid {
 			$z2,
 			$x1,
 			&implementations::Axis::X,
-			$material
+			$material,
+			center_point
 		));
 		vec.extend(aarect!(
 			$y1,
@@ -469,7 +497,8 @@ macro_rules! aacuboid {
 			$z2,
 			$x2,
 			&implementations::Axis::X,
-			$material
+			$material,
+			center_point
 		));
 		vec
 	}};
@@ -662,6 +691,42 @@ macro_rules! triangle {
 			a.cross(b)
 		}
 		.normalised();
+
+		implementations::AllPrimitives::Triangle(implementations::Triangle::new(
+			[$point_one, $point_two, $point_three],
+			[normal; 3],
+			$material,
+		))
+	}};
+	($point_one:expr, $point_two:expr, $point_three:expr, $material:expr, $nr:expr) => {{
+		let mut normal = {
+			let a = $point_two - $point_one;
+			let b = $point_three - $point_one;
+			a.cross(b)
+		}
+		.normalised();
+
+		if normal.dot($nr) < 0.0 {
+			normal = -1.0 * normal;
+		}
+
+		implementations::AllPrimitives::Triangle(implementations::Triangle::new(
+			[$point_one, $point_two, $point_three],
+			[normal; 3],
+			$material,
+		))
+	}};
+	($point_one:expr, $point_two:expr, $point_three:expr, $normal_ray:expr, $material:expr) => {{
+		let mut normal = {
+			let a = $point_two - $point_one;
+			let b = $point_three - $point_one;
+			a.cross(b)
+		}
+		.normalised();
+
+		if normal.dot($normal_ray) < 0.0 {
+			normal = -normal;
+		}
 
 		implementations::AllPrimitives::Triangle(implementations::Triangle::new(
 			[$point_one, $point_two, $point_three],
