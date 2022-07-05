@@ -36,6 +36,12 @@ pub enum SplitType {
 	EqualCounts,
 }
 
+impl Default for SplitType {
+	fn default() -> Self {
+		SplitType::Sah
+	}
+}
+
 pub trait Split {
 	fn split(
 		&self,

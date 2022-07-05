@@ -4,8 +4,6 @@ use implementations::split::SplitType;
 use rt_core::{Float, RenderMethod, RenderOptions};
 use std::process;
 
-const BVH_DEFAULT: SplitType = SplitType::Sah;
-
 pub struct Parameters {
 	pub render_options: RenderOptions,
 	pub gui: bool,
@@ -78,61 +76,34 @@ pub fn process_args(args: Vec<String>) -> Option<(SceneType, Parameters)> {
 						println!("Invalid option {} for --gui", args[arg_i + 1]);
 					}
 				},
-				"-L" => {
+				"-L" | "--list" => {
 					get_list();
 				}
-				"--list" => {
-					get_list();
-				}
-				"-I" => {
+				"-I" | "--info" => {
 					get_info(&args, arg_i + 1);
 				}
-				"--info" => {
-					get_info(&args, arg_i + 1);
-				}
-				"-S" => {
+				"-S" | "--scene" => {
 					scene_index = Some(arg_i + 1);
 				}
-				"--scene" => {
-					scene_index = Some(arg_i + 1);
-				}
-				"-N" => {
+				"-N" | "--samples" => {
 					samples = Some(get_samples(&args, arg_i + 1));
 				}
-				"--samples" => {
-					samples = Some(get_samples(&args, arg_i + 1));
-				}
-				"-X" => {
+				"-X" | "--width" => {
 					width = Some(get_dimension(&args, arg_i + 1));
 				}
-				"--width" => {
-					width = Some(get_dimension(&args, arg_i + 1));
-				}
-				"-Y" => {
+				"-Y" | "--height" => {
 					height = Some(get_dimension(&args, arg_i + 1));
 				}
-				"--height" => {
-					height = Some(get_dimension(&args, arg_i + 1));
-				}
-				"-B" => {
+				"-B" | "--bvh" => {
 					bvh_type = Some(get_bvh_type(&args, arg_i + 1));
 				}
-				"--bvh" => {
-					bvh_type = Some(get_bvh_type(&args, arg_i + 1));
-				}
-				"-O" => {
-					filename = get_filename(&args, arg_i + 1);
-				}
-				"--output" => {
+				"-O" | "--output" => {
 					filename = get_filename(&args, arg_i + 1);
 				}
 				"-R" | "--render_type" => {
 					render_method = get_render_method(&args, arg_i + 1);
 				}
-				"-J" => {
-					seed = Some(get_seed(&args, arg_i + 1));
-				}
-				"--seed" => {
+				"-J" | "--seed" => {
 					seed = Some(get_seed(&args, arg_i + 1));
 				}
 				_ => {}
@@ -148,7 +119,7 @@ pub fn process_args(args: Vec<String>) -> Option<(SceneType, Parameters)> {
 			render_options.render_method = render_method.unwrap_or(render_options.render_method);
 
 			let aspect_ratio = render_options.width as Float / render_options.height as Float;
-			let bvh_type = bvh_type.unwrap_or(BVH_DEFAULT);
+			let bvh_type = bvh_type.unwrap_or_default();
 			let scene = get_scene(&args, scene_index, bvh_type, aspect_ratio, seed);
 
 			let parameters = Parameters::new(render_options, gui, filename);
