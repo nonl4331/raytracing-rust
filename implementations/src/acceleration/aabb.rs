@@ -1,3 +1,4 @@
+use crate::utility::gamma;
 use rt_core::{Float, Ray, Vec3};
 
 pub trait AABound {
@@ -12,26 +13,42 @@ pub struct AABB {
 
 impl AABB {
 	pub fn new(min: Vec3, max: Vec3) -> Self {
-		if (min.x >= max.x || min.y >= max.y || min.z >= max.z) && (min != max) {
-			panic!("Maximum value in AABB must be greater or equal to minimum!");
+		if min.x > max.x || min.y > max.y || min.z > max.z {
+			panic!("Maximum value in AABB must be greater than the minimum!");
 		}
 		AABB { min, max }
 	}
 
 	pub fn does_int(&self, ray: &Ray) -> bool {
-		let t1 = (self.min.x - ray.origin.x) * ray.d_inverse.x;
-		let t2 = (self.max.x - ray.origin.x) * ray.d_inverse.x;
+		let mut t1 = (self.min.x - ray.origin.x) * ray.d_inverse.x;
+		let mut t2 = (self.max.x - ray.origin.x) * ray.d_inverse.x;
+
+		if t1 > t2 {
+			std::mem::swap(&mut t1, &mut t2);
+		}
+		t2 *= 1.0 + 2.0 * gamma(3);
 
 		let tmin = t1.min(t2);
 		let tmax = t1.max(t2);
 
-		let t1 = (self.min.y - ray.origin.y) * ray.d_inverse.y;
-		let t2 = (self.max.y - ray.origin.y) * ray.d_inverse.y;
+		let mut t1 = (self.min.y - ray.origin.y) * ray.d_inverse.y;
+		let mut t2 = (self.max.y - ray.origin.y) * ray.d_inverse.y;
+
+		if t1 > t2 {
+			std::mem::swap(&mut t1, &mut t2);
+		}
+		t2 *= 1.0 + 2.0 * gamma(3);
 
 		let tmin = tmin.max(t1.min(t2));
 		let tmax = tmax.min(t1.max(t2));
-		let t1 = (self.min.z - ray.origin.z) * ray.d_inverse.z;
-		let t2 = (self.max.z - ray.origin.z) * ray.d_inverse.z;
+
+		let mut t1 = (self.min.z - ray.origin.z) * ray.d_inverse.z;
+		let mut t2 = (self.max.z - ray.origin.z) * ray.d_inverse.z;
+
+		if t1 > t2 {
+			std::mem::swap(&mut t1, &mut t2);
+		}
+		t2 *= 1.0 + 2.0 * gamma(3);
 
 		let tmin = tmin.max(t1.min(t2));
 		let tmax = tmax.min(t1.max(t2));
