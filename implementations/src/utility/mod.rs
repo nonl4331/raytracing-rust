@@ -31,6 +31,13 @@ pub fn cosine_hemisphere_sampling() -> Vec3 {
 	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
 }
 
+pub fn specular_sampling(n: Float) -> Vec3 {
+	let a = random_float().powf(1.0 / (n + 1.0));
+	let term = (1.0 - a * a).sqrt();
+	let phi = 2.0 * PI * random_float();
+	Vec3::new(term * phi.cos(), term * phi.sin(), a)
+}
+
 pub fn random_float() -> Float {
 	let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
 	rng.gen()

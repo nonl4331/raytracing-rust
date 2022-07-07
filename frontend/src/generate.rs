@@ -180,6 +180,63 @@ pub fn overshadowed(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	scene!(camera, sky!(), random_sampler!(), bvh)
 }*/
 
+pub fn coffee(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+	let mut primitives = Vec::new();
+
+	let diffuse = &diffuse!(1, 1, 1, 0.9);
+
+	let orange = &std::sync::Arc::new(implementations::AllMaterials::Phong(
+		implementations::Phong::new(&solid_colour!(0.592, 0.192, 0.0), 0.2, 0.8, 1250.0),
+	));
+
+	let floor = &std::sync::Arc::new(implementations::AllMaterials::Phong(
+		implementations::Phong::new(&solid_colour!(colour!(1)), 0.1, 0.9, 1250.0),
+	));
+
+	let black = &std::sync::Arc::new(implementations::AllMaterials::Phong(
+		implementations::Phong::new(&solid_colour!(colour!(0.006)), 0.1, 0.9, 1250.0),
+	));
+
+	let glass = &refract!(&solid_colour!(colour!(1)), 1.5);
+
+	let left_light = &emit!(&solid_colour!(colour!(1)), 3.0 * 1.0);
+	let right_light = &emit!(&solid_colour!(colour!(1)), 1.0 * 1.0);
+	let left_reflection = &emit!(&solid_colour!(colour!(1)), 0.75 * 1.0);
+
+	let metal = &reflect!(&solid_colour!(colour!(1)), 0);
+
+	let materials = vec![
+		(diffuse.clone(), "default"),
+		(orange.clone(), "Plastic_Orange"),
+		(glass.clone(), "Glass"),
+		(left_light.clone(), "Left_Light"),
+		(left_reflection.clone(), "Left_Reflection"),
+		(right_light.clone(), "Right_Light"),
+		(floor.clone(), "Floor"),
+		(black.clone(), "Plastic_Black"),
+		(metal.clone(), "Metal"),
+	];
+	primitives.extend(crate::load_model::load_model_with_materials(
+		"../../../render_scenes/coffee.obj",
+		&materials,
+	));
+
+	let sky = sky!();
+
+	let camera = camera!(
+		position!(0, 0.17 * 10.0, (2.0386 - 1.0) * 10.0),
+		position!(0, 0.150512 * 10.0, 0),
+		position!(0, 1, 0),
+		40,
+		aspect_ratio,
+		0,
+		0.0075 * 10.0
+	);
+
+	let bvh = create_bvh_with_info(primitives, bvh_type);
+	scene!(camera, sky, random_sampler!(), bvh)
+}
+
 pub fn cornell(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 	let mut primitives = Vec::new();
 

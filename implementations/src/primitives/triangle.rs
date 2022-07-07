@@ -32,7 +32,7 @@ pub struct MeshTriangle<M: Scatter> {
 	pub point_indices: [usize; 3],
 	pub normal_indices: [usize; 3],
 	pub material: Arc<M>,
-	pub mesh: Arc<MeshData<M>>,
+	pub mesh: Arc<MeshData>,
 }
 
 impl<M> MeshTriangle<M>
@@ -43,7 +43,7 @@ where
 		point_indices: [usize; 3],
 		normal_indices: [usize; 3],
 		material: &Arc<M>,
-		mesh: &Arc<MeshData<M>>,
+		mesh: &Arc<MeshData>,
 	) -> Self {
 		MeshTriangle {
 			point_indices,
@@ -55,22 +55,14 @@ where
 }
 
 #[derive(Debug)]
-pub struct MeshData<M: Scatter> {
+pub struct MeshData {
 	pub vertices: Vec<Vec3>,
 	pub normals: Vec<Vec3>,
-	pub material: Arc<M>,
 }
 
-impl<M> MeshData<M>
-where
-	M: Scatter,
-{
-	pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>, material: &Arc<M>) -> Self {
-		MeshData {
-			vertices,
-			normals,
-			material: material.clone(),
-		}
+impl MeshData {
+	pub fn new(vertices: Vec<Vec3>, normals: Vec<Vec3>) -> Self {
+		MeshData { vertices, normals }
 	}
 }
 

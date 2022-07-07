@@ -96,7 +96,9 @@ impl Ray {
 				let weight = power_heuristic(pdf_light, scattering_pdf);
 				let f = mat.eval(hit, wo, wi);
 
-				direct_lighting += si.material.get_emission(&si.hit, wi) * f * weight / pdf_light;
+				direct_lighting += si.material.get_emission(&si.hit, wi)
+					* num_lights as Float
+					* f * weight / pdf_light;
 			}
 		}
 
@@ -132,6 +134,7 @@ impl Ray {
 		let (mut throughput, mut output) = (Colour::one(), Colour::zero());
 		let mut depth = 0;
 		let mut ray_count = 0;
+		let mut last_delta = false;
 
 		while depth < MAX_DEPTH {
 			let hit_info = bvh.check_hit(ray);
@@ -147,8 +150,9 @@ impl Ray {
 
 				let exit = mat.scatter_ray(ray, hit);
 
-				if depth == 0 {
+				if depth == 0 || last_delta {
 					output += throughput * emission;
+					last_delta = false;
 				}
 
 				if exit {
@@ -166,6 +170,7 @@ impl Ray {
 						/ mat.scattering_pdf(hit, wo, ray.direction);
 				} else {
 					throughput *= mat.eval(hit, wo, ray.direction);
+					last_delta = true;
 				}
 
 				// russian roulette

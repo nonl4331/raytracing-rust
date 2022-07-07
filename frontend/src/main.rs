@@ -24,6 +24,7 @@ use winit::event_loop::EventLoopProxy;
 
 mod generate;
 mod gui;
+mod load_model;
 mod macros;
 mod parameters;
 mod rendering;

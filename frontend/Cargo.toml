@@ -15,4 +15,5 @@ rt_core = {path = "../rt_core"}
 vulkano = "0.28.0"
 vulkano-win = "0.28.0"
 vulkano-shaders = "0.28.0"
+wavefront_obj = "10.0.0"
 winit = "0.26.1"

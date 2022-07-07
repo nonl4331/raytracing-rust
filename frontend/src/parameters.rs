@@ -267,6 +267,9 @@ fn get_scene(
 			"furnace" => {
 				scene!(furnace, bvh_type, aspect_ratio)
 			}
+			"coffee" => {
+				scene!(coffee, bvh_type, aspect_ratio)
+			}
 			_ => {
 				println!("{} is not a valid scene index!", string);
 				println!("Please specify a valid for scene!");
