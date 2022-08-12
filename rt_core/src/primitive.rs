@@ -57,7 +57,7 @@ pub trait Primitive<M: Scatter> {
 		unimplemented!()
 	}
 	fn area(&self) -> Float;
-	fn scattering_pdf(&self, _hit: &Hit, _wo: Vec3, _light_point: Vec3) -> Float {
+	fn scattering_pdf(&self, _hit: &Hit, _wo: Vec3, _sampled_point: Vec3) -> Float {
 		1.0 / self.area()
 	}
 	fn material_is_light(&self) -> bool {

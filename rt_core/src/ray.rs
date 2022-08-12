@@ -1,10 +1,8 @@
-use crate::{
-	power_heuristic, AccelerationStructure, Float, Hit, NoHit, Primitive, Scatter,
-	SurfaceIntersection, Vec3,
-};
-use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
+use crate::{power_heuristic, AccelerationStructure, Float, Hit, NoHit, Primitive, Scatter, Vec3};
+use rand::{prelude::SliceRandom, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 const RUSSIAN_ROULETTE_THRESHOLD: u32 = 3;
+const MAX_DEPTH: u32 = 50;
 
 pub type Colour = Vec3;
 
@@ -15,8 +13,6 @@ pub struct Ray {
 	pub shear: Vec3,
 	pub time: Float,
 }
-
-const MAX_DEPTH: u32 = 50;
 
 impl Ray {
 	pub fn new(origin: Vec3, mut direction: Vec3, time: Float) -> Self {
@@ -58,72 +54,98 @@ impl Ray {
 		self.origin + self.direction * t
 	}
 
-	fn get_light_contribution<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter>(
-		wo: Vec3,
-		hit: &Hit,
-		surface_intersection: &SurfaceIntersection<M>,
+	fn sample_light<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter>(
 		bvh: &A,
+		hit: &Hit,
+		mat: &M,
+		wo: Vec3,
 	) -> Vec3 {
-		let mut direct_lighting = Vec3::zero();
-
-		let mat = &surface_intersection.material;
-
-		if mat.is_delta() {
-			return direct_lighting;
-		}
-
-		let lights = bvh.get_samplable();
-		let num_lights = lights.len();
-		let light_index = if num_lights == 0 {
-			return direct_lighting;
-		} else {
-			let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-			lights[rng.gen_range(0..num_lights)]
+		let light_index = match bvh
+			.get_samplable()
+			.choose(&mut SmallRng::from_rng(thread_rng()).unwrap())
+		{
+			Some(&index) => index,
+			None => return Vec3::zero(),
 		};
 
-		let light_obj = bvh.get_object(light_index).unwrap();
-		let wi = light_obj.sample_visible_from_point(hit.point);
-		let ray = Ray::new(hit.point + 0.0001 * hit.normal, wi, 0.0);
-		//mat.scatter_ray(&mut ray, hit); // This is done due to error bounds on point
-		// investigate why the above does not work
+		let samplable = bvh.get_object(light_index).unwrap();
 
-		// sample light
-		if let Some(si) = bvh.check_hit_index(&ray, light_index) {
-			let pdf_light = light_obj.scattering_pdf(hit, wi, si.hit.point);
-			if pdf_light != 0.0 {
-				let scattering_pdf = mat.scattering_pdf(hit, wo, wi);
+		let sampled_wi = samplable.sample_visible_from_point(hit.point);
 
-				let weight = power_heuristic(pdf_light, scattering_pdf);
-				let f = mat.eval(hit, wo, wi);
+		if let Some(sampled_si) = bvh.check_hit_index(
+			&Ray::new(hit.point + 0.0001 * hit.normal, sampled_wi, 0.0),
+			light_index,
+		) {
+			let sampled_hit = &sampled_si.hit;
 
-				direct_lighting += si.material.get_emission(&si.hit, wi)
-					* num_lights as Float
-					* f * weight / pdf_light;
+			let sampled_pdf = samplable.scattering_pdf(hit, sampled_wi, sampled_hit.point);
+
+			if sampled_pdf > 0.0 {
+				let li = sampled_si.material.get_emission(sampled_hit, sampled_wi);
+
+				let f = mat.eval(hit, wo, sampled_wi);
+
+				let num_lights = bvh.get_samplable().len() as Float;
+
+				return li * f * num_lights / sampled_pdf;
+			}
+		}
+		Vec3::zero()
+	}
+
+	fn sample_light_mis<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter>(
+		bvh: &A,
+		hit: &Hit,
+		mat: &M,
+		wo: Vec3,
+		index: usize,
+		new_mat: &M,
+	) -> Vec3 {
+		let mut output = Vec3::zero();
+		let samplable = bvh.get_object(index).unwrap();
+
+		let sampled_wi = samplable.sample_visible_from_point(hit.point);
+
+		if let Some(sampled_si) = bvh.check_hit_index(
+			&Ray::new(hit.point + 0.0001 * hit.normal, sampled_wi, 0.0),
+			index,
+		) {
+			let sampled_hit = &sampled_si.hit;
+
+			let sampled_pdf = samplable.scattering_pdf(hit, sampled_wi, sampled_hit.point);
+
+			if sampled_pdf > 0.0 {
+				let li = new_mat.get_emission(sampled_hit, sampled_wi);
+
+				let f = mat.eval(hit, wo, sampled_wi);
+
+				let scattering_pdf = mat.scattering_pdf(hit, wo, sampled_wi);
+
+				let weight = power_heuristic(sampled_pdf, scattering_pdf);
+
+				output += li * f * weight / sampled_pdf;
 			}
 		}
 
-		// sample bxdf
-		let mut ray = Ray::new(surface_intersection.hit.point, wo, 0.0);
-		mat.scatter_ray(&mut ray, &surface_intersection.hit);
+		let mut ray = Ray::new(hit.point, wo, 0.0);
+		mat.scatter_ray(&mut ray, hit);
 
-		// check light intersection & get colour
-		let (int_point, li) = match bvh.check_hit_index(&ray, light_index) {
+		let (int_point, li) = match bvh.check_hit_index(&ray, index) {
 			Some(int) => (int.hit.point, int.material.get_emission(hit, wo)),
-			None => return direct_lighting,
+			None => return output,
 		};
 
-		// calculate pdfs
 		let scattering_pdf = mat.scattering_pdf(hit, wo, ray.direction);
 		if scattering_pdf != 0.0 {
-			let light_pdf = light_obj.scattering_pdf(hit, ray.direction, int_point);
+			let light_pdf = samplable.scattering_pdf(hit, ray.direction, int_point);
 			if light_pdf != 0.0 {
 				let weight = power_heuristic(scattering_pdf, light_pdf);
 
-				direct_lighting += li * weight * mat.eval(hit, wo, ray.direction) / scattering_pdf;
+				output += li * weight * mat.eval(hit, wo, ray.direction) / scattering_pdf;
 			}
 		}
 
-		direct_lighting
+		output
 	}
 
 	pub fn get_colour<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter, S: NoHit>(
@@ -131,66 +153,77 @@ impl Ray {
 		sky: &S,
 		bvh: &A,
 	) -> (Colour, u64) {
-		let (mut throughput, mut output) = (Colour::one(), Colour::zero());
-		let mut depth = 0;
-		let mut ray_count = 0;
-		let mut last_delta = false;
+		let mut output;
+		let mut throughput = Colour::one();
+		let mut ray_count = 1;
 
-		while depth < MAX_DEPTH {
-			let hit_info = bvh.check_hit(ray);
+		if let Some((surface_intersection, _index)) = bvh.check_hit(ray) {
+			let (mut hit, mut mat) = (surface_intersection.hit, surface_intersection.material);
+			let mut wo = ray.direction;
+			output = mat.get_emission(&hit, wo);
 
-			ray_count += 1;
+			let mut exit = mat.scatter_ray(ray, &hit);
 
-			if let Some((surface_intersection, _index)) = hit_info {
-				let (hit, mat) = (&surface_intersection.hit, &surface_intersection.material);
+			if !exit {
+				for depth in 1..MAX_DEPTH {
+					exit = mat.scatter_ray(ray, &hit);
 
-				let wo = ray.direction;
-
-				let emission = mat.get_emission(hit, wo);
-
-				let exit = mat.scatter_ray(ray, hit);
-
-				if depth == 0 || last_delta {
-					output += throughput * emission;
-					last_delta = false;
-				}
-
-				if exit {
-					break;
-				}
-
-				//add light contribution
-				ray_count += 1;
-				output +=
-					throughput * Ray::get_light_contribution(wo, hit, &surface_intersection, bvh);
-
-				// add bxdf contribution
-				if !mat.is_delta() {
-					throughput *= mat.eval(hit, wo, ray.direction)
-						/ mat.scattering_pdf(hit, wo, ray.direction);
-				} else {
-					throughput *= mat.eval(hit, wo, ray.direction);
-					last_delta = true;
-				}
-
-				// russian roulette
-				if depth > RUSSIAN_ROULETTE_THRESHOLD {
-					let p = throughput.component_max();
-					let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
-					if rng.gen::<Float>() > p {
+					if exit {
+						ray_count += depth as u64;
 						break;
 					}
-					throughput /= p;
-				}
 
-				depth += 1;
+					let wi = ray.direction;
+
+					if let Some((new_si, new_index)) = bvh.check_hit(ray) {
+						let (new_hit, new_mat) = (new_si.hit, new_si.material);
+
+						if mat.is_delta() {
+							throughput *= mat.eval(&hit, wo, wi);
+							output += throughput * new_mat.get_emission(&hit, wo);
+						} else if bvh.get_samplable().contains(&new_index) {
+							output += throughput
+								* Self::sample_light_mis(bvh, &hit, &mat, wo, new_index, &new_mat);
+							ray_count += 1;
+							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
+						} else {
+							output += throughput * Self::sample_light(bvh, &hit, &mat, wo);
+							ray_count += 1;
+							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
+						}
+
+						mat = new_mat;
+						hit = new_hit;
+						wo = wi;
+					} else {
+						if mat.is_delta() {
+							throughput *= mat.eval(&hit, wo, wi);
+						} else {
+							output += throughput * Self::sample_light(bvh, &hit, &mat, wo);
+							ray_count += 1;
+							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
+						}
+
+						output += throughput * sky.get_colour(ray);
+						ray_count += depth as u64;
+						break;
+					}
+
+					if depth > RUSSIAN_ROULETTE_THRESHOLD {
+						let p = throughput.component_max();
+						let mut rng = SmallRng::from_rng(thread_rng()).unwrap();
+						if rng.gen::<Float>() > p {
+							ray_count += depth as u64;
+							break;
+						}
+						throughput /= p;
+					}
+				}
 			} else {
-				output += throughput * sky.get_colour(ray);
-				break;
+				output = mat.get_emission(&hit, wo);
 			}
-		}
-		if output.contains_nan() || !output.is_finite() {
-			return (Vec3::zero(), ray_count);
+		} else {
+			output = sky.get_colour(ray);
 		}
 		(output, ray_count)
 	}
@@ -232,10 +265,6 @@ impl Ray {
 					break;
 				}
 
-				//add light contribution
-				ray_count += 1;
-
-				// add bxdf contribution
 				if !mat.is_delta() {
 					throughput *= mat.eval(hit, wo, ray.direction)
 						/ mat.scattering_pdf(hit, wo, ray.direction);
@@ -243,7 +272,6 @@ impl Ray {
 					throughput *= mat.eval(hit, wo, ray.direction);
 				}
 
-				// russian roulette
 				if depth > RUSSIAN_ROULETTE_THRESHOLD {
 					let p = throughput.component_max();
 					let mut rng = SmallRng::from_rng(thread_rng()).unwrap();

@@ -152,11 +152,12 @@ where
 
 		(point - in_point).normalised()
 	}
-	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, light_point: Vec3) -> Float {
+	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, sampled_point: Vec3) -> Float {
 		let rsq = self.radius * self.radius;
 		let dsq = (hit.point - self.center).mag_sq();
 		if dsq <= rsq {
-			return (light_point - hit.point).mag_sq() / (wo.dot(-hit.normal).abs() * self.area());
+			return (sampled_point - hit.point).mag_sq()
+				/ (wo.dot(-hit.normal).abs() * self.area());
 		}
 		let sin_theta_max_sq = rsq / dsq;
 		let cos_theta_max = (1.0 - sin_theta_max_sq).max(0.0).sqrt();
