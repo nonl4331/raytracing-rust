@@ -1,4 +1,7 @@
-use crate::{power_heuristic, AccelerationStructure, Float, Hit, NoHit, Primitive, Scatter, Vec3};
+use crate::{
+	power_heuristic, AccelerationStructure, Float, Hit, NoHit, Primitive, Scatter,
+	SurfaceIntersection, Vec3,
+};
 use rand::{prelude::SliceRandom, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 
 const RUSSIAN_ROULETTE_THRESHOLD: u32 = 3;
@@ -87,7 +90,11 @@ impl Ray {
 
 				let num_lights = bvh.get_samplable().len() as Float;
 
-				return li * f * num_lights / sampled_pdf;
+				let scattering_pdf = mat.scattering_pdf(hit, wo, sampled_wi);
+
+				let weight = power_heuristic(sampled_pdf, scattering_pdf);
+
+				return li * f * num_lights * weight / sampled_pdf;
 			}
 		}
 		Vec3::zero()
@@ -99,7 +106,8 @@ impl Ray {
 		mat: &M,
 		wo: Vec3,
 		index: usize,
-		new_mat: &M,
+		wi: Vec3,
+		new_si: &SurfaceIntersection<M>,
 	) -> Vec3 {
 		let mut output = Vec3::zero();
 		let samplable = bvh.get_object(index).unwrap();
@@ -115,7 +123,7 @@ impl Ray {
 			let sampled_pdf = samplable.scattering_pdf(hit, sampled_wi, sampled_hit.point);
 
 			if sampled_pdf > 0.0 {
-				let li = new_mat.get_emission(sampled_hit, sampled_wi);
+				let li = new_si.material.get_emission(sampled_hit, sampled_wi);
 
 				let f = mat.eval(hit, wo, sampled_wi);
 
@@ -127,22 +135,17 @@ impl Ray {
 			}
 		}
 
-		let mut ray = Ray::new(hit.point, wo, 0.0);
-		mat.scatter_ray(&mut ray, hit);
-
-		let (int_point, li) = match bvh.check_hit_index(&ray, index) {
-			Some(int) => (int.hit.point, int.material.get_emission(hit, wo)),
-			None => return output,
-		};
-
-		let scattering_pdf = mat.scattering_pdf(hit, wo, ray.direction);
+		let scattering_pdf = mat.scattering_pdf(hit, wo, wi);
 		if scattering_pdf != 0.0 {
-			let light_pdf = samplable.scattering_pdf(hit, ray.direction, int_point);
-			if light_pdf != 0.0 {
-				let weight = power_heuristic(scattering_pdf, light_pdf);
+			let li = new_si.material.get_emission(&new_si.hit, wi);
 
-				output += li * weight * mat.eval(hit, wo, ray.direction) / scattering_pdf;
-			}
+			let f = mat.eval(hit, wo, wi);
+
+			let sampling_pdf = samplable.scattering_pdf(hit, wi, new_si.hit.point);
+
+			let weight = power_heuristic(scattering_pdf, sampling_pdf);
+
+			output += li * f * weight / scattering_pdf;
 		}
 
 		output
@@ -176,14 +179,14 @@ impl Ray {
 					let wi = ray.direction;
 
 					if let Some((new_si, new_index)) = bvh.check_hit(ray) {
-						let (new_hit, new_mat) = (new_si.hit, new_si.material);
-
 						if mat.is_delta() {
 							throughput *= mat.eval(&hit, wo, wi);
-							output += throughput * new_mat.get_emission(&hit, wo);
+							output += throughput * new_si.material.get_emission(&hit, wo);
 						} else if bvh.get_samplable().contains(&new_index) {
 							output += throughput
-								* Self::sample_light_mis(bvh, &hit, &mat, wo, new_index, &new_mat);
+								* Self::sample_light_mis(
+									bvh, &hit, &mat, wo, new_index, wi, &new_si,
+								);
 							ray_count += 1;
 							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
 						} else {
@@ -192,8 +195,8 @@ impl Ray {
 							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
 						}
 
-						mat = new_mat;
-						hit = new_hit;
+						mat = new_si.material;
+						hit = new_si.hit;
 						wo = wi;
 					} else {
 						if mat.is_delta() {
