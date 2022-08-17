@@ -81,7 +81,7 @@ impl Ray {
 		) {
 			let sampled_hit = &sampled_si.hit;
 
-			let sampled_pdf = samplable.scattering_pdf(hit, sampled_wi, sampled_hit.point);
+			let sampled_pdf = samplable.scattering_pdf(hit.point, sampled_wi, sampled_hit);
 
 			if sampled_pdf > 0.0 {
 				let li = sampled_si.material.get_emission(sampled_hit, sampled_wi);
@@ -120,7 +120,7 @@ impl Ray {
 		) {
 			let sampled_hit = &sampled_si.hit;
 
-			let sampled_pdf = samplable.scattering_pdf(hit, sampled_wi, sampled_hit.point);
+			let sampled_pdf = samplable.scattering_pdf(hit.point, sampled_wi, sampled_hit);
 
 			if sampled_pdf > 0.0 {
 				let li = new_si.material.get_emission(sampled_hit, sampled_wi);
@@ -141,7 +141,7 @@ impl Ray {
 
 			let f = mat.eval(hit, wo, wi);
 
-			let sampling_pdf = samplable.scattering_pdf(hit, wi, new_si.hit.point);
+			let sampling_pdf = samplable.scattering_pdf(hit.point, wi, &new_si.hit);
 
 			let weight = power_heuristic(scattering_pdf, sampling_pdf);
 

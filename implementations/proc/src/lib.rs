@@ -136,7 +136,7 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 		),
 		(quote!(area(&self) -> Float), quote!(area())),
 		(
-			quote!(scattering_pdf(&self, __one: &Hit, __two: Vec3, __three: Vec3) -> Float),
+			quote!(scattering_pdf(&self, __one: Vec3, __two: Vec3, __three: &Hit) -> Float),
 			quote!(scattering_pdf(__one, __two, __three)),
 		),
 		(

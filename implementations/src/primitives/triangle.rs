@@ -231,15 +231,15 @@ where
 	fn sample_visible_from_point(&self, in_point: Vec3) -> Vec3 {
 		let mut rng = thread_rng();
 		let uv = rng.gen::<Float>().sqrt();
-		let uv = (1.0 - uv, uv * rng.gen::<Float>().sqrt());
+		let uv = (1.0 - uv, uv * rng.gen::<Float>());
 
 		let point =
 			uv.0 * self.points[0] + uv.1 * self.points[1] + (1.0 - uv.0 - uv.1) * self.points[2];
 
 		(point - in_point).normalised()
 	}
-	fn scattering_pdf(&self, hit: &Hit, wi: Vec3, light_point: Vec3) -> Float {
-		(light_point - hit.point).mag_sq() / (hit.normal.dot(-wi).abs() * self.area())
+	fn scattering_pdf(&self, hit_point: Vec3, wi: Vec3, sampled_hit: &Hit) -> Float {
+		(sampled_hit.point - hit_point).mag_sq() / (sampled_hit.normal.dot(wi).abs() * self.area())
 	}
 	fn material_is_light(&self) -> bool {
 		self.material.is_light()
@@ -273,8 +273,8 @@ where
 
 		(point - in_point).normalised()
 	}
-	fn scattering_pdf(&self, hit: &Hit, wi: Vec3, light_point: Vec3) -> Float {
-		(light_point - hit.point).mag_sq() / (hit.normal.dot(-wi).abs() * self.area())
+	fn scattering_pdf(&self, hit_point: Vec3, wi: Vec3, sampled_hit: &Hit) -> Float {
+		(sampled_hit.point - hit_point).mag_sq() / (wi.dot(sampled_hit.normal).abs() * self.area())
 	}
 	fn material_is_light(&self) -> bool {
 		self.material.is_light()
