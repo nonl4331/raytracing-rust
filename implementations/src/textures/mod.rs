@@ -1,4 +1,4 @@
-use image::GenericImageView;
+use image::{io::Reader, GenericImageView};
 use proc::Texture;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rt_core::{Float, Vec2, Vec3, PI};
@@ -187,7 +187,20 @@ pub struct ImageTexture {
 impl ImageTexture {
 	pub fn new(filepath: &str) -> Self {
 		// open image and get dimensions
-		let img = image::open(filepath).unwrap();
+
+		let img = match image::open(filepath) {
+			Ok(img) => img,
+			Err(e) => {
+				if let image::error::ImageError::Limits(_) = e {
+					let mut image = Reader::open(filepath).unwrap();
+
+					image.no_limits();
+					image.decode().unwrap()
+				} else {
+					panic!("{e}");
+				}
+			}
+		};
 
 		// make sure image in non-zero
 		let dim = img.dimensions();
@@ -198,17 +211,12 @@ impl ImageTexture {
 
 		// get raw pixel data as Vec<u16> then convert to Vec<Vec3>
 		let mut data: Vec<Vec3> = Vec::new();
-		for col in (img.to_rgb8().to_vec())
-			.to_vec()
-			.iter()
-			.map(|val| *val as Float / 255.999)
-			.collect::<Vec<Float>>()
-			.chunks(3)
-		{
+		let image = img.to_rgb32f();
+		for col in image.into_raw().chunks(3) {
 			data.push(Vec3::new(
-				*col.get(0).unwrap(),
-				*col.get(1).unwrap(),
-				*col.get(2).unwrap(),
+				*col.get(0).unwrap() as Float,
+				*col.get(1).unwrap() as Float,
+				*col.get(2).unwrap() as Float,
 			));
 		}
 
@@ -218,8 +226,8 @@ impl ImageTexture {
 
 impl Texture for ImageTexture {
 	fn colour_value(&self, direction: Vec3, _: Vec3) -> Vec3 {
-		let phi = direction.z.atan2(direction.x) + PI;
-		let theta = direction.y.acos();
+		let phi = direction.y.atan2(direction.x) + PI;
+		let theta = direction.z.acos();
 		let uv = Vec2::new(phi / (2.0 * PI), theta / PI);
 		let x_pixel = (self.dim.0 as Float * uv.x) as usize;
 		let y_pixel = (self.dim.1 as Float * uv.y) as usize;

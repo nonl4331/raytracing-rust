@@ -169,8 +169,6 @@ impl Ray {
 
 			if !exit {
 				for depth in 1..MAX_DEPTH {
-					exit = mat.scatter_ray(ray, &hit);
-
 					if exit {
 						ray_count += depth as u64;
 						break;
@@ -221,6 +219,8 @@ impl Ray {
 						}
 						throughput /= p;
 					}
+
+					exit = mat.scatter_ray(ray, &hit);
 				}
 			} else {
 				output = mat.get_emission(&hit, wo);

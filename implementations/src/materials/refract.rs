@@ -60,6 +60,6 @@ where
 	}
 }
 
-fn fresnel(cos: Float, f0: Vec3) -> Vec3 {
+pub fn fresnel(cos: Float, f0: Vec3) -> Vec3 {
 	f0 + (1.0 - f0) * (1.0 - cos).powf(5.0)
 }
