@@ -179,6 +179,11 @@ impl Vec3 {
 	}
 
 	#[inline]
+	pub fn reflected(&self, normal: Self) -> Self {
+		*self - 2.0 * self.dot(normal) * normal
+	}
+
+	#[inline]
 	pub fn component_min(self) -> Float {
 		self.x.min(self.y.min(self.z))
 	}

@@ -33,6 +33,10 @@ pub fn derive_scatter(tokens: TokenStream) -> TokenStream {
 			quote!(eval(__one, __two, __three)),
 		),
 		(
+			quote!(eval_over_scattering_pdf(&self, __one: &Hit, __two: Vec3, __three: Vec3) -> Vec3),
+			quote!(eval_over_scattering_pdf(__one, __two, __three)),
+		),
+		(
 			quote!(get_emission(&self, __one: &Hit, __two: Vec3) -> Vec3),
 			quote!(get_emission(__one, __two)),
 		),

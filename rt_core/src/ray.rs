@@ -136,17 +136,15 @@ impl Ray {
 		}
 
 		let scattering_pdf = mat.scattering_pdf(hit, wo, wi);
-		if scattering_pdf != 0.0 {
-			let li = new_si.material.get_emission(&new_si.hit, wi);
+		let li = new_si.material.get_emission(&new_si.hit, wi);
 
-			let f = mat.eval(hit, wo, wi);
+		let sampling_pdf = samplable.scattering_pdf(hit.point, wi, &new_si.hit);
 
-			let sampling_pdf = samplable.scattering_pdf(hit.point, wi, &new_si.hit);
+		let weight = power_heuristic(scattering_pdf, sampling_pdf);
 
-			let weight = power_heuristic(scattering_pdf, sampling_pdf);
+		let fp = mat.eval_over_scattering_pdf(hit, wo, wi);
 
-			output += li * f * weight / scattering_pdf;
-		}
+		output += li * fp * weight;
 
 		output
 	}
@@ -186,11 +184,11 @@ impl Ray {
 									bvh, &hit, &mat, wo, new_index, wi, &new_si,
 								);
 							ray_count += 1;
-							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
+							throughput *= mat.eval_over_scattering_pdf(&hit, wo, wi);
 						} else {
 							output += throughput * Self::sample_light(bvh, &hit, &mat, wo);
 							ray_count += 1;
-							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
+							throughput *= mat.eval_over_scattering_pdf(&hit, wo, wi);
 						}
 
 						mat = new_si.material;
@@ -202,7 +200,7 @@ impl Ray {
 						} else {
 							output += throughput * Self::sample_light(bvh, &hit, &mat, wo);
 							ray_count += 1;
-							throughput *= mat.eval(&hit, wo, wi) / mat.scattering_pdf(&hit, wo, wi);
+							throughput *= mat.eval_over_scattering_pdf(&hit, wo, wi);
 						}
 
 						output += throughput * sky.get_colour(ray);
@@ -269,8 +267,9 @@ impl Ray {
 				}
 
 				if !mat.is_delta() {
-					throughput *= mat.eval(hit, wo, ray.direction)
-						/ mat.scattering_pdf(hit, wo, ray.direction);
+					throughput *= mat.eval_over_scattering_pdf(hit, wo, ray.direction);
+				//mat.eval(hit, wo, ray.direction)
+				// / mat.scattering_pdf(hit, wo, ray.direction);
 				} else {
 					throughput *= mat.eval(hit, wo, ray.direction);
 				}

@@ -20,6 +20,9 @@ pub trait Scatter {
 		0.0
 	}
 	fn eval(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Vec3;
+	fn eval_over_scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
+		self.eval(hit, wo, wi) / self.scattering_pdf(hit, wo, wi)
+	}
 	fn get_emission(&self, _hit: &Hit, _wo: Vec3) -> Vec3 {
 		Vec3::zero()
 	}
