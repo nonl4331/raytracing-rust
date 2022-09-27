@@ -11,3 +11,6 @@ proc = {path = "./proc"}
 rand = { version = "0.8.3", features = [ "small_rng" ] }
 rayon = "1.5.1"
 rt_core = {path = "../rt_core"}
+
+[dev-dependencies]
+statrs = "0.16.0"
