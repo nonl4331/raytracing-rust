@@ -9,11 +9,11 @@ use std::{
 
 pub mod int;
 
-const SAMPLES: usize = 10_000_000;
-const THETA_RES: usize = 80;
-const PHI_RES: usize = 2 * THETA_RES;
-const CHI2_THRESHOLD: Float = 0.01;
-const CHI_TESTS: usize = 1;
+pub const SAMPLES: usize = 10_000_000;
+pub const THETA_RES: usize = 80;
+pub const PHI_RES: usize = 2 * THETA_RES;
+pub const CHI2_THRESHOLD: Float = 0.01;
+pub const CHI_TESTS: usize = 1;
 
 use int::*;
 
@@ -29,7 +29,7 @@ pub fn to_vec(sin_theta: Float, cos_theta: Float, phi: Float) -> Vec3 {
 	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
 }
 
-fn chi2_probability(dof: f64, distance: f64) -> f64 {
+pub fn chi2_probability(dof: f64, distance: f64) -> f64 {
 	assert!(
 		(gamma_lr(dof * 0.5, distance * 0.5) + gamma_ur(dof * 0.5, distance * 0.5) - 1.0).abs()
 			< 0.0001
@@ -122,7 +122,7 @@ pub fn random_float() -> Float {
 	rng.gen()
 }
 
-fn generate_wo() -> Vec3 {
+pub fn generate_wo() -> Vec3 {
 	let cos_theta = random_float();
 	let phi = TAU as Float * random_float();
 
@@ -176,12 +176,13 @@ pub fn chi_squared(
 	(df, chi_squared)
 }
 
-fn dump_tables(
+pub fn dump_tables(
 	wo: Vec3,
 	freq_table: &[Float],
 	expected_freq_table: &[Float],
 	theta_res: usize,
 	phi_res: usize,
+	bxdf_name: &str,
 ) {
 	let enumerate = |file: &mut File, func: fn(Float, Float) -> Float| {
 		(0..theta_res * phi_res).for_each(|index| {
@@ -198,7 +199,13 @@ fn dump_tables(
 		});
 	};
 
-	let mut file = File::create("chi_test.m").unwrap();
+	let time = chrono::Local::now();
+
+	let mut file = File::create(format!(
+		"chi_test_{bxdf_name}@{}.m",
+		time.format("%Y-%m-%d:%H:%M")
+	))
+	.unwrap();
 
 	file.write_all(format!("% wo = {wo}\nfrequencies = [ ").as_bytes())
 		.unwrap();
@@ -228,39 +235,4 @@ axis equal;
 title('expected frequencies');",
 	)
 	.unwrap();
-}
-
-pub fn bsdf_testing<S, P>(sample: &S, pdf: &P) -> bool
-where
-	S: Fn(Vec3) -> Vec3,
-	P: Fn(Vec3, Vec3) -> Float,
-{
-	for i in 0..CHI_TESTS {
-		let wo = generate_wo();
-		let freq_table = samped_frequency_distribution(&sample, wo, THETA_RES, PHI_RES, SAMPLES);
-		let expected_freq_table: Vec<Float> =
-			integrate_frequency_table(pdf, wo, THETA_RES, PHI_RES)
-				.into_iter()
-				.map(|x| x * SAMPLES as Float)
-				.collect();
-		if i == 0 {
-			dump_tables(
-				wo,
-				&freq_table
-					.iter()
-					.map(|&v| v as Float)
-					.collect::<Vec<Float>>(),
-				&expected_freq_table,
-				THETA_RES,
-				PHI_RES,
-			);
-		}
-		let (df, chi_squared) = chi_squared(freq_table, expected_freq_table, SAMPLES);
-		let p = chi2_probability(df as f64, chi_squared as f64);
-		let threshold = 1.0 - (1.0 - CHI2_THRESHOLD).powf(1.0 / CHI_TESTS as Float);
-		if p < threshold as f64 || p.is_infinite() {
-			return false;
-		}
-	}
-	true
 }

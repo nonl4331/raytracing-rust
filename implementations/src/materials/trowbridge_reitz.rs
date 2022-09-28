@@ -8,7 +8,7 @@ use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::{f32::INFINITY, sync::Arc};
 
 #[derive(Debug)]
-pub struct CookTorrence<T: Texture> {
+pub struct TrowbridgeReitz<T: Texture> {
 	pub texture: Arc<T>,
 	pub alpha: Float,
 	pub ior: Vec3,
@@ -21,7 +21,7 @@ use std::f64::consts::PI;
 #[cfg(not(feature = "f64"))]
 use std::f32::consts::PI;
 
-impl<T> CookTorrence<T>
+impl<T> TrowbridgeReitz<T>
 where
 	T: Texture,
 {
@@ -83,7 +83,7 @@ where
 	}
 }
 
-impl<T> Scatter for CookTorrence<T>
+impl<T> Scatter for TrowbridgeReitz<T>
 where
 	T: Texture,
 {

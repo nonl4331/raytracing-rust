@@ -13,4 +13,5 @@ rayon = "1.5.1"
 rt_core = {path = "../rt_core"}
 
 [dev-dependencies]
+chrono = "0.4.19"
 statrs = "0.16.0"
