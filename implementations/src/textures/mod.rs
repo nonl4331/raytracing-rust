@@ -28,6 +28,38 @@ pub struct CheckeredTexture {
 	secondary_colour: Vec3,
 }
 
+pub fn generate_pdf<T: Texture>(texture: &T, sample_res: (usize, usize)) -> Vec<Float> {
+	let mut sum = 0.0;
+
+	let mut pdf = Vec::new();
+
+	let step = (1.0 / sample_res.0 as Float, 1.0 / sample_res.1 as Float);
+	for y in 0..sample_res.1 {
+		for x in 0..sample_res.0 {
+			let u = (x as Float + 0.5) * step.0;
+			let v = (y as Float + 0.5) * step.1;
+			let phi = u * 2.0 * PI;
+			let theta = v * PI;
+			let sin_theta = theta.sin();
+			let direction = Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, theta.cos());
+			let col = texture.colour_value(direction, Vec3::zero());
+			sum += 0.2126 * col.x + 0.7152 * col.y + 0.0722 * col.z;
+			pdf.push(0.2126 * col.x + 0.7152 * col.y + 0.0722 * col.z);
+		}
+	}
+
+	let average = sum * step.0 * step.1;
+
+	let pdf: Vec<Float> = pdf
+		.into_iter()
+		.map(|v| (v / average) / (sample_res.0 * sample_res.1) as Float)
+		.collect();
+
+	let sum: Float = pdf.iter().sum();
+
+	pdf.into_iter().map(|v| v / sum).collect()
+}
+
 impl CheckeredTexture {
 	pub fn new(primary_colour: Vec3, secondary_colour: Vec3) -> Self {
 		CheckeredTexture {
@@ -119,12 +151,12 @@ impl Perlin {
 		perm
 	}
 
-	fn permute(perm: &mut [u32; 256]) {
+	fn permute(perm: &mut [u32; PERLIN_RVECS]) {
 		let mut rng = rand::rngs::SmallRng::from_rng(rand::thread_rng()).unwrap();
 
-		for i in (1..256).rev() {
+		for i in (1..PERLIN_RVECS).rev() {
 			let target = rng.gen_range(0..i);
-			perm[0..256].swap(i, target);
+			perm[0..PERLIN_RVECS].swap(i, target);
 		}
 	}
 
@@ -214,7 +246,7 @@ impl ImageTexture {
 		let image = img.to_rgb32f();
 		for col in image.into_raw().chunks(3) {
 			data.push(Vec3::new(
-				*col.get(0).unwrap() as Float,
+				*col.first().unwrap() as Float,
 				*col.get(1).unwrap() as Float,
 				*col.get(2).unwrap() as Float,
 			));
@@ -258,7 +290,7 @@ impl Lerp {
 
 impl Texture for Lerp {
 	fn colour_value(&self, direction: Vec3, _: Vec3) -> Vec3 {
-		let t = direction.y * 0.5 + 0.5;
+		let t = direction.z * 0.5 + 0.5;
 		self.colour_one * t + self.colour_two * (1.0 - t)
 	}
 	fn requires_uv(&self) -> bool {

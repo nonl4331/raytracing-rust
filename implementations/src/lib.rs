@@ -13,6 +13,7 @@ pub use primitives::*;
 pub use proc::*;
 pub use samplers::*;
 pub use textures::*;
+pub use utility::*;
 
 pub use primitives::triangle::Triangle;
 

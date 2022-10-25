@@ -140,8 +140,8 @@ impl Gui {
 
 		mod cs {
 			vulkano_shaders::shader! {
-			ty: "compute",
-			src:
+									ty: "compute",
+									src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;

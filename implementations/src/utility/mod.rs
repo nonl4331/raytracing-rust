@@ -2,6 +2,7 @@ use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rt_core::{Float, Vec3, PI};
 
 pub mod coord;
+pub mod distribution;
 
 pub fn check_side(normal: &mut Vec3, ray_direction: &Vec3) -> bool {
 	if normal.dot(*ray_direction) > 0.0 {

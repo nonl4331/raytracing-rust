@@ -23,13 +23,13 @@ pub fn get_seed(length: usize) -> String {
 pub fn classic(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -> SceneType {
 	let mut primitives = Vec::new();
 
-	let ground = sphere!(0, -1000, 0, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
+	let ground = sphere!(0, 0, -1000, 1000, &diffuse!(0.5, 0.5, 0.5, 0.5));
 
-	let sphere_one = sphere!(0, 1, 0, 1, &refract!(&solid_colour!(colour!(1)), 1.5));
+	let sphere_one = sphere!(0, 0, 1, 1, &refract!(&solid_colour!(colour!(1)), 1.5));
 
-	let sphere_two = sphere!(-4, 1, 0, 1, &diffuse!(0.4, 0.2, 0.1, 0.5));
+	let sphere_two = sphere!(-4, 0, 1, 1, &diffuse!(0.4, 0.2, 0.1, 0.5));
 
-	let sphere_three = sphere!(4, 1, 0, 1, &reflect!(&solid_colour!(0.7, 0.6, 0.5), 0));
+	let sphere_three = sphere!(4, 0, 1, 1, &reflect!(&solid_colour!(0.7, 0.6, 0.5), 0));
 
 	primitives.push(ground);
 	primitives.push(sphere_one);
@@ -47,11 +47,11 @@ pub fn classic(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -
 		for b in -11..11 {
 			let center = position!(
 				a as Float + 0.9 * rng.gen::<Float>(),
-				0.2,
-				b as Float + 0.9 * rng.gen::<Float>()
+				b as Float + 0.9 * rng.gen::<Float>(),
+				0.2
 			);
 
-			if (center - position!(4.0, 0.2, 0.0)).mag() > 0.9 {
+			if (center - position!(4.0, 0.0, 0.2)).mag() > 0.9 {
 				let choose_material: Float = rng.gen();
 				let colour = colour!(rng.gen::<Float>(), rng.gen::<Float>(), rng.gen::<Float>());
 
@@ -76,9 +76,9 @@ pub fn classic(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -
 	let sky = sky!(&texture_lerp!(colour!(0.5, 0.7, 1), colour!(1)));
 
 	let camera = camera!(
-		position!(13, 2, -3),
+		position!(13, -3, 2),
 		position!(0, 0, 0),
-		position!(0, 1, 0),
+		position!(0, 0, 1),
 		29,
 		aspect_ratio,
 		0.1,

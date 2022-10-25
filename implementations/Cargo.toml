@@ -15,3 +15,6 @@ rt_core = {path = "../rt_core"}
 [dev-dependencies]
 chrono = "0.4.19"
 statrs = "0.16.0"
+
+[features]
+f64 = ["rt_core/f64"]

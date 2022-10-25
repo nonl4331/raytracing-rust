@@ -137,6 +137,16 @@ impl Vec3 {
 	}
 
 	#[inline]
+	pub fn from_spherical(
+		sin_theta: Float,
+		cos_theta: Float,
+		sin_phi: Float,
+		cos_phi: Float,
+	) -> Self {
+		Vec3::new(sin_theta * cos_phi, sin_theta * sin_phi, cos_theta)
+	}
+
+	#[inline]
 	pub fn dot(&self, other: Self) -> Float {
 		self.x * other.x + self.y * other.y + self.z * other.z
 	}

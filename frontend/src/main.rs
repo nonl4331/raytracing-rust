@@ -1,16 +1,13 @@
 use crate::{
-	gui::{Gui, RenderEvent},
 	parameters::line_break,
 	utility::{get_progress_output, print_final_statistics, print_render_start, save_u8_to_image},
 };
+#[cfg(feature = "gui")]
+use gui::{Gui, RenderEvent};
+
 use rt_core::{Float, SamplerProgress};
-use std::{
-	env,
-	sync::{
-		atomic::{AtomicBool, AtomicU64, Ordering},
-		Arc,
-	},
-};
+use std::env;
+#[cfg(feature = "gui")]
 use vulkano::{
 	buffer::CpuAccessibleBuffer,
 	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
@@ -20,17 +17,23 @@ use vulkano::{
 	sync::{self, GpuFuture},
 	Version,
 };
+#[cfg(feature = "gui")]
 use winit::event_loop::EventLoopProxy;
 
-mod generate;
+#[cfg(feature = "gui")]
 mod gui;
+#[cfg(feature = "gui")]
+mod rendering;
+
+mod generate;
 mod load_model;
 mod macros;
 mod parameters;
-mod rendering;
+
 mod scene;
 mod utility;
 
+#[cfg(feature = "gui")]
 struct Data {
 	queue: Arc<Queue>,
 	device: Arc<Device>,
@@ -45,6 +48,7 @@ struct Data {
 	event_proxy: EventLoopProxy<RenderEvent>,
 }
 
+#[cfg(feature = "gui")]
 impl Data {
 	pub fn new(
 		queue: Arc<Queue>,
@@ -118,126 +122,130 @@ fn main() {
 				.map(|val| (val.sqrt() * 255.999) as u8)
 				.collect();
 
-			match filename {
-				Some(filename) => {
-					save_u8_to_image(
-						render_options.width,
-						render_options.height,
-						output,
-						filename,
-						false,
-					);
-				}
-				None => {}
+			if let Some(filename) = filename {
+				save_u8_to_image(
+					render_options.width,
+					render_options.height,
+					output,
+					filename,
+					false,
+				);
 			}
 		} else {
-			let required_extensions = vulkano_win::required_extensions();
-			let instance = Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
-			let gui = Gui::new(
-				&instance,
-				render_options.width as u32,
-				render_options.height as u32,
-			);
-
-			let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
-				gui.event_loop.as_ref().map(|el| el.create_proxy());
-			let iter = [0.0f32, 0.0, 0.0, 0.0]
-				.repeat((render_options.width * render_options.height) as usize)
-				.into_iter();
-			let buffer = CpuAccessibleBuffer::from_iter(
-				gui.device.clone(),
-				vulkano::buffer::BufferUsage::all(),
-				true,
-				iter,
-			)
-			.unwrap();
-
-			let samples = Arc::new(AtomicU64::new(0));
-			let ray_count = Arc::new(AtomicU64::new(0));
-
-			let command_buffers = create_command_buffers(
-				gui.device.clone(),
-				gui.queue.clone(),
-				buffer.clone(),
-				gui.cpu_rendering.cpu_swapchain.clone(),
-			);
-
-			let mut data = Data::new(
-				gui.queue.clone(),
-				gui.device.clone(),
-				gui.cpu_rendering.to_sc.clone(),
-				gui.cpu_rendering.from_sc.clone(),
-				command_buffers,
-				buffer.clone(),
-				gui.cpu_rendering.copy_to_first.clone(),
-				samples.clone(),
-				render_options.samples_per_pixel,
-				ray_count.clone(),
-				event_loop_proxy.unwrap(),
-			);
-
-			let image_copy_finished = data.to_sc.clone();
-
-			let start = print_render_start(render_options.width, render_options.height, None);
-
-			let render_canceled = Arc::new(AtomicBool::new(true));
-
-			let moved_render_canceled = render_canceled.clone();
-			let moved_filename = filename.clone();
-
-			std::thread::spawn(move || {
-				let ray_count = data.rays_shot.clone();
-				let samples = data.samples.clone();
-				let buffer = data.buffer.clone();
-				let to_sc = data.to_sc.clone();
-
-				scene.generate_image_threaded(
-					render_options,
-					Some((
-						&mut data,
-						|data: &mut Data, previous: &SamplerProgress, i: u64| {
-							sample_update(data, previous, i);
-						},
-					)),
+			#[cfg(feature = "gui")]
+			{
+				let required_extensions = vulkano_win::required_extensions();
+				let instance =
+					Instance::new(None, Version::V1_5, &required_extensions, None).unwrap();
+				let gui = Gui::new(
+					&instance,
+					render_options.width as u32,
+					render_options.height as u32,
 				);
 
-				let ray_count = ray_count.load(Ordering::Relaxed);
-				let samples = samples.load(Ordering::Relaxed);
+				let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
+					gui.event_loop.as_ref().map(|el| el.create_proxy());
+				let iter = [0.0f32, 0.0, 0.0, 0.0]
+					.repeat((render_options.width * render_options.height) as usize)
+					.into_iter();
+				let buffer = CpuAccessibleBuffer::from_iter(
+					gui.device.clone(),
+					vulkano::buffer::BufferUsage::all(),
+					true,
+					iter,
+				)
+				.unwrap();
 
-				print_final_statistics(start, ray_count, Some(samples));
-				line_break();
+				let samples = Arc::new(AtomicU64::new(0));
+				let ray_count = Arc::new(AtomicU64::new(0));
 
-				moved_render_canceled.store(false, Ordering::Relaxed);
-
-				save_file(
-					moved_filename,
-					render_options.width,
-					render_options.height,
-					&*buffer.read().unwrap(),
-					to_sc,
+				let command_buffers = create_command_buffers(
+					gui.device.clone(),
+					gui.queue.clone(),
+					buffer.clone(),
+					gui.cpu_rendering.cpu_swapchain.clone(),
 				);
-			});
 
-			gui.run();
-			if render_canceled.load(Ordering::Relaxed) {
-				let ray_count = ray_count.load(Ordering::Relaxed);
-				let samples = samples.load(Ordering::Relaxed);
-
-				print_final_statistics(start, ray_count, Some(samples));
-				line_break();
-
-				save_file(
-					filename,
-					render_options.width,
-					render_options.height,
-					&*buffer.read().unwrap(),
-					image_copy_finished,
+				let mut data = Data::new(
+					gui.queue.clone(),
+					gui.device.clone(),
+					gui.cpu_rendering.to_sc.clone(),
+					gui.cpu_rendering.from_sc.clone(),
+					command_buffers,
+					buffer.clone(),
+					gui.cpu_rendering.copy_to_first.clone(),
+					samples.clone(),
+					render_options.samples_per_pixel,
+					ray_count.clone(),
+					event_loop_proxy.unwrap(),
 				);
+
+				let image_copy_finished = data.to_sc.clone();
+
+				let start = print_render_start(render_options.width, render_options.height, None);
+
+				let render_canceled = Arc::new(AtomicBool::new(true));
+
+				let moved_render_canceled = render_canceled.clone();
+				let moved_filename = filename.clone();
+
+				std::thread::spawn(move || {
+					let ray_count = data.rays_shot.clone();
+					let samples = data.samples.clone();
+					let buffer = data.buffer.clone();
+					let to_sc = data.to_sc.clone();
+
+					scene.generate_image_threaded(
+						render_options,
+						Some((
+							&mut data,
+							|data: &mut Data, previous: &SamplerProgress, i: u64| {
+								sample_update(data, previous, i);
+							},
+						)),
+					);
+
+					let ray_count = ray_count.load(Ordering::Relaxed);
+					let samples = samples.load(Ordering::Relaxed);
+
+					print_final_statistics(start, ray_count, Some(samples));
+					line_break();
+
+					moved_render_canceled.store(false, Ordering::Relaxed);
+
+					save_file(
+						moved_filename,
+						render_options.width,
+						render_options.height,
+						&*buffer.read().unwrap(),
+						to_sc,
+					);
+				});
+
+				gui.run();
+				if render_canceled.load(Ordering::Relaxed) {
+					let ray_count = ray_count.load(Ordering::Relaxed);
+					let samples = samples.load(Ordering::Relaxed);
+
+					print_final_statistics(start, ray_count, Some(samples));
+					line_break();
+
+					save_file(
+						filename,
+						render_options.width,
+						render_options.height,
+						&*buffer.read().unwrap(),
+						image_copy_finished,
+					);
+				}
 			}
+			#[cfg(not(feature = "gui"))]
+			println!("feature: gui not enabled");
 		}
 	}
 }
 
+#[cfg(feature = "gui")]
 fn create_command_buffers(
 	device: Arc<Device>,
 	queue: Arc<Queue>,
@@ -270,6 +278,7 @@ fn create_command_buffers(
 	]
 }
 
+#[cfg(feature = "gui")]
 fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) {
 	// update infomation about the rays shot and samples completed in the current render
 	data.samples.fetch_add(1, Ordering::Relaxed);
@@ -339,6 +348,7 @@ fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) {
 		.unwrap();
 }
 
+#[cfg(feature = "gui")]
 fn save_file(
 	filename: Option<String>,
 	width: u64,

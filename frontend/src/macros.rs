@@ -782,10 +782,15 @@ macro_rules! random_sampler {
 #[macro_export]
 macro_rules! sky {
 	() => {
-		std::sync::Arc::new(implementations::Sky::new(None))
+		std::sync::Arc::new(implementations::Sky::new(
+			&std::sync::Arc::new(implementations::AllTextures::SolidColour(
+				implementations::SolidColour::new(rt_core::Vec3::zero()),
+			)),
+			(100, 100),
+		))
 	};
 	($sky_texture:expr) => {
-		std::sync::Arc::new(implementations::Sky::new(Some($sky_texture)))
+		std::sync::Arc::new(implementations::Sky::new($sky_texture, (100, 100)))
 	};
 }
 

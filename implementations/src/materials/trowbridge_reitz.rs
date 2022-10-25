@@ -5,7 +5,7 @@ use crate::{
 	utility::{offset_ray, random_float},
 };
 use rt_core::{Float, Hit, Ray, Scatter, Vec3};
-use std::{f32::INFINITY, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct TrowbridgeReitz<T: Texture> {
@@ -16,10 +16,10 @@ pub struct TrowbridgeReitz<T: Texture> {
 }
 
 #[cfg(all(feature = "f64"))]
-use std::f64::consts::PI;
+use std::f64::{consts::PI, INFINITY};
 
 #[cfg(not(feature = "f64"))]
-use std::f32::consts::PI;
+use std::f32::{consts::PI, INFINITY};
 
 impl<T> TrowbridgeReitz<T>
 where

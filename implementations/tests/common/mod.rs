@@ -3,6 +3,7 @@ use rayon::prelude::*;
 use rt_core::{vec::*, Float};
 use statrs::function::gamma::*;
 use std::{
+	cmp::Ordering::*,
 	f64::{consts::*, INFINITY},
 	{fs::File, io::Write},
 };
@@ -17,34 +18,26 @@ pub const CHI_TESTS: usize = 1;
 
 use int::*;
 
-fn chi_squared_term(a: Float, b: Float) -> Float {
-	if a < (SAMPLES / 100000) as Float && b == 0.0 {
-		return 0.0;
-	}
-	let val = a - b;
-	val * val / b
-}
-
 pub fn to_vec(sin_theta: Float, cos_theta: Float, phi: Float) -> Vec3 {
 	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
 }
 
 pub fn chi2_probability(dof: f64, distance: f64) -> f64 {
-	assert!(
-		(gamma_lr(dof * 0.5, distance * 0.5) + gamma_ur(dof * 0.5, distance * 0.5) - 1.0).abs()
-			< 0.0001
-	);
-	gamma_ur(dof * 0.5, distance * 0.5)
+	match distance.partial_cmp(&0.0).unwrap() {
+		Less => panic!("distance < 0.0"),
+		Equal => 1.0,
+		Greater => gamma_ur(dof * 0.5, distance * 0.5),
+	}
 }
 
 pub fn integrate_frequency_table<F>(
 	pdf: &F,
 	wo: Vec3,
-	theta_res: usize,
 	phi_res: usize,
+	theta_res: usize,
 ) -> Vec<Float>
 where
-	F: Fn(Vec3, Vec3) -> Float,
+	F: Fn(Vec3, Vec3) -> Float + Sync,
 {
 	let theta_step = PI as Float / theta_res as Float;
 	let phi_step = TAU as Float / phi_res as Float;
@@ -65,10 +58,12 @@ where
 		)
 	};
 
-	let mut vec = Vec::new();
-	for theta_i in 0..theta_res {
-		for phi_i in 0..phi_res {
-			let a = adaptive_simpsons(
+	(0..(theta_res * phi_res))
+		.into_par_iter()
+		.map(|i| {
+			let phi_i = i % phi_res;
+			let theta_i = i / phi_res;
+			adaptive_simpsons(
 				|phi| {
 					pdf(
 						phi,
@@ -78,18 +73,48 @@ where
 				},
 				phi_i as Float * phi_step,
 				(phi_i + 1) as Float * phi_step,
-			);
-			vec.push(a);
+			)
+		})
+		.collect()
+}
+
+pub fn samped_frequency_distribution_uv<F>(
+	function: &F,
+	u_res: usize,
+	v_res: usize,
+	sample_count: usize,
+) -> Vec<Float>
+where
+	F: Fn() -> (usize, usize) + std::marker::Sync,
+{
+	let mut freq = vec![vec![0.0; u_res * v_res]; 16];
+
+	freq.par_iter_mut().for_each(|x| {
+		for _ in 0..(sample_count / 16) {
+			let sample = function();
+			x[sample.0 + sample.1 * u_res] += 1.0;
 		}
+	});
+
+	freq.into_iter()
+		.fold(vec![0.0; u_res * v_res], |mut sum, val| {
+			sum.iter_mut().zip(val).for_each(|(s, v)| *s += v);
+			sum
+		})
+
+	/*for _ in 0..sample_count {
+		let sample = function();
+		freq[sample.0 + sample.1 * u_res] += 1.0;
 	}
-	vec
+
+	freq*/
 }
 
 pub fn samped_frequency_distribution<F>(
 	function: &F,
 	wo: Vec3,
-	theta_res: usize,
 	phi_res: usize,
+	theta_res: usize,
 	sample_count: usize,
 ) -> Vec<Float>
 where
@@ -155,6 +180,11 @@ pub fn chi_squared(
 			if actual > (samples / 100_000) as Float {
 				chi_squared += INFINITY as Float;
 			}
+		} else if expected_pooled > 5.0 {
+			// prevent df = 0 when all values are less than 5
+			let diff = actual_pooled - expected_pooled;
+			chi_squared += diff * diff / expected_pooled;
+			df += 1;
 		} else if expected < 5.0 || (expected_pooled > 0.0 && expected_pooled < 5.0) {
 			expected_pooled += expected;
 			actual_pooled += actual;
@@ -180,20 +210,28 @@ pub fn dump_tables(
 	wo: Vec3,
 	freq_table: &[Float],
 	expected_freq_table: &[Float],
-	theta_res: usize,
-	phi_res: usize,
+	x: usize,
+	y: usize,
 	bxdf_name: &str,
 ) {
+	fn chi_squared_term(a: Float, b: Float) -> Float {
+		if a < (SAMPLES / 100000) as Float && b == 0.0 {
+			return 0.0;
+		}
+		let val = a - b;
+		val * val / b
+	}
+
 	let enumerate = |file: &mut File, func: fn(Float, Float) -> Float| {
-		(0..theta_res * phi_res).for_each(|index| {
+		(0..(x * y)).for_each(|index| {
 			file.write_all(
 				format!("{}", func(freq_table[index], expected_freq_table[index])).as_bytes(),
 			)
 			.unwrap();
 
-			if index % phi_res + 1 != phi_res {
+			if index % x + 1 != x {
 				file.write_all(b", ").unwrap();
-			} else if index / phi_res + 1 != theta_res {
+			} else if index / x + 1 != y {
 				file.write_all(b"; ").unwrap();
 			}
 		});
