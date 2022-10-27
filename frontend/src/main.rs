@@ -3,22 +3,26 @@ use crate::{
 	utility::{get_progress_output, print_final_statistics, print_render_start, save_u8_to_image},
 };
 #[cfg(feature = "gui")]
-use gui::{Gui, RenderEvent};
+use {
+	gui::{Gui, RenderEvent},
+	std::sync::{
+		atomic::{AtomicBool, AtomicU64, Ordering},
+		Arc,
+	},
+	vulkano::{
+		buffer::CpuAccessibleBuffer,
+		command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
+		device::{Device, Queue},
+		image::StorageImage,
+		instance::Instance,
+		sync::{self, GpuFuture},
+		Version,
+	},
+	winit::event_loop::EventLoopProxy,
+};
 
 use rt_core::{Float, SamplerProgress};
 use std::env;
-#[cfg(feature = "gui")]
-use vulkano::{
-	buffer::CpuAccessibleBuffer,
-	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
-	device::{Device, Queue},
-	image::StorageImage,
-	instance::Instance,
-	sync::{self, GpuFuture},
-	Version,
-};
-#[cfg(feature = "gui")]
-use winit::event_loop::EventLoopProxy;
 
 #[cfg(feature = "gui")]
 mod gui;
