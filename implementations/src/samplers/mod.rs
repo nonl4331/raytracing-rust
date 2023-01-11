@@ -1,17 +1,14 @@
-use crate::textures::Texture;
-use crate::utility::distribution::*;
-use crate::{generate_pdf, next_float, random_float};
-use rt_core::Float;
-use rt_core::PI;
-use rt_core::{NoHit, Ray, Vec3};
+use crate::{generate_values, next_float, random_float, textures::Texture};
+use rand::{rngs::SmallRng, thread_rng, SeedableRng};
+use rt_core::*;
+use statistics::distributions::*;
 use std::sync::Arc;
 
 pub mod random_sampler;
 
 pub struct Sky<T: Texture> {
 	texture: Arc<T>,
-	pub pdf: Vec<Float>,
-	cdf: CDF2D,
+	pub distribution: Distribution2D,
 	sampler_res: (usize, usize),
 }
 
@@ -19,14 +16,13 @@ impl<T: Texture> Sky<T> {
 	pub fn new(texture: &Arc<T>, sampler_res: (usize, usize)) -> Self {
 		let texture = texture.clone();
 
-		let pdf = generate_pdf(&*texture, sampler_res);
+		let values = generate_values(&*texture, sampler_res);
 
-		let cdf = CDF2D::from_pdf(&pdf, sampler_res.0);
+		let distribution = Distribution2D::new(&values, sampler_res.0);
 
 		Sky {
 			texture,
-			pdf,
-			cdf,
+			distribution,
 			sampler_res,
 		}
 	}
@@ -49,20 +45,16 @@ impl<T: Texture> NoHit for Sky<T> {
 		}
 		let u = phi / (2.0 * PI);
 		let v = theta / PI;
-
-		let u_bin = next_float((u * self.sampler_res.0 as Float).floor()) as usize;
-		let v_bin = next_float((v * self.sampler_res.1 as Float).floor()) as usize;
-
-		let index =
-			(v_bin * self.sampler_res.0 + u_bin).min(self.sampler_res.0 * self.sampler_res.1 - 1);
-
-		self.pdf[index] / (2.0 * PI * PI * sin_theta)
+		self.sampler_res.0 as Float * self.sampler_res.1 as Float * self.distribution.pdf(u, v)
+			/ (sin_theta * TAU * PI)
 	}
 	fn can_sample(&self) -> bool {
 		true
 	}
 	fn sample(&self) -> Vec3 {
-		let uv = self.cdf.sample();
+		let uv = self
+			.distribution
+			.sample(&mut SmallRng::from_rng(thread_rng()).unwrap());
 
 		let u = next_float(uv.0 as Float + random_float()) / self.sampler_res.0 as Float;
 		let v = next_float(uv.1 as Float + random_float()) / self.sampler_res.1 as Float;
@@ -71,5 +63,24 @@ impl<T: Texture> NoHit for Sky<T> {
 		let theta = v * PI;
 
 		Vec3::from_spherical(theta.sin(), theta.cos(), phi.sin(), phi.cos())
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::*;
+	use rand::rngs::ThreadRng;
+	use rt_core::*;
+	use statistics::spherical_sampling::test_spherical_pdf;
+
+	#[test]
+	fn sky_sampling() {
+		let tex = std::sync::Arc::new(AllTextures::Lerp(Lerp::new(Vec3::zero(), Vec3::one())));
+
+		let sky = Sky::new(&tex, (60, 30));
+
+		let pdf = |outgoing: Vec3| sky.pdf(outgoing);
+		let sample = |_: &mut ThreadRng| sky.sample();
+		test_spherical_pdf("lerp sky sampling", &pdf, &sample, false);
 	}
 }

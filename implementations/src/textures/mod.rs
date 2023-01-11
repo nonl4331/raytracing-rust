@@ -1,7 +1,7 @@
 use image::{io::Reader, GenericImageView};
 use proc::Texture;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
-use rt_core::{Float, Vec2, Vec3, PI};
+use rt_core::*;
 
 const PERLIN_RVECS: usize = 256;
 
@@ -28,10 +28,8 @@ pub struct CheckeredTexture {
 	secondary_colour: Vec3,
 }
 
-pub fn generate_pdf<T: Texture>(texture: &T, sample_res: (usize, usize)) -> Vec<Float> {
-	let mut sum = 0.0;
-
-	let mut pdf = Vec::new();
+pub fn generate_values<T: Texture>(texture: &T, sample_res: (usize, usize)) -> Vec<Float> {
+	let mut values = Vec::new();
 
 	let step = (1.0 / sample_res.0 as Float, 1.0 / sample_res.1 as Float);
 	for y in 0..sample_res.1 {
@@ -43,21 +41,11 @@ pub fn generate_pdf<T: Texture>(texture: &T, sample_res: (usize, usize)) -> Vec<
 			let sin_theta = theta.sin();
 			let direction = Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, theta.cos());
 			let col = texture.colour_value(direction, Vec3::zero());
-			sum += 0.2126 * col.x + 0.7152 * col.y + 0.0722 * col.z;
-			pdf.push(0.2126 * col.x + 0.7152 * col.y + 0.0722 * col.z);
+			values.push((0.2126 * col.x + 0.7152 * col.y + 0.0722 * col.z) * sin_theta);
 		}
 	}
 
-	let average = sum * step.0 * step.1;
-
-	let pdf: Vec<Float> = pdf
-		.into_iter()
-		.map(|v| (v / average) / (sample_res.0 * sample_res.1) as Float)
-		.collect();
-
-	let sum: Float = pdf.iter().sum();
-
-	pdf.into_iter().map(|v| v / sum).collect()
+	values
 }
 
 impl CheckeredTexture {

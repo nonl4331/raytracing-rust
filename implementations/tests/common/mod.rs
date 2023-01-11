@@ -1,22 +1,19 @@
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rayon::prelude::*;
 use rt_core::{vec::*, Float};
+use statistics::integrators::adaptive_simpsons;
 use statrs::function::gamma::*;
 use std::{
 	cmp::Ordering::*,
-	f64::{consts::*, INFINITY},
+	f64::consts::*,
 	{fs::File, io::Write},
 };
-
-pub mod int;
 
 pub const SAMPLES: usize = 10_000_000;
 pub const THETA_RES: usize = 80;
 pub const PHI_RES: usize = 2 * THETA_RES;
 pub const CHI2_THRESHOLD: Float = 0.01;
 pub const CHI_TESTS: usize = 1;
-
-use int::*;
 
 pub fn to_vec(sin_theta: Float, cos_theta: Float, phi: Float) -> Vec3 {
 	Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)
@@ -101,13 +98,6 @@ where
 			sum.iter_mut().zip(val).for_each(|(s, v)| *s += v);
 			sum
 		})
-
-	/*for _ in 0..sample_count {
-		let sample = function();
-		freq[sample.0 + sample.1 * u_res] += 1.0;
-	}
-
-	freq*/
 }
 
 pub fn samped_frequency_distribution<F>(
@@ -152,58 +142,6 @@ pub fn generate_wo() -> Vec3 {
 	let phi = TAU as Float * random_float();
 
 	to_vec((1.0 - cos_theta * cos_theta).sqrt(), cos_theta, phi)
-}
-
-pub fn chi_squared(
-	freq_table: Vec<Float>,
-	expected_freq_table: Vec<Float>,
-	samples: usize,
-) -> (usize, Float) {
-	assert_eq!(freq_table.len(), expected_freq_table.len());
-
-	let mut values = expected_freq_table
-		.into_par_iter()
-		.zip(freq_table.into_par_iter())
-		.collect::<Vec<(Float, Float)>>();
-
-	values.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-
-	let mut df = 0;
-
-	let mut expected_pooled = 0.0;
-	let mut actual_pooled = 0.0;
-
-	let mut chi_squared = 0.0;
-
-	for (expected, actual) in values {
-		if expected == 0.0 {
-			if actual > (samples / 100_000) as Float {
-				chi_squared += INFINITY as Float;
-			}
-		} else if expected_pooled > 5.0 {
-			// prevent df = 0 when all values are less than 5
-			let diff = actual_pooled - expected_pooled;
-			chi_squared += diff * diff / expected_pooled;
-			df += 1;
-		} else if expected < 5.0 || (expected_pooled > 0.0 && expected_pooled < 5.0) {
-			expected_pooled += expected;
-			actual_pooled += actual;
-		} else {
-			let diff = actual - expected;
-			chi_squared += diff * diff / expected;
-			df += 1;
-		}
-	}
-
-	if actual_pooled > 0.0 || expected_pooled > 0.0 {
-		let diff = actual_pooled - expected_pooled;
-		chi_squared += diff * diff / expected_pooled;
-		df += 1;
-	}
-
-	df -= 1;
-
-	(df, chi_squared)
 }
 
 pub fn dump_tables(

@@ -1,10 +1,10 @@
-use crate::utility::coord::Coordinate;
 use crate::{
 	materials::refract,
 	textures::Texture,
-	utility::{offset_ray, random_float},
+	utility::{coord::Coordinate, offset_ray},
 };
-use rt_core::{Float, Hit, Ray, Scatter, Vec3};
+use rand::{rngs::SmallRng, thread_rng, SeedableRng};
+use rt_core::*;
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -14,12 +14,6 @@ pub struct TrowbridgeReitz<T: Texture> {
 	pub ior: Vec3,
 	pub metallic: Float,
 }
-
-#[cfg(all(feature = "f64"))]
-use std::f64::{consts::PI, INFINITY};
-
-#[cfg(not(feature = "f64"))]
-use std::f32::{consts::PI, INFINITY};
 
 impl<T> TrowbridgeReitz<T>
 where
@@ -57,29 +51,12 @@ where
 		((1.0 + self.alpha * self.alpha * tan_sq).sqrt() - 1.0) * 0.5
 	}
 
-	fn distribution_ggx(&self, hit: &Hit, h: Vec3) -> Float {
+	fn microfacet_ndf_ggx(&self, hit: &Hit, h: Vec3) -> Float {
 		let noh = hit.normal.dot(h);
 		let alpha_sq = self.alpha * self.alpha;
 		let noh_sq = noh * noh;
 		let den = noh_sq * (alpha_sq - 1.0) + 1.0;
 		alpha_sq / (PI * den * den)
-	}
-
-	fn sample_h(&self, hit: &Hit, _: Vec3) -> Vec3 {
-		let coord = Coordinate::new_from_z(hit.normal);
-
-		let r1 = random_float();
-		let r2 = random_float();
-		let cos_theta = ((1.0 - r1) / (r1 * (self.alpha * self.alpha - 1.0) + 1.0)).sqrt();
-		let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
-		let phi_s = (2.0 * PI * r2).max(0.0).min(2.0 * PI);
-
-		let mut h =
-			Vec3::new(phi_s.cos() * sin_theta, phi_s.sin() * sin_theta, cos_theta).normalised();
-
-		coord.vec_to_coordinate(&mut h);
-
-		h
 	}
 }
 
@@ -88,9 +65,14 @@ where
 	T: Texture,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let wo = -ray.direction;
+		let coord = Coordinate::new_from_z(hit.normal);
 
-		let h = self.sample_h(hit, wo);
+		let mut h = statistics::bxdfs::trowbridge_reitz::sample_h(
+			self.alpha,
+			&mut SmallRng::from_rng(thread_rng()).unwrap(),
+		);
+
+		coord.vec_to_coordinate(&mut h);
 
 		let direction = ray.direction.reflected(h);
 
@@ -101,8 +83,7 @@ where
 	}
 	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Float {
 		let wo = -wo;
-		let h = (wo + wi).normalised();
-		let a = self.distribution_ggx(hit, h) * h.dot(hit.normal).abs() / (4.0 * wo.dot(h));
+		let a = statistics::bxdfs::trowbridge_reitz::pdf_outgoing(self.alpha, wo, wi, hit.normal);
 		if a == 0.0 {
 			INFINITY
 		} else {
@@ -119,7 +100,7 @@ where
 
 		let spec_component = self.fresnel(hit, wo, wi, h)
 			* self.geometry_ggx(h, wo, wi)
-			* self.distribution_ggx(hit, h)
+			* self.microfacet_ndf_ggx(hit, h)
 			/ (4.0 * wo.dot(hit.normal) * wi.dot(hit.normal));
 
 		spec_component * hit.normal.dot(wi).abs()
@@ -132,7 +113,7 @@ where
 			return Vec3::zero();
 		}
 
-		self.distribution_ggx(hit, h);
+		self.microfacet_ndf_ggx(hit, h);
 
 		self.fresnel(hit, wo, wi, h) * self.geometry_ggx(h, wo, wi)
 			/ self.geometry_partial_ggx(h, wo)

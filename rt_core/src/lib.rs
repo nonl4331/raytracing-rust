@@ -13,18 +13,25 @@ pub use sampler::*;
 pub use vec::*;
 
 #[cfg(all(feature = "f64"))]
-pub type Float = f64;
-#[cfg(all(feature = "f64"))]
-pub use std::f64::consts::PI;
-#[cfg(all(feature = "f64"))]
-pub const EPSILON: Float = 5.58E-8;
+pub mod f64_stuff {
+	pub type Float = f64;
+	pub use std::f64::consts::*;
+	pub use std::f64::*;
+	pub const EPSILON: Float = 5.58E-8;
+}
 
 #[cfg(not(feature = "f64"))]
-pub type Float = f32;
+pub mod f32_stuff {
+	pub type Float = f32;
+	pub use std::f32::consts::*;
+	pub use std::f32::*;
+	pub const EPSILON: Float = 3.0E-4;
+}
+
 #[cfg(not(feature = "f64"))]
-pub use std::f32::consts::PI;
-#[cfg(not(feature = "f64"))]
-pub const EPSILON: Float = 3.0E-4;
+pub use f32_stuff::*;
+#[cfg(all(feature = "f64"))]
+pub use f64_stuff::*;
 
 #[inline]
 pub fn power_heuristic(pdf_a: Float, pdf_b: Float) -> Float {
