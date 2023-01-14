@@ -119,7 +119,11 @@ where
 			.collect();
 		let sampled_values: Vec<Float> = (0..SAMPLE_LEN)
 			.into_par_iter()
-			.map(|i| recursively_binary_average((0..BATCHES).map(|j| sampled_vecs[j][i]).collect()))
+			.map(|i| {
+				recursively_binary_average::<Float>(
+					(0..BATCHES).map(|j| sampled_vecs[j][i]).collect(),
+				)
+			})
 			.collect();
 
 		let (df, chi_squared) = chi_squared(&sampled_values, &expected_values, SAMPLES);
@@ -133,12 +137,8 @@ where
 
 #[cfg(test)]
 pub mod test {
-	use crate::{
-		chi_squared::*, integrators::*, spherical_sampling::*, utility::*, Float, Vec3, PI, TAU,
-	};
-	use rand::{rngs::ThreadRng, thread_rng, Rng};
-	use rayon::prelude::*;
-	use rt_core::FRAC_PI_2;
+	use crate::{spherical_sampling::*, Float, Vec3, TAU};
+	use rand::Rng;
 
 	pub fn to_vec(sin_theta: Float, cos_theta: Float, phi: Float) -> Vec3 {
 		Vec3::new(phi.cos() * sin_theta, phi.sin() * sin_theta, cos_theta)

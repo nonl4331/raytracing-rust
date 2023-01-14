@@ -231,7 +231,7 @@ fn get_info(args: &[String], index: usize) {
 				println!("Motion Blur: No");
 			}
 			_ => {
-				println!("{} is not a valid scene index!", string);
+				println!("{string} is not a valid scene index!");
 				println!("Please specify a valid for scene!");
 				println!("Do -L or--list to view scenes or do -H or --help for more information.");
 				process::exit(0);
@@ -270,8 +270,11 @@ fn get_scene(
 			"coffee" => {
 				scene!(coffee, bvh_type, aspect_ratio)
 			}
+			"bxdf_testing" => {
+				scene!(bxdf_testing, bvh_type, aspect_ratio)
+			}
 			_ => {
-				println!("{} is not a valid scene index!", string);
+				println!("{string} is not a valid scene index!");
 				println!("Please specify a valid for scene!");
 				println!("Do -L or--list to view scenes or do -H or --help for more information.");
 				process::exit(0);

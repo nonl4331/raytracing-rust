@@ -19,7 +19,7 @@ where
 					phi.cos() * theta.sin(),
 					phi.sin() * theta.sin(),
 					theta.cos(),
-				)) * theta.sin()
+				)) * theta.sin().abs()
 			},
 			a,
 			b,

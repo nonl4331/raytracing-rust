@@ -8,7 +8,7 @@ pub mod random_sampler;
 
 pub struct Sky<T: Texture> {
 	texture: Arc<T>,
-	pub distribution: Distribution2D,
+	pub distribution: Option<Distribution2D>,
 	sampler_res: (usize, usize),
 }
 
@@ -18,7 +18,11 @@ impl<T: Texture> Sky<T> {
 
 		let values = generate_values(&*texture, sampler_res);
 
-		let distribution = Distribution2D::new(&values, sampler_res.0);
+		let distribution = if sampler_res.0 | sampler_res.1 != 0 {
+			Some(Distribution2D::new(&values, sampler_res.0))
+		} else {
+			None
+		};
 
 		Sky {
 			texture,
@@ -45,15 +49,19 @@ impl<T: Texture> NoHit for Sky<T> {
 		}
 		let u = phi / (2.0 * PI);
 		let v = theta / PI;
-		self.sampler_res.0 as Float * self.sampler_res.1 as Float * self.distribution.pdf(u, v)
+		self.sampler_res.0 as Float
+			* self.sampler_res.1 as Float
+			* self.distribution.as_ref().unwrap().pdf(u, v)
 			/ (sin_theta * TAU * PI)
 	}
 	fn can_sample(&self) -> bool {
-		true
+		self.sampler_res.0 | self.sampler_res.1 != 0
 	}
 	fn sample(&self) -> Vec3 {
 		let uv = self
 			.distribution
+			.as_ref()
+			.unwrap()
 			.sample(&mut SmallRng::from_rng(thread_rng()).unwrap());
 
 		let u = next_float(uv.0 as Float + random_float()) / self.sampler_res.0 as Float;

@@ -80,7 +80,7 @@ pub struct Distribution2D {
 
 impl Distribution2D {
 	pub fn new(values: &[Float], width: usize) -> Self {
-		assert_eq!(values.len() % width, 0);
+		assert!(values.len() % width == 0 && !values.is_empty());
 		let mut y_values = Vec::new();
 		let mut x_distributions = Vec::new();
 		for vec_x in values.chunks_exact(width) {

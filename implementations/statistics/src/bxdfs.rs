@@ -7,7 +7,6 @@ pub mod trowbridge_reitz {
 		let cos_theta = ((1.0 - r1) / (r1 * (alpha * alpha - 1.0) + 1.0)).sqrt();
 		let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 		let phi_s = (TAU * r2).max(0.0).min(TAU);
-
 		Vec3::new(phi_s.cos() * sin_theta, phi_s.sin() * sin_theta, cos_theta).normalised()
 	}
 
@@ -46,15 +45,20 @@ pub mod trowbridge_reitz {
 	}
 
 	pub fn pdf_outgoing(alpha: Float, incoming: Vec3, outgoing: Vec3, normal: Vec3) -> Float {
-		let h = (incoming + outgoing).normalised();
+		let mut h = (incoming + outgoing).normalised();
+		if h.dot(normal) < 0.0 {
+			h = -(incoming + outgoing).normalised();
+		}
 		let cos_theta = normal.dot(h);
 		let d = {
-			// Why no positive charactaristic function?
+			if cos_theta <= 0.0 {
+				return 0.0;
+			}
 			let a_sq = alpha * alpha;
 			let tmp = cos_theta * cos_theta * (a_sq - 1.0) + 1.0;
 			a_sq / (PI * tmp * tmp)
 		};
-		d * cos_theta.abs() / (4.0 * outgoing.dot(h).abs())
+		d * h.dot(normal).abs() / (4.0 * outgoing.dot(h).abs())
 	}
 }
 
@@ -83,4 +87,16 @@ pub mod test {
 		let sample = |rng: &mut ThreadRng| trowbridge_reitz::sample(alpha, incoming, rng);
 		test_spherical_pdf("trowbrige reitz h", &pdf, &sample, false);
 	}
+
+	/*#[test]
+	fn some_test() {
+		let mut rng = thread_rng();
+		let incoming: Vec3 = generate_wi(&mut rng);
+		let alpha: Float = rng.gen();
+		let pdf = |outgoing: Vec3| {
+
+		};
+		let sample = |rng: &mut ThreadRng| trowbridge_reitz::sample(alpha, incoming, rng);
+		test_spherical_pdf("trowbrige reitz h", &pdf, &sample, false);
+	}*/
 }

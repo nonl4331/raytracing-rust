@@ -9,7 +9,7 @@ pub mod spherical_sampling;
 pub mod utility {
 
 	use rayon::prelude::*;
-	use std::ops::Add;
+	use std::ops::*;
 
 	pub fn distribute_samples_over_threads<T, F>(samples: u64, f: &F) -> Vec<T>
 	where
@@ -37,7 +37,12 @@ pub mod utility {
 
 	use super::Float;
 
-	pub fn recursively_binary_average(mut values: Vec<Float>) -> Float {
+	pub fn recursively_binary_average<T: Add + Mul>(mut values: Vec<T>) -> T
+	where
+		<T as Add>::Output: Mul<Float>,
+		T: Copy,
+		Vec<T>: FromIterator<<<T as Add>::Output as Mul<Float>>::Output>,
+	{
 		let mut len = values.len();
 		if len & (len - 1) != 0 && len != 0 {
 			panic!("values.len() is not a power of 2");
@@ -50,7 +55,7 @@ pub mod utility {
 			values = a
 				.iter()
 				.zip(b.iter())
-				.map(|(&a, &b)| 0.5 * (a + b))
+				.map(|(&a, &b)| (a + b) * 0.5)
 				.collect();
 		}
 
@@ -60,6 +65,8 @@ pub mod utility {
 	#[cfg(test)]
 	#[test]
 	fn binary_average() {
-		assert!((recursively_binary_average(vec![1.0, 3.0, 7.0, 1.0]) - 3.0).abs() < 0.0000001);
+		assert!(
+			(recursively_binary_average::<Float>(vec![1.0, 3.0, 7.0, 1.0]) - 3.0).abs() < 0.0000001
+		);
 	}
 }

@@ -1,6 +1,7 @@
 use crate::{scene::Scene, utility::create_bvh_with_info, *};
 use implementations::{
 	random_sampler::RandomSampler, split::SplitType, AllMaterials, AllPrimitives, AllTextures, Bvh,
+	Lambertian,
 };
 use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
 use rand_seeder::Seeder;
@@ -40,7 +41,7 @@ pub fn classic(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -
 		None => get_seed(32),
 	};
 
-	println!("\tseed: {}", seed);
+	println!("\tseed: {seed}");
 	let mut rng: SmallRng = Seeder::from(seed).make_rng();
 
 	for a in -11..11 {
@@ -88,6 +89,69 @@ pub fn classic(bvh_type: SplitType, aspect_ratio: Float, seed: Option<String>) -
 	let bvh = create_bvh_with_info(primitives, bvh_type);
 
 	scene!(camera, sky, random_sampler!(), bvh)
+}
+
+pub fn bxdf_testing(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
+	let mut primitives = Vec::new();
+
+	let testing_mat = &std::sync::Arc::new(implementations::AllMaterials::Lambertian(
+		Lambertian::new(&solid_colour!(0.93, 0.62, 0.54), 0.5),
+	));
+
+	primitives.extend(aarect!(
+		-500.0,
+		-500.0,
+		500.0,
+		500.0,
+		-40.0,
+		&axis!(Z),
+		&diffuse!(0.5, 0.5, 0.5, 0.5)
+	));
+
+	let glowy = sphere!(
+		0,
+		-100.5,
+		0,
+		50,
+		&emit!(&solid_colour!(colour!(0, 1, 0)), 5.5)
+	);
+
+	let glowy_two = sphere!(
+		0,
+		0.0,
+		300,
+		50,
+		&emit!(&solid_colour!(colour!(1, 1, 1)), 10.5)
+	);
+
+	let materials = vec![(testing_mat.clone(), "default")];
+
+	primitives.extend(crate::load_model::load_model_with_materials(
+		"../res/dragon.obj",
+		&materials,
+	));
+
+	primitives.push(glowy);
+	primitives.push(glowy_two);
+
+	let camera = camera!(
+		position!(700, -700, 700),
+		position!(0, 0, 0),
+		position!(0, 0, 1),
+		34,
+		aspect_ratio,
+		0,
+		10
+	);
+
+	let bvh = create_bvh_with_info(primitives, bvh_type);
+
+	scene!(
+		camera,
+		sky!(&image!("../res/skymaps/lilienstein.webp")),
+		random_sampler!(),
+		bvh
+	)
 }
 
 pub fn furnace(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
