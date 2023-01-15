@@ -21,7 +21,7 @@ use {
 	winit::event_loop::EventLoopProxy,
 };
 
-use rt_core::{Float, SamplerProgress};
+use implementations::rt_core::{Float, SamplerProgress};
 use std::env;
 
 #[cfg(feature = "gui")]
@@ -33,8 +33,6 @@ mod generate;
 mod load_model;
 mod macros;
 mod parameters;
-
-mod scene;
 mod utility;
 
 #[cfg(feature = "gui")]

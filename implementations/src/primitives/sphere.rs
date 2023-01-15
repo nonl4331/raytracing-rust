@@ -1,8 +1,8 @@
 use crate::{
 	aabb::{AABound, AABB},
+	rt_core::*,
 	utility::{coord::Coordinate, random_float},
 };
-use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3, EPSILON, PI};
 use std::sync::Arc;
 
 #[derive(Debug)]

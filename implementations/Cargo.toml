@@ -10,7 +10,6 @@ image = "0.24.3"
 proc = { path = "./proc" }
 rand = { version = "0.8.3", features = [ "small_rng" ] }
 rayon = "1.5.1"
-rt_core = {path = "../rt_core"}
 statistics = { path = "./statistics" }
 
 [dev-dependencies]
@@ -18,4 +17,4 @@ chrono = "0.4.19"
 statrs = "0.16.0"
 
 [features]
-f64 = ["rt_core/f64"]
+f64 = ["statistics/f64"]

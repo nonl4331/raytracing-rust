@@ -6,6 +6,8 @@ mod samplers;
 mod textures;
 mod utility;
 
+pub use statistics::rt_core;
+
 pub use acceleration::*;
 pub use cameras::*;
 pub use materials::*;

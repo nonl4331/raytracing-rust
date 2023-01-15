@@ -1,10 +1,10 @@
 use crate::{
 	aabb::{AABound, AABB},
 	primitives::Axis,
+	rt_core::*,
 	utility::{check_side, gamma},
 };
 use rand::{thread_rng, Rng};
-use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
@@ -92,10 +92,10 @@ where
 	M: Scatter,
 {
 	fn get_point(&self, index: usize) -> Vec3 {
-		(*self.mesh).vertices[self.point_indices[index]]
+		self.mesh.vertices[self.point_indices[index]]
 	}
 	fn get_normal(&self, index: usize) -> Vec3 {
-		(*self.mesh).normals[self.normal_indices[index]]
+		self.mesh.normals[self.normal_indices[index]]
 	}
 	fn get_material(&self) -> &Arc<M> {
 		&self.material
@@ -254,11 +254,11 @@ where
 		triangle_intersection(self, ray)
 	}
 	fn area(&self) -> Float {
-		0.5 * ((*self.mesh).vertices[self.point_indices[1]]
-			- (*self.mesh).vertices[self.point_indices[0]])
+		0.5 * (self.mesh.vertices[self.point_indices[1]]
+			- self.mesh.vertices[self.point_indices[0]])
 			.cross(
-				(*self.mesh).vertices[self.point_indices[2]]
-					- (*self.mesh).vertices[self.point_indices[0]],
+				self.mesh.vertices[self.point_indices[2]]
+					- self.mesh.vertices[self.point_indices[0]],
 			)
 			.mag()
 	}
@@ -267,9 +267,9 @@ where
 		let uv = rng.gen::<Float>().sqrt();
 		let uv = (1.0 - uv, uv * rng.gen::<Float>().sqrt());
 
-		let point = uv.0 * (*self.mesh).vertices[self.point_indices[0]]
-			+ uv.1 * (*self.mesh).vertices[self.point_indices[1]]
-			+ (1.0 - uv.0 - uv.1) * (*self.mesh).vertices[self.point_indices[2]];
+		let point = uv.0 * self.mesh.vertices[self.point_indices[0]]
+			+ uv.1 * self.mesh.vertices[self.point_indices[1]]
+			+ (1.0 - uv.0 - uv.1) * self.mesh.vertices[self.point_indices[2]];
 
 		(point - in_point).normalised()
 	}
@@ -292,9 +292,9 @@ impl<M: Scatter> AABound for Triangle<M> {
 impl<M: Scatter> AABound for MeshTriangle<M> {
 	fn get_aabb(&self) -> AABB {
 		let points = [
-			(*self.mesh).vertices[self.point_indices[0]],
-			(*self.mesh).vertices[self.point_indices[1]],
-			(*self.mesh).vertices[self.point_indices[2]],
+			self.mesh.vertices[self.point_indices[0]],
+			self.mesh.vertices[self.point_indices[1]],
+			self.mesh.vertices[self.point_indices[2]],
 		];
 
 		AABB::new(

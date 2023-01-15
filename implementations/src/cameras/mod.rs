@@ -1,5 +1,4 @@
-use crate::utility::random_float;
-use rt_core::{Camera, Float, Ray, Vec3};
+use crate::{rt_core::*, utility::random_float};
 
 pub struct SimpleCamera {
 	pub viewport_width: Float,

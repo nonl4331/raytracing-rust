@@ -1,5 +1,4 @@
-use crate::{aabb::AABB, acceleration::PrimitiveInfo, Axis};
-use rt_core::Float;
+use crate::{aabb::AABB, acceleration::PrimitiveInfo, rt_core::*, Axis};
 
 const NUM_BUCKETS: usize = 12;
 const MAX_IN_NODE: usize = 255;

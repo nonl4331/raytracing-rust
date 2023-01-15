@@ -1,6 +1,5 @@
 use chrono::Local;
-use implementations::{aabb::AABound, split::SplitType, Axis, Bvh};
-use rt_core::{Float, Primitive, Scatter, Vec3};
+use implementations::{aabb::AABound, rt_core::*, split::SplitType, Axis, Bvh};
 use std::{
 	io::{stdout, Write},
 	process,
@@ -32,29 +31,29 @@ pub fn get_readable_duration(duration: Duration) -> String {
 
 	let days_string = match days {
 		0 => "".to_string(),
-		1 => format!("{} day, ", days),
-		_ => format!("{} days, ", days),
+		1 => format!("{days} day, "),
+		_ => format!("{days} days, "),
 	};
 
 	let hours = (duration.as_secs() - days * 86400) / 3600;
 	let hours_string = match hours {
 		0 => "".to_string(),
-		1 => format!("{} hour, ", hours),
-		_ => format!("{} hours, ", hours),
+		1 => format!("{hours} hour, "),
+		_ => format!("{hours} hours, "),
 	};
 
 	let minutes = (duration.as_secs() - days * 86400 - hours * 3600) / 60;
 	let minutes_string = match minutes {
 		0 => "".to_string(),
-		1 => format!("{} minute, ", minutes),
-		_ => format!("{} minutes, ", minutes),
+		1 => format!("{minutes} minute, "),
+		_ => format!("{minutes} minutes, "),
 	};
 
 	let seconds = duration.as_secs() % 60;
 	let seconds_string = match seconds {
 		0 => "~0 seconds".to_string(),
-		1 => format!("{} second", seconds),
-		_ => format!("{} seconds", seconds),
+		1 => format!("{seconds} second"),
+		_ => format!("{seconds} seconds"),
 	};
 	days_string + &hours_string + &minutes_string + &seconds_string
 }
@@ -81,7 +80,7 @@ pub fn create_bvh_with_info<P: Primitive<M> + AABound, M: Scatter>(
 pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
 	progress_bar(samples_completed as f64 / total_samples as f64);
 
-	print!(" ({}/{}) samples", samples_completed, total_samples);
+	print!(" ({samples_completed}/{total_samples}) samples");
 
 	stdout().flush().unwrap();
 }
@@ -111,15 +110,13 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
 			.unwrap();
 		}
 		"ppm" => {
-			let mut data = format!("P3\n{} {}\n255\n", width, height)
-				.as_bytes()
-				.to_owned();
+			let mut data = format!("P3\n{width} {height}\n255\n").as_bytes().to_owned();
 
 			image.iter().enumerate().for_each(|(i, &v)| {
 				if i % 3 == 0 {
-					data.extend_from_slice(format!("{}\n", v).as_bytes())
+					data.extend_from_slice(format!("{v}\n").as_bytes())
 				} else {
-					data.extend_from_slice(format!("{} ", v).as_bytes())
+					data.extend_from_slice(format!("{v} ").as_bytes())
 				}
 			});
 
@@ -141,9 +138,9 @@ pub fn print_final_statistics(start: Instant, ray_count: u64, samples: Option<u6
 		time.format("%X")
 	);
 	println!("\tRender Time: {}", get_readable_duration(duration));
-	println!("\tRays: {}", ray_count);
+	println!("\tRays: {ray_count}");
 	match samples {
-		Some(samples) => println!("\tSamples: {}", samples),
+		Some(samples) => println!("\tSamples: {samples}"),
 		None => {
 			println!()
 		}
@@ -158,10 +155,10 @@ pub fn print_final_statistics(start: Instant, ray_count: u64, samples: Option<u6
 pub fn print_render_start(width: u64, height: u64, samples: Option<u64>) -> Instant {
 	let time = Local::now();
 	println!("{} - Render started", time.format("%X"));
-	println!("\tWidth: {}", width);
-	println!("\tHeight: {}", height);
+	println!("\tWidth: {width}");
+	println!("\tHeight: {height}");
 	match samples {
-		Some(samples) => println!("\tSamples per pixel: {}\n", samples),
+		Some(samples) => println!("\tSamples per pixel: {samples}\n"),
 		None => println!(),
 	}
 	Instant::now()
@@ -206,7 +203,7 @@ pub fn rotate_around_axis(point: &mut Vec3, axis: Axis, sin: Float, cos: Float) 
 mod tests {
 
 	use super::*;
-	use rt_core::PI;
+	use implementations::rt_core::PI;
 
 	#[test]
 	fn rotation() {

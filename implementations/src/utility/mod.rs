@@ -1,5 +1,5 @@
+use crate::rt_core::{Float, Vec3, PI};
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
-use rt_core::{Float, Vec3, PI};
 
 pub mod coord;
 

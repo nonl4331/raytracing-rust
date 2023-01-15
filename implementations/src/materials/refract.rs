@@ -1,9 +1,9 @@
 use crate::{
 	materials::reflect::Reflect,
+	rt_core::*,
 	textures::Texture,
 	utility::{offset_ray, random_float},
 };
-use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::sync::Arc;
 
 #[derive(Debug)]

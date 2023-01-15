@@ -4,31 +4,34 @@
 #[macro_export]
 macro_rules! position {
 	($x:expr, $y:expr, $z:expr) => {
-		rt_core::vec::Vec3::new(
-			$x as rt_core::Float,
-			$y as rt_core::Float,
-			$z as rt_core::Float,
+		implementations::rt_core::vec::Vec3::new(
+			$x as implementations::rt_core::Float,
+			$y as implementations::rt_core::Float,
+			$z as implementations::rt_core::Float,
 		)
 	};
 	($x:expr, $y:expr) => {
-		rt_core::vec::Vec2::new($x as rt_core::Float, $y as rt_core::Float)
+		implementations::rt_core::vec::Vec2::new(
+			$x as implementations::rt_core::Float,
+			$y as implementations::rt_core::Float,
+		)
 	};
 }
 
 #[macro_export]
 macro_rules! colour {
 	($r:expr,$g:expr,$b:expr) => {
-		rt_core::Vec3::new(
-			$r as rt_core::Float,
-			$g as rt_core::Float,
-			$b as rt_core::Float,
+		implementations::rt_core::Vec3::new(
+			$r as implementations::rt_core::Float,
+			$g as implementations::rt_core::Float,
+			$b as implementations::rt_core::Float,
 		)
 	};
 	($value:expr) => {
-		rt_core::Vec3::new(
-			$value as rt_core::Float,
-			$value as rt_core::Float,
-			$value as rt_core::Float,
+		implementations::rt_core::Vec3::new(
+			$value as implementations::rt_core::Float,
+			$value as implementations::rt_core::Float,
+			$value as implementations::rt_core::Float,
 		)
 	};
 }
@@ -36,17 +39,17 @@ macro_rules! colour {
 #[macro_export]
 macro_rules! rotation {
 	($x:expr, $y:expr, $z:expr, D) => {
-		rt_core::vec::Vec3::new(
-			$x as rt_core::Float * rt_core::PI / 180.0,
-			$y as rt_core::Float * rt_core::PI / 180.0,
-			$z as rt_core::Float * rt_core::PI / 180.0,
+		implementations::rt_core::vec::Vec3::new(
+			$x as implementations::rt_core::Float * implementations::rt_core::PI / 180.0,
+			$y as implementations::rt_core::Float * implementations::rt_core::PI / 180.0,
+			$z as implementations::rt_core::Float * implementations::rt_core::PI / 180.0,
 		)
 	};
 	($x:expr, $y:expr, $z:expr, R) => {
-		rt_core::vec::Vec3::new(
-			$x as rt_core::Float,
-			$y as rt_core::Float,
-			$z as rt_core::Float,
+		implementations::rt_core::vec::Vec3::new(
+			$x as implementations::rt_core::Float,
+			$y as implementations::rt_core::Float,
+			$z as implementations::rt_core::Float,
 		)
 	};
 }
@@ -94,12 +97,15 @@ macro_rules! image {
 macro_rules! checkered {
 	($colour_one:expr, $colour_two:expr) => {
 		std::sync::Arc::new(implementations::AllTextures::CheckeredTexture(
-			rt_core::CheckeredTexture::new($colour_one, $colour_two),
+			implementations::rt_core::CheckeredTexture::new($colour_one, $colour_two),
 		))
 	};
 	($r1:expr, $g1:expr, $b1:expr, $r2:expr, $g2:expr, $b2:expr) => {
 		std::sync::Arc::new(implementations::AllTextures::CheckeredTexture(
-			rt_core::CheckeredTexture::new(colour!($r1, $g1, $b1), colour!($r2, $g2, $b2)),
+			implementations::rt_core::CheckeredTexture::new(
+				colour!($r1, $g1, $b1),
+				colour!($r2, $g2, $b2),
+			),
 		))
 	};
 }
@@ -112,10 +118,9 @@ macro_rules! texture_lerp {
 		))
 	};
 	($r1:expr, $g1:expr, $b1:expr, $r2:expr, $g2:expr, $b2:expr) => {
-		std::sync::Arc::new(implementations::AllTextures::Lerp(rt_core::Lerp::new(
-			colour!($r1, $g1, $b1),
-			colour!($r2, $g2, $b2),
-		)))
+		std::sync::Arc::new(implementations::AllTextures::Lerp(
+			implementations::rt_core::Lerp::new(colour!($r1, $g1, $b1), colour!($r2, $g2, $b2)),
+		))
 	};
 }
 
@@ -123,7 +128,7 @@ macro_rules! texture_lerp {
 macro_rules! perlin {
 	() => {
 		std::sync::Arc::new(implementations::AllTextures::Perlin(Box::new(
-			rt_core::Perlin::new(),
+			implementations::rt_core::Perlin::new(),
 		)))
 	};
 }
@@ -139,13 +144,16 @@ macro_rules! diffuse {
 				&std::sync::Arc::new(implementations::AllTextures::SolidColour(
 					implementations::SolidColour::new(colour!($r, $g, $b)),
 				)),
-				$absorption as rt_core::Float,
+				$absorption as implementations::rt_core::Float,
 			),
 		))
 	};
 	($texture:expr,$absorption:expr) => {
 		std::sync::Arc::new(implementations::AllMaterials::Lambertian(
-			implementations::Lambertian::new($texture, $absorption as rt_core::Float),
+			implementations::Lambertian::new(
+				$texture,
+				$absorption as implementations::rt_core::Float,
+			),
 		))
 	};
 }
@@ -154,17 +162,17 @@ macro_rules! diffuse {
 macro_rules! reflect {
 	($r:expr,$g:expr,$b:expr, $fuzz:expr) => {
 		std::sync::Arc::new(implementations::AllMaterials::Reflect(
-			rt_core::Reflect::new(
+			implementations::rt_core::Reflect::new(
 				&Arc::new(implementations::AllTextures::SolidColour(
-					rt_core::SolidColour::new(colour!($r, $g, $b)),
+					implementations::rt_core::SolidColour::new(colour!($r, $g, $b)),
 				)),
-				$fuzz as rt_core::Float,
+				$fuzz as implementations::rt_core::Float,
 			),
 		));
 	};
 	($texture:expr,$fuzz:expr) => {
 		std::sync::Arc::new(implementations::AllMaterials::Reflect(
-			implementations::Reflect::new($texture, $fuzz as rt_core::Float),
+			implementations::Reflect::new($texture, $fuzz as implementations::rt_core::Float),
 		))
 	};
 }
@@ -173,17 +181,17 @@ macro_rules! reflect {
 macro_rules! refract {
 	($r:expr,$g:expr,$b:expr, $eta:expr) => {
 		std::sync::Arc::new(implementations::AllMaterials::Refract(
-			rt_core::Refract::new(
+			implementations::rt_core::Refract::new(
 				&std::sync::Arc::new(implementations::AllTextures::SolidColour(
-					rt_core::SolidColour::new(colour!($r, $g, $b)),
+					implementations::rt_core::SolidColour::new(colour!($r, $g, $b)),
 				)),
-				$eta as rt_core::Float,
+				$eta as implementations::rt_core::Float,
 			),
 		))
 	};
 	($texture:expr,$eta:expr) => {
 		std::sync::Arc::new(implementations::AllMaterials::Refract(
-			implementations::Refract::new($texture, $eta as rt_core::Float),
+			implementations::Refract::new($texture, $eta as implementations::rt_core::Float),
 		))
 	};
 }
@@ -191,14 +199,16 @@ macro_rules! refract {
 #[macro_export]
 macro_rules! emit {
 	($r:expr,$g:expr,$b:expr, $strength:expr) => {
-		std::sync::Arc::new(implementations::AllMaterials::Emit(rt_core::Emit::new(
-			&std::sync::Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
-			$strength as rt_core::Float,
-		)));
+		std::sync::Arc::new(implementations::AllMaterials::Emit(
+			implementations::rt_core::Emit::new(
+				&std::sync::Arc::new(Texture::SolidColour(SolidColour::new(colour!($r, $g, $b)))),
+				$strength as implementations::rt_core::Float,
+			),
+		));
 	};
 	($texture:expr,$strength:expr) => {
 		std::sync::Arc::new(implementations::AllMaterials::Emit(
-			implementations::Emit::new($texture, $strength as rt_core::Float),
+			implementations::Emit::new($texture, $strength as implementations::rt_core::Float),
 		))
 	};
 }
@@ -218,7 +228,7 @@ macro_rules! sphere {
 	($position:expr, $radius:expr, $material:expr) => {
 		implementations::AllPrimitives::Sphere(implementations::sphere::Sphere::new(
 			$position,
-			$radius as rt_core::Float,
+			$radius as implementations::rt_core::Float,
 			$material,
 		))
 	};
@@ -228,12 +238,12 @@ macro_rules! sphere {
 macro_rules! aarect {
 	($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr,  $material:expr) => {{
 		let point_three = implementations::Axis::point_from_2d(
-			rt_core::Vec2::new($point_one.x, $point_two.y),
+			implementations::rt_core::Vec2::new($point_one.x, $point_two.y),
 			$axis,
 			$axis_value,
 		);
 		let point_four = implementations::Axis::point_from_2d(
-			rt_core::Vec2::new($point_two.x, $point_one.y),
+			implementations::rt_core::Vec2::new($point_two.x, $point_one.y),
 			$axis,
 			$axis_value,
 		);
@@ -246,14 +256,26 @@ macro_rules! aarect {
 		vec
 	}};
 	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr, $cp:expr) => {{
-		let point_three =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
-		let point_four =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
-		let point_one =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
-		let point_two =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+		let point_three = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y2),
+			$axis,
+			$axis_value,
+		);
+		let point_four = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y1),
+			$axis,
+			$axis_value,
+		);
+		let point_one = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y1),
+			$axis,
+			$axis_value,
+		);
+		let point_two = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y2),
+			$axis,
+			$axis_value,
+		);
 		let mut vec = Vec::new();
 		let nr = 0.5 * (point_one + point_two) - $cp;
 		vec.push(triangle!(point_one, point_two, point_three, $material, nr));
@@ -262,14 +284,26 @@ macro_rules! aarect {
 		vec
 	}};
 	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr,  $material:expr) => {{
-		let point_three =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
-		let point_four =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
-		let point_one =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
-		let point_two =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+		let point_three = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y2),
+			$axis,
+			$axis_value,
+		);
+		let point_four = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y1),
+			$axis,
+			$axis_value,
+		);
+		let point_one = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y1),
+			$axis,
+			$axis_value,
+		);
+		let point_two = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y2),
+			$axis,
+			$axis_value,
+		);
 
 		let mut vec = Vec::new();
 		vec.push(triangle!(point_one, point_two, point_three, $material));
@@ -284,20 +318,28 @@ macro_rules! rect {
 	($point_one:expr, $point_two:expr, $axis_value:expr, $axis:expr, $rotation:expr, $material:expr) => {{
 		let center_point = 0.5 * ($point_one + $point_two);
 		let point_three = implementations::Axis::point_from_2d(
-			rt_core::Vec2::new($point_one.x, $point_two.y),
+			implementations::rt_core::Vec2::new($point_one.x, $point_two.y),
 			$axis,
 			$axis_value,
 		);
 		let point_four = implementations::Axis::point_from_2d(
-			rt_core::Vec2::new($point_two.x, $point_one.y),
+			implementations::rt_core::Vec2::new($point_two.x, $point_one.y),
 			$axis,
 			$axis_value,
 		);
 		let point_one = implementations::Axis::point_from_2d($point_one, $axis, $axis_value);
 		let point_two = implementations::Axis::point_from_2d($point_two, $axis, $axis_value);
 
-		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
-		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+		let sin_rot = implementations::rt_core::Vec3::new(
+			$rotation.x.sin(),
+			$rotation.y.sin(),
+			$rotation.z.sin(),
+		);
+		let cos_rot = implementations::rt_core::Vec3::new(
+			$rotation.x.cos(),
+			$rotation.y.cos(),
+			$rotation.z.cos(),
+		);
 
 		let point_one =
 			$crate::utility::rotate_around_point(point_one, center_point, sin_rot, cos_rot);
@@ -315,17 +357,37 @@ macro_rules! rect {
 		vec
 	}};
 	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr, $rotation:expr, $material:expr) => {{
-		let mut point_three =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
-		let mut point_four =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
-		let mut point_one =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
-		let mut point_two =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+		let mut point_three = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y2),
+			$axis,
+			$axis_value,
+		);
+		let mut point_four = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y1),
+			$axis,
+			$axis_value,
+		);
+		let mut point_one = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y1),
+			$axis,
+			$axis_value,
+		);
+		let mut point_two = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y2),
+			$axis,
+			$axis_value,
+		);
 
-		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
-		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+		let sin_rot = implementations::rt_core::Vec3::new(
+			$rotation.x.sin(),
+			$rotation.y.sin(),
+			$rotation.z.sin(),
+		);
+		let cos_rot = implementations::rt_core::Vec3::new(
+			$rotation.x.cos(),
+			$rotation.y.cos(),
+			$rotation.z.cos(),
+		);
 
 		$crate::utility::rotate_around_point(&mut point_one, center_point, sin_rot, cos_rot);
 
@@ -342,14 +404,26 @@ macro_rules! rect {
 		vec
 	}};
 	($x1:expr, $y1:expr, $x2:expr, $y2:expr, $axis_value:expr, $axis:expr, $center_point:expr, $sin_rot:expr, $cos_rot:expr, $material:expr) => {{
-		let mut point_three =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y2), $axis, $axis_value);
-		let mut point_four =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y1), $axis, $axis_value);
-		let mut point_one =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x1, $y1), $axis, $axis_value);
-		let mut point_two =
-			implementations::Axis::point_from_2d(&rt_core::Vec2::new($x2, $y2), $axis, $axis_value);
+		let mut point_three = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y2),
+			$axis,
+			$axis_value,
+		);
+		let mut point_four = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y1),
+			$axis,
+			$axis_value,
+		);
+		let mut point_one = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x1, $y1),
+			$axis,
+			$axis_value,
+		);
+		let mut point_two = implementations::Axis::point_from_2d(
+			&implementations::rt_core::Vec2::new($x2, $y2),
+			$axis,
+			$axis_value,
+		);
 
 		$crate::utility::rotate_around_point(&mut point_one, $center_point, $sin_rot, $cos_rot);
 
@@ -437,7 +511,7 @@ macro_rules! aacuboid {
 	}};
 	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $material:expr) => {{
 		let mut vec = Vec::new();
-		let center_point = 0.5 * (rt_core::Vec3::new($x1, $y1, $z1) + rt_core::Vec3::new($x2, $y2, $z2));
+		let center_point = 0.5 * (implementations::rt_core::Vec3::new($x1, $y1, $z1) + implementations::rt_core::Vec3::new($x2, $y2, $z2));
 		vec.extend(aarect!(
 			$x1,
 			$y1,
@@ -589,11 +663,19 @@ macro_rules! cuboid {
 		vec
 	}};
 	($x1:expr, $y1:expr, $z1:expr, $x2:expr, $y2:expr, $z2:expr, $rotation:expr, $material:expr) => {{
-		let point_one = rt_core::Vec3::new($x1, $y1, $z1);
-		let point_two = rt_core::Vec3::new($x2, $y2, $z2);
+		let point_one = implementations::rt_core::Vec3::new($x1, $y1, $z1);
+		let point_two = implementations::rt_core::Vec3::new($x2, $y2, $z2);
 		let center_point = 0.5 * (point_one + point_two);
-		let sin_rot = rt_core::Vec3::new($rotation.x.sin(), $rotation.y.sin(), $rotation.z.sin());
-		let cos_rot = rt_core::Vec3::new($rotation.x.cos(), $rotation.y.cos(), $rotation.z.cos());
+		let sin_rot = implementations::rt_core::Vec3::new(
+			$rotation.x.sin(),
+			$rotation.y.sin(),
+			$rotation.z.sin(),
+		);
+		let cos_rot = implementations::rt_core::Vec3::new(
+			$rotation.x.cos(),
+			$rotation.y.cos(),
+			$rotation.z.cos(),
+		);
 
 		let mut vec = Vec::new();
 		vec.extend(rect!(
@@ -746,11 +828,13 @@ macro_rules! triangle {
 		}
 		.normalized();
 
-		rt_core::AllPrimitives::Triangle(rt_core::Triangle::new_from_arc(
-			[point_one, point_two, point_three],
-			[normal; 3],
-			$material,
-		))
+		implementations::rt_core::AllPrimitives::Triangle(
+			implementations::rt_core::Triangle::new_from_arc(
+				[point_one, point_two, point_three],
+				[normal; 3],
+				$material,
+			),
+		)
 	}};
 }
 
@@ -764,10 +848,10 @@ macro_rules! camera {
 			$origin,
 			$lookat,
 			$vup,
-			$fov as rt_core::Float,
-			$aspect_ratio as rt_core::Float,
-			$aperture as rt_core::Float,
-			$focus_dist as rt_core::Float,
+			$fov as implementations::rt_core::Float,
+			$aspect_ratio as implementations::rt_core::Float,
+			$aperture as implementations::rt_core::Float,
+			$focus_dist as implementations::rt_core::Float,
 		))
 	};
 }
@@ -784,7 +868,7 @@ macro_rules! sky {
 	() => {
 		std::sync::Arc::new(implementations::Sky::new(
 			&std::sync::Arc::new(implementations::AllTextures::SolidColour(
-				implementations::SolidColour::new(rt_core::Vec3::zero()),
+				implementations::SolidColour::new(implementations::rt_core::Vec3::zero()),
 			)),
 			(100, 100),
 		))
@@ -804,6 +888,6 @@ macro_rules! bvh {
 #[macro_export]
 macro_rules! scene {
 	($camera:expr, $sky:expr, $sampler:expr, $bvh:expr) => {
-		$crate::scene::Scene::new($camera, $sky, $sampler, $bvh)
+		scene::Scene::new($camera, $sky, $sampler, $bvh)
 	};
 }

@@ -4,9 +4,9 @@ use crate::{
 		sphere::Sphere,
 		triangle::{MeshTriangle, Triangle},
 	},
+	rt_core::*,
 };
 use proc::Primitive;
-use rt_core::{Float, Hit, Primitive, Ray, Scatter, SurfaceIntersection, Vec2, Vec3};
 
 pub mod sphere;
 pub mod triangle;

@@ -1,8 +1,8 @@
 use crate::{
+	rt_core::*,
 	textures::Texture,
 	utility::{coord::Coordinate, cosine_hemisphere_sampling, near_zero, offset_ray},
 };
-use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::sync::Arc;
 
 #[derive(Debug)]

@@ -1,7 +1,9 @@
 use crate::generate::SceneType;
 use chrono::Local;
-use implementations::split::SplitType;
-use rt_core::{Float, RenderMethod, RenderOptions};
+use implementations::{
+	rt_core::{Float, RenderMethod, RenderOptions},
+	split::SplitType,
+};
 use std::process;
 
 pub struct Parameters {
@@ -299,8 +301,8 @@ fn get_render_method(args: &[String], index: usize) -> Option<RenderMethod> {
 		Some(string) => match &string.to_ascii_lowercase()[..] {
 			"naive" => RenderMethod::Naive,
 			"mis" => RenderMethod::MIS,
-			_val => {
-				println!("Unsupported render method: {}", _val);
+			render_method => {
+				println!("Unsupported render method: {render_method}");
 				println!("Do -H or --help for more information.");
 				process::exit(0);
 			}
@@ -350,8 +352,8 @@ fn get_bvh_type(args: &[String], index: usize) -> SplitType {
 			"equal" => SplitType::EqualCounts,
 			"middle" => SplitType::Middle,
 			"sah" => SplitType::Sah,
-			_ => {
-				println!("{} is not a valid value for BVH type!", string);
+			bvh_type => {
+				println!("{bvh_type} is not a valid value for BVH type!");
 				println!("Please specify a valid value for BVH type!");
 				println!("Do -H or --help for more information.");
 				process::exit(0);
@@ -378,7 +380,7 @@ fn get_samples(args: &[String], index: usize) -> u64 {
 				_ => parsed,
 			},
 			Err(_) => {
-				println!("{} is not a valid value for samples!", string);
+				println!("{string} is not a valid value for samples!");
 				println!("Please specify a valid value for height!");
 				println!("Do -H or --help for more information.");
 				process::exit(0);
@@ -405,7 +407,7 @@ fn get_dimension(args: &[String], index: usize) -> u64 {
 				_ => parsed,
 			},
 			Err(_) => {
-				println!("{} is not a valid value for height!", string);
+				println!("{string} is not a valid value for height!");
 				println!("Please specify a valid value for height!");
 				println!("Do -H or --help for more information.");
 				process::exit(0);

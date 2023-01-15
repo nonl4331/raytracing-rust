@@ -139,9 +139,7 @@ impl Gui {
 		let cpu_rendering = CpuRendering::new(&physical_device, device.clone(), width, height);
 
 		mod cs {
-			vulkano_shaders::shader! {
-									ty: "compute",
-									src:
+			vulkano_shaders::shader! {ty: "compute",src:
 "#version 460
 
 layout(local_size_x = 32, local_size_y = 32) in;

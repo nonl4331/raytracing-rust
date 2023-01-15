@@ -1,10 +1,10 @@
 use crate::{
 	materials::refract,
+	rt_core::*,
 	textures::Texture,
 	utility::{coord::Coordinate, offset_ray},
 };
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
-use rt_core::*;
 use std::sync::Arc;
 
 #[derive(Debug)]

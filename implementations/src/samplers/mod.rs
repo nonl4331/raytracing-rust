@@ -1,6 +1,5 @@
-use crate::{generate_values, next_float, random_float, textures::Texture};
+use crate::{generate_values, next_float, random_float, rt_core::*, textures::Texture};
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
-use rt_core::*;
 use statistics::distributions::*;
 use std::sync::Arc;
 

@@ -1,9 +1,9 @@
-use rand::Rng;
-use rayon::prelude::*;
-use rt_core::{
+use crate::rt_core::{
 	AccelerationStructure, Camera, Float, NoHit, Primitive, Ray, RenderMethod, RenderOptions,
 	Sampler, SamplerProgress, Scatter,
 };
+use rand::Rng;
+use rayon::prelude::*;
 
 pub struct RandomSampler;
 
@@ -53,8 +53,8 @@ impl Sampler for RandomSampler {
 							for chunk_pixel_i in 0..(chunk.len() / 3) {
 								let pixel_i =
 									chunk_pixel_i as u64 + pixel_chunk_size * chunk_i as u64;
-								let x = pixel_i as u64 % render_options.width;
-								let y = (pixel_i as u64 - x) / render_options.width;
+								let x = pixel_i % render_options.width;
+								let y = (pixel_i - x) / render_options.width;
 								let u = (rng.gen_range(0.0..1.0) + x as Float)
 									/ render_options.width as Float;
 								let v = 1.0
@@ -82,9 +82,8 @@ impl Sampler for RandomSampler {
 				});
 			});
 			if i != 0 {
-				match presentation_update.as_mut() {
-					Some((ref mut data, f)) => f(data, previous, i),
-					None => (),
+				if let Some((ref mut data, f)) = presentation_update.as_mut() {
+					f(data, previous, i)
 				};
 			}
 		}
@@ -94,9 +93,8 @@ impl Sampler for RandomSampler {
 		} else {
 			(&accumulator_buffers.1, &mut accumulator_buffers.0)
 		};
-		match presentation_update.as_mut() {
-			Some((ref mut data, f)) => f(data, previous, render_options.samples_per_pixel),
-			None => (),
+		if let Some((ref mut data, f)) = presentation_update.as_mut() {
+			f(data, previous, render_options.samples_per_pixel)
 		}
 	}
 }

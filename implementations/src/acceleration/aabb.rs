@@ -1,5 +1,4 @@
-use crate::utility::gamma;
-use rt_core::{Float, Ray, Vec3};
+use crate::{rt_core::*, utility::gamma};
 
 pub trait AABound {
 	fn get_aabb(&self) -> AABB;

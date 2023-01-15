@@ -2,8 +2,6 @@ use rand::rngs::ThreadRng;
 use rt_core::*;
 use statistics::spherical_sampling::test_spherical_pdf;
 
-mod common;
-
 #[test]
 fn sky_sampling() {
 	const SAMPLE_WIDTH: usize = 30;

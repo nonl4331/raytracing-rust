@@ -1,5 +1,4 @@
-use crate::{textures::Texture, utility::offset_ray};
-use rt_core::{Float, Hit, Ray, Scatter, Vec3};
+use crate::{rt_core::*, textures::Texture, utility::offset_ray};
 use std::sync::Arc;
 
 #[derive(Debug)]

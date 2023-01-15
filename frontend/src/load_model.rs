@@ -1,8 +1,8 @@
 use implementations::{
+	rt_core::*,
 	triangle::{MeshData, MeshTriangle},
 	AllMaterials, AllPrimitives, AllTextures,
 };
-use rt_core::{Float, Vec3};
 use std::sync::Arc;
 
 pub fn load_model_with_materials(
@@ -75,7 +75,7 @@ fn get_material(
 			if let Some(mat) = mat {
 				return mat.0.clone();
 			}
-			panic!("{} material not found", name);
+			panic!("{name} material not found");
 		}
 	}
 }

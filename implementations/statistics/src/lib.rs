@@ -1,4 +1,4 @@
-pub use rt_core::*;
+pub use rt_core::{self, *};
 
 pub mod bxdfs;
 pub mod chi_squared;
@@ -35,7 +35,7 @@ pub mod utility {
 			.unwrap()
 	}
 
-	use super::Float;
+	use rt_core::Float;
 
 	pub fn recursively_binary_average<T: Add + Mul>(mut values: Vec<T>) -> T
 	where

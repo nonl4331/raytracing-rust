@@ -1,8 +1,8 @@
 use crate::{
+	rt_core::*,
 	textures::Texture,
 	utility::{offset_ray, random_unit_vector},
 };
-use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use std::sync::Arc;
 
 #[derive(Debug)]
