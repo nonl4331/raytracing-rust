@@ -2,6 +2,7 @@ use crate::rt_core::*;
 use image::{io::Reader, GenericImageView};
 use proc::Texture;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
+use std::path::Path;
 
 const PERLIN_RVECS: usize = 256;
 
@@ -24,8 +25,8 @@ pub enum AllTextures {
 
 #[derive(Debug)]
 pub struct CheckeredTexture {
-	primary_colour: Vec3,
-	secondary_colour: Vec3,
+	colour_one: Vec3,
+	colour_two: Vec3,
 }
 
 pub fn generate_values<T: Texture>(texture: &T, sample_res: (usize, usize)) -> Vec<Float> {
@@ -49,10 +50,10 @@ pub fn generate_values<T: Texture>(texture: &T, sample_res: (usize, usize)) -> V
 }
 
 impl CheckeredTexture {
-	pub fn new(primary_colour: Vec3, secondary_colour: Vec3) -> Self {
+	pub fn new(colour_one: Vec3, colour_two: Vec3) -> Self {
 		CheckeredTexture {
-			primary_colour,
-			secondary_colour,
+			colour_one,
+			colour_two,
 		}
 	}
 }
@@ -61,9 +62,9 @@ impl Texture for CheckeredTexture {
 	fn colour_value(&self, _: Vec3, point: Vec3) -> Vec3 {
 		let sign = (10.0 * point.x).sin() * (10.0 * point.y).sin() * (10.0 * point.z).sin();
 		if sign > 0.0 {
-			self.primary_colour
+			self.colour_one
 		} else {
-			self.secondary_colour
+			self.colour_two
 		}
 	}
 	fn requires_uv(&self) -> bool {
@@ -205,7 +206,10 @@ pub struct ImageTexture {
 }
 
 impl ImageTexture {
-	pub fn new(filepath: &str) -> Self {
+	pub fn new<P>(filepath: &P) -> Self
+	where
+		P: AsRef<Path>,
+	{
 		// open image and get dimensions
 
 		let img = match image::open(filepath) {

@@ -1,4 +1,4 @@
-use implementations::{
+use scene::implementations::{
 	rt_core::*,
 	triangle::{MeshData, MeshTriangle},
 	AllMaterials, AllPrimitives, AllTextures,

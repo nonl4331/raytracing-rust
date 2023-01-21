@@ -1,10 +1,10 @@
 use crate::{utility::create_bvh_with_info, *};
-use implementations::{
+use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
+use rand_seeder::Seeder;
+use scene::implementations::{
 	random_sampler::RandomSampler, rt_core::Float, split::SplitType, AllMaterials, AllPrimitives,
 	AllTextures, Bvh, Lambertian,
 };
-use rand::{distributions::Alphanumeric, rngs::SmallRng, thread_rng, Rng, SeedableRng};
-use rand_seeder::Seeder;
 use scene::*;
 
 type MaterialType = AllMaterials<AllTextures>;

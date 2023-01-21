@@ -21,7 +21,7 @@ use {
 	winit::event_loop::EventLoopProxy,
 };
 
-use implementations::rt_core::{Float, SamplerProgress};
+use scene::rt_core::{Float, SamplerProgress};
 use std::env;
 
 #[cfg(feature = "gui")]

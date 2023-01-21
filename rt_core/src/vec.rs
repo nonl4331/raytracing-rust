@@ -333,3 +333,15 @@ impl std::fmt::Display for Vec3 {
 		write!(f, "({}, {}, {})", self.x, self.y, self.z)
 	}
 }
+
+impl From<[Float; 3]> for Vec3 {
+	fn from(vec: [Float; 3]) -> Self {
+		Vec3::new(vec[0], vec[1], vec[2])
+	}
+}
+
+impl From<[Float; 2]> for Vec2 {
+	fn from(vec: [Float; 2]) -> Self {
+		Vec2::new(vec[0], vec[1])
+	}
+}

@@ -1,5 +1,8 @@
 use chrono::Local;
-use implementations::{aabb::AABound, rt_core::*, split::SplitType, Axis, Bvh};
+use scene::{
+	implementations::{aabb::AABound, split::SplitType, Axis, Bvh},
+	rt_core::*,
+};
 use std::{
 	io::{stdout, Write},
 	process,
@@ -203,7 +206,7 @@ pub fn rotate_around_axis(point: &mut Vec3, axis: Axis, sin: Float, cos: Float) 
 mod tests {
 
 	use super::*;
-	use implementations::rt_core::PI;
+	use scene::implementations::rt_core::PI;
 
 	#[test]
 	fn rotation() {

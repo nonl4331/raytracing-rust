@@ -168,7 +168,7 @@ pub fn bxdf_testing(sampler_res: (usize, usize)) -> (Sky<AllTextures>, BvhType) 
 	primitives.push(glowy);
 	primitives.push(glowy_two);
 
-	let image = |filepath| Arc::new(AllTextures::ImageTexture(ImageTexture::new(filepath)));
+	let image = |filepath| Arc::new(AllTextures::ImageTexture(ImageTexture::new(&filepath)));
 
 	let bvh = Bvh::new(primitives, split::SplitType::Sah); //create_bvh_with_info(primitives, bvh_type);
 

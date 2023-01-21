@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 image = "0.23.14"
+serde = { version = "1.0", features = ["derive"] }
 implementations = {path = "../../implementations"}
-rt_core = { path = "../../rt_core" }
 toml = "0.5.10"
 wavefront_obj = "10.0.0"
 
 [features]
-f64 = ["implementations/f64", "rt_core/f64"]
+f64 = ["implementations/f64"]

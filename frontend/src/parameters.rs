@@ -1,8 +1,8 @@
 use crate::generate::SceneType;
 use chrono::Local;
-use implementations::{
+use scene::{
+	implementations::split::SplitType,
 	rt_core::{Float, RenderMethod, RenderOptions},
-	split::SplitType,
 };
 use std::process;
 

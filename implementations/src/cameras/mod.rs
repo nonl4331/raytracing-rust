@@ -1,5 +1,6 @@
 use crate::{rt_core::*, utility::random_float};
 
+#[derive(Debug)]
 pub struct SimpleCamera {
 	pub viewport_width: Float,
 	pub viewport_height: Float,

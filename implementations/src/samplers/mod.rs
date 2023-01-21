@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 pub mod random_sampler;
 
+#[derive(Debug)]
 pub struct Sky<T: Texture> {
 	texture: Arc<T>,
 	pub distribution: Option<Distribution2D>,
