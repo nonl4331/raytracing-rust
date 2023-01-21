@@ -136,7 +136,7 @@ impl Ray {
 
 			let emission = mat.get_emission(&hit, wo);
 
-			let exit = mat.scatter_ray(ray, &hit);
+			let exit = mat.scatter_ray(&mut ray.clone(), &hit);
 
 			output += emission;
 
@@ -150,15 +150,18 @@ impl Ray {
 
 		let mut depth = 1;
 		while depth < MAX_DEPTH {
-			// light sampling
-			if let Some((l_pos, le, l_pdf)) = Ray::sample_lights_test(bvh, &hit, sky, &mat, wo) {
-				let l_wi = (l_pos - hit.point).normalised();
-				let m_pdf = mat.scattering_pdf(&hit, wo, l_wi);
-				let mis_weight = power_heuristic(l_pdf, m_pdf);
+			if !mat.is_delta() {
+				// light sampling
+				if let Some((l_pos, le, l_pdf)) = Ray::sample_lights_test(bvh, &hit, sky, &mat, wo)
+				{
+					let l_wi = (l_pos - hit.point).normalised();
+					let m_pdf = mat.scattering_pdf(&hit, wo, l_wi);
+					let mis_weight = power_heuristic(l_pdf, m_pdf);
 
-				output += throughput * mat.eval(&hit, wo, l_wi) * mis_weight * le / l_pdf;
+					output += throughput * mat.eval(&hit, wo, l_wi) * mis_weight * le / l_pdf;
+				}
+				ray_count += 1;
 			}
-			ray_count += 1;
 
 			// material sample and bounce
 			let (m_wi, m_pdf) = match Ray::sample_material_test(bvh, &hit, sky, &mat, ray) {
@@ -166,7 +169,11 @@ impl Ray {
 				None => break,
 			};
 
-			throughput *= mat.eval(&hit, wo, m_wi) / mat.scattering_pdf(&hit, wo, m_wi);
+			throughput *= if mat.is_delta() {
+				mat.eval(&hit, wo, m_wi)
+			} else {
+				mat.eval_over_scattering_pdf(&hit, wo, m_wi)
+			};
 
 			let (surface_intersection, index) = match bvh.check_hit(ray) {
 				Some((surface_intersection, index)) => (surface_intersection, index),
@@ -177,18 +184,25 @@ impl Ray {
 			};
 
 			if surface_intersection.material.get_emission(&hit, wo) != Vec3::zero() {
-				let light_pdf = if bvh.get_samplable().contains(&index) {
-					bvh.get_object(index).unwrap().scattering_pdf(
-						hit.point,
-						m_wi,
-						&surface_intersection.hit,
-					) / bvh.get_samplable().len() as Float
-				} else {
-					0.0
-				};
-				let mis_weight = power_heuristic(m_pdf, light_pdf);
 				let le = surface_intersection.material.get_emission(&hit, wo);
-				output += throughput * mis_weight * le;
+
+				if mat.is_delta() {
+					output += throughput * le;
+				} else {
+					let light_pdf = if bvh.get_samplable().contains(&index) {
+						bvh.get_object(index).unwrap().scattering_pdf(
+							hit.point,
+							m_wi,
+							&surface_intersection.hit,
+						) / bvh.get_samplable().len() as Float
+					} else {
+						0.0
+					};
+					let mis_weight = power_heuristic(m_pdf, light_pdf);
+
+					output += throughput * mis_weight * le;
+				}
+
 				if surface_intersection.material.is_light() {
 					break;
 				}

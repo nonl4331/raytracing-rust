@@ -148,7 +148,7 @@ pub fn bxdf_testing(bvh_type: SplitType, aspect_ratio: Float) -> SceneType {
 
 	scene!(
 		camera,
-		sky!(&image!("../res/skymaps/lilienstein.webp")),
+		sky!(&image!(&"../res/skymaps/lilienstein.webp".to_owned())),
 		random_sampler!(),
 		bvh
 	)
