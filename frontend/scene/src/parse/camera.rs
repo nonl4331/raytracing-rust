@@ -7,7 +7,7 @@ use toml::Value;
 use crate::*;
 
 pub fn parse_cameras(data: Value, camera_names: &[String]) -> Result<Vec<SimpleCamera>, Error> {
-	parse_items::<(), CameraLoad, SimpleCamera>(data, camera_names, &())
+	parse_items::<(), CameraLoad, SimpleCamera>(data, camera_names, &mut ())
 }
 
 #[derive(Debug)]

@@ -10,7 +10,7 @@ use super::parse_items;
 pub fn parse_materials(
 	data: Value,
 	material_names: &[String],
-	textures_map: &HashMap<String, Arc<AllTextures>>,
+	textures_map: &mut HashMap<String, Arc<AllTextures>>,
 ) -> Result<Vec<AllMaterials<AllTextures>>, Error> {
 	parse_items::<HashMap<String, Arc<AllTextures>>, MaterialLoad, AllMaterials<AllTextures>>(
 		data,
@@ -43,7 +43,7 @@ impl Load for MaterialLoad {
 			self.absorbtion = other.absorbtion;
 		}
 	}
-	fn load(&mut self, textures_map: &Self::LoadType) -> Result<(), Error> {
+	fn load(&mut self, textures_map: &mut Self::LoadType) -> Result<(), Error> {
 		let tex_name = match &self.texture {
 			Some(tex_name) => tex_name,
 			None => return Err(MaterialLoadError::MissingField.into()),
@@ -108,12 +108,12 @@ mod tests {
 		let texture_names = vec!["texture_four".to_string(), "texture_one".to_string()];
 		let textures = parse_textures(value.clone(), &texture_names).unwrap();
 
-		let textures: HashMap<String, Arc<AllTextures>> = HashMap::from_iter(
+		let mut textures: HashMap<String, Arc<AllTextures>> = HashMap::from_iter(
 			texture_names
 				.into_iter()
 				.zip(textures.into_iter().map(Arc::new)),
 		);
 
-		let _ = parse_materials(value, &["material_one".to_string()], &textures).unwrap();
+		let _ = parse_materials(value, &["material_one".to_string()], &mut textures).unwrap();
 	}
 }

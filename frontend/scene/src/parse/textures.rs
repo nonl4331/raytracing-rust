@@ -8,7 +8,7 @@ use toml::Value;
 use crate::*;
 
 pub fn parse_textures(data: Value, texture_names: &[String]) -> Result<Vec<AllTextures>, Error> {
-	parse_items::<(), TextureLoad, AllTextures>(data, texture_names, &())
+	parse_items::<(), TextureLoad, AllTextures>(data, texture_names, &mut ())
 }
 
 #[derive(Deserialize, Debug)]

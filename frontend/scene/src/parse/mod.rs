@@ -1,3 +1,5 @@
+use crate::parse::acceleration_structures::AccelerationStructureLoadError;
+use crate::parse::scenes::SceneLoadError;
 use crate::parse::{
 	camera::CameraLoadError, materials::MaterialLoadError, primitives::PrimitiveLoadError,
 	sky::SkyLoadError, textures::TextureLoadError,
@@ -6,9 +8,11 @@ use std::io;
 use std::path::Path;
 use toml::Value;
 
+pub mod acceleration_structures;
 pub mod camera;
 pub mod materials;
 pub mod primitives;
+pub mod scenes;
 pub mod sky;
 pub mod textures;
 
@@ -35,7 +39,7 @@ macro_rules! try_into {
 pub trait Load {
 	type LoadType;
 	fn derive_from(&mut self, other: Self);
-	fn load(&mut self, _: &Self::LoadType) -> Result<(), Error> {
+	fn load(&mut self, _: &mut Self::LoadType) -> Result<(), Error> {
 		Ok(())
 	}
 	fn get_definition(&self) -> Option<String>;
@@ -51,6 +55,8 @@ pub enum Error {
 	PrimitiveLoad(PrimitiveLoadError),
 	SkyLoad(SkyLoadError),
 	CameraLoad(CameraLoadError),
+	AccelerationStructureLoad(AccelerationStructureLoadError),
+	SceneLoad(SceneLoadError),
 	NoValue(String),
 	WrongType(String),
 }
@@ -72,6 +78,8 @@ from!(MaterialLoadError, MaterialLoad);
 from!(PrimitiveLoadError, PrimitiveLoad);
 from!(SkyLoadError, SkyLoad);
 from!(CameraLoadError, CameraLoad);
+from!(AccelerationStructureLoadError, AccelerationStructureLoad);
+from!(SceneLoadError, SceneLoad);
 
 pub fn parse_value_from_file(filepath: &Path) -> Result<Value, Error> {
 	let data = std::fs::read_to_string(filepath)?;
@@ -79,7 +87,11 @@ pub fn parse_value_from_file(filepath: &Path) -> Result<Value, Error> {
 	Ok(data.parse::<Value>()?)
 }
 
-pub fn parse_items<'de, O, L, T>(data: Value, names: &[String], other: &O) -> Result<Vec<T>, Error>
+pub fn parse_items<'de, O, L, T>(
+	data: Value,
+	names: &[String],
+	other: &mut O,
+) -> Result<Vec<T>, Error>
 where
 	L: Load + serde::Deserialize<'de> + Load<LoadType = O> + TryInto<T>,
 	Error: From<<L as TryInto<T>>::Error>,
@@ -128,7 +140,7 @@ where
 	Ok(items)
 }
 
-pub fn parse_item<'de, O, L>(data: Value, other: &O) -> Result<L, Error>
+pub fn parse_item<'de, O, L>(data: Value, other: &mut O) -> Result<L, Error>
 where
 	L: Load + serde::Deserialize<'de> + Load<LoadType = O>,
 {
@@ -169,13 +181,14 @@ skies = ["sky_one"]
 cameras = ["camera_one"]
 
 # An example scene
-[scene_one.materials]
-default = "m1"
-mat1 = "material_one"
-mat2 = "material_two"
+[scene_one]
+primitives = ["sphere_one", "a_triangle"]
+bvh = "bvh_one"
+camera = "camera_one"
+sky = "sky_one"
 
-[scene_one.primitives]
-sphere_one = { type = "sphere", radius = 0.5, position = [10.5, 1.5, -3.5], mat = "mat2" }
+[bvh_one]
+type = "sah"
 
 [camera_one]
 type = "simple"

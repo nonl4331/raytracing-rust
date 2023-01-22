@@ -10,7 +10,7 @@ use crate::*;
 pub fn parse_skies(
 	data: Value,
 	sky_names: &[String],
-	textures_map: &HashMap<String, Arc<AllTextures>>,
+	textures_map: &mut HashMap<String, Arc<AllTextures>>,
 ) -> Result<Vec<Sky<AllTextures>>, Error> {
 	parse_items::<HashMap<String, Arc<AllTextures>>, SkyLoad, Sky<AllTextures>>(
 		data,
@@ -38,7 +38,7 @@ impl Load for SkyLoad {
 			self.sample_res = other.sample_res;
 		}
 	}
-	fn load(&mut self, textures_map: &Self::LoadType) -> Result<(), Error> {
+	fn load(&mut self, textures_map: &mut Self::LoadType) -> Result<(), Error> {
 		let tex_name = match &self.texture {
 			Some(tex_name) => tex_name,
 			None => return Err(MaterialLoadError::MissingField.into()),
@@ -88,12 +88,12 @@ mod tests {
 		let texture_names = vec!["texture_four".to_string(), "texture_one".to_string()];
 		let textures = parse_textures(value.clone(), &texture_names).unwrap();
 
-		let textures: HashMap<String, Arc<AllTextures>> = HashMap::from_iter(
+		let mut textures: HashMap<String, Arc<AllTextures>> = HashMap::from_iter(
 			texture_names
 				.into_iter()
 				.zip(textures.into_iter().map(Arc::new)),
 		);
 
-		let _ = parse_skies(value, &["sky_one".to_string()], &textures).unwrap();
+		let _ = parse_skies(value, &["sky_one".to_string()], &mut textures).unwrap();
 	}
 }

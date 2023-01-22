@@ -11,7 +11,7 @@ type Material = AllMaterials<AllTextures>;
 pub fn parse_primitives(
 	data: Value,
 	primitive_names: &[String],
-	materials_map: &HashMap<String, Arc<Material>>,
+	materials_map: &mut HashMap<String, Arc<Material>>,
 ) -> Result<Vec<AllPrimitives<Material>>, Error> {
 	parse_items::<
 		HashMap<String, Arc<AllMaterials<AllTextures>>>,
@@ -34,7 +34,7 @@ pub struct PrimitiveLoad {
 
 impl Load for PrimitiveLoad {
 	type LoadType = HashMap<String, Arc<AllMaterials<AllTextures>>>;
-	fn load(&mut self, materials_map: &Self::LoadType) -> Result<(), Error> {
+	fn load(&mut self, materials_map: &mut Self::LoadType) -> Result<(), Error> {
 		let mat_name = match &self.material {
 			Some(mat_name) => mat_name,
 			None => return Err(PrimitiveLoadError::MissingField.into()),
@@ -112,20 +112,20 @@ mod tests {
 		let texture_names = vec!["texture_four".to_string(), "texture_one".to_string()];
 		let textures = parse_textures(value.clone(), &texture_names).unwrap();
 
-		let textures: HashMap<String, Arc<AllTextures>> = HashMap::from_iter(
+		let mut textures: HashMap<String, Arc<AllTextures>> = HashMap::from_iter(
 			texture_names
 				.into_iter()
 				.zip(textures.into_iter().map(Arc::new)),
 		);
 
 		let material_names = vec!["material_one".to_string()];
-		let materials = parse_materials(value.clone(), &material_names, &textures).unwrap();
-		let materials: HashMap<String, Arc<Material>> = HashMap::from_iter(
+		let materials = parse_materials(value.clone(), &material_names, &mut textures).unwrap();
+		let mut materials: HashMap<String, Arc<Material>> = HashMap::from_iter(
 			material_names
 				.into_iter()
 				.zip(materials.into_iter().map(Arc::new)),
 		);
 
-		let _ = parse_primitives(value, &["sphere_one".to_string()], &materials).unwrap();
+		let _ = parse_primitives(value, &["sphere_one".to_string()], &mut materials).unwrap();
 	}
 }
