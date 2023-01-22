@@ -177,7 +177,10 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 	});
 
 	quote! {
-		impl #impl_generics Primitive #ty_generics for #enum_name #ty_generics #where_clause {#( #functions_primitive )*}
+		impl #impl_generics Primitive for #enum_name #ty_generics #where_clause {
+			type Material = M;
+			#( #functions_primitive )*
+		}
 		impl #impl_generics AABound for #enum_name #ty_generics #where_clause { #( #functions_aabound )*}
 	}
 	.into()

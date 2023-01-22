@@ -17,7 +17,7 @@ impl Sampler for RandomSampler {
 		mut presentation_update: Option<(&mut T, F)>,
 	) where
 		C: Camera + Send + Sync,
-		P: Primitive<M> + Sync + Send + 'static,
+		P: Primitive + Sync + Send + 'static,
 		M: Scatter + Send + Sync + 'static,
 		F: Fn(&mut T, &SamplerProgress, u64),
 		A: AccelerationStructure<P, M> + Send + Sync,

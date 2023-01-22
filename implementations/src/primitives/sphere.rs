@@ -26,10 +26,11 @@ where
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
-impl<M> Primitive<M> for Sphere<M>
+impl<M> Primitive for Sphere<M>
 where
 	M: Scatter,
 {
+	type Material = M;
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		let dir = ray.direction;
 		let center = self.center;

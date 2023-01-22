@@ -25,7 +25,7 @@ pub struct PrimitiveInfo {
 }
 
 impl PrimitiveInfo {
-	fn new<P: Primitive<M> + AABound, M: Scatter>(index: usize, primitive: &P) -> PrimitiveInfo {
+	fn new<P: Primitive + AABound, M: Scatter>(index: usize, primitive: &P) -> PrimitiveInfo {
 		let aabb = primitive.get_aabb();
 		let min = aabb.min;
 		let max = aabb.max;
@@ -38,7 +38,7 @@ impl PrimitiveInfo {
 	}
 }
 
-pub struct Bvh<P: Primitive<M>, M: Scatter> {
+pub struct Bvh<P: Primitive, M: Scatter> {
 	split_type: SplitType,
 	nodes: Vec<Node>,
 	pub primitives: Vec<P>,
@@ -48,7 +48,7 @@ pub struct Bvh<P: Primitive<M>, M: Scatter> {
 
 impl<P, M> Bvh<P, M>
 where
-	P: Primitive<M> + AABound,
+	P: Primitive + AABound,
 	M: Scatter,
 {
 	pub fn new(primitives: Vec<P>, split_type: SplitType) -> Self {
@@ -63,7 +63,7 @@ where
 			.primitives
 			.iter()
 			.enumerate()
-			.map(|(index, primitive)| PrimitiveInfo::new(index, primitive))
+			.map(|(index, primitive)| PrimitiveInfo::new::<P, M>(index, primitive))
 			.collect();
 
 		bvh.build_bvh(&mut Vec::new(), 0, &mut primitives_info);
@@ -179,7 +179,7 @@ where
 
 impl<P, M> AccelerationStructure<P, M> for Bvh<P, M>
 where
-	P: Primitive<M>,
+	P: Primitive<Material = M>,
 	M: Scatter,
 {
 	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)> {

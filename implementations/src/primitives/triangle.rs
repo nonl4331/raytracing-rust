@@ -215,10 +215,11 @@ pub fn triangle_intersection<T: TriangleTrait<M>, M: Scatter>(
 	))
 }
 
-impl<M> Primitive<M> for Triangle<M>
+impl<M> Primitive for Triangle<M>
 where
 	M: Scatter,
 {
+	type Material = M;
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		triangle_intersection(self, ray)
 	}
@@ -246,10 +247,11 @@ where
 	}
 }
 
-impl<M> Primitive<M> for MeshTriangle<M>
+impl<M> Primitive for MeshTriangle<M>
 where
 	M: Scatter,
 {
+	type Material = M;
 	fn get_int(&self, ray: &Ray) -> Option<SurfaceIntersection<M>> {
 		triangle_intersection(self, ray)
 	}

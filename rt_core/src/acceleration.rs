@@ -2,7 +2,7 @@ use crate::{Primitive, Ray, Scatter, SurfaceIntersection};
 
 pub trait AccelerationStructure<P, M>
 where
-	P: Primitive<M>,
+	P: Primitive,
 	M: Scatter,
 {
 	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)>;

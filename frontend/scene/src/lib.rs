@@ -6,13 +6,7 @@ use implementations::{SimpleCamera, Sky, Texture};
 use rt_core::*;
 use std::{marker::PhantomData, sync::Arc};
 
-pub struct Scene<
-	P: Primitive<M>,
-	M: Scatter,
-	S: Sampler,
-	A: AccelerationStructure<P, M>,
-	T: Texture,
-> {
+pub struct Scene<P: Primitive, M: Scatter, S: Sampler, A: AccelerationStructure<P, M>, T: Texture> {
 	pub acceleration_structure: Arc<A>,
 	pub camera: Arc<SimpleCamera>,
 	pub sampler: Arc<S>,
@@ -22,7 +16,7 @@ pub struct Scene<
 
 impl<P, M, S, A, T> Scene<P, M, S, A, T>
 where
-	P: Primitive<M> + Send + Sync + 'static,
+	P: Primitive + Send + Sync + 'static,
 	M: Scatter + Send + Sync + 'static,
 	S: Sampler,
 	A: AccelerationStructure<P, M> + Send + Sync,

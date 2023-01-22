@@ -55,7 +55,7 @@ impl Ray {
 		self.origin + self.direction * t
 	}
 
-	fn sample_lights_test<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter, S: NoHit>(
+	fn sample_lights_test<A: AccelerationStructure<P, M>, P: Primitive, M: Scatter, S: NoHit>(
 		bvh: &A,
 		hit: &Hit,
 		_sky: &S,
@@ -97,12 +97,7 @@ impl Ray {
 		}
 	}
 
-	fn sample_material_test<
-		A: AccelerationStructure<P, M>,
-		P: Primitive<M>,
-		M: Scatter,
-		S: NoHit,
-	>(
+	fn sample_material_test<A: AccelerationStructure<P, M>, P: Primitive, M: Scatter, S: NoHit>(
 		_bvh: &A,
 		hit: &Hit,
 		_sky: &S,
@@ -117,7 +112,7 @@ impl Ray {
 		}
 	}
 
-	pub fn get_colour<A: AccelerationStructure<P, M>, P: Primitive<M>, M: Scatter, S: NoHit>(
+	pub fn get_colour<A: AccelerationStructure<P, M>, P: Primitive, M: Scatter, S: NoHit>(
 		ray: &mut Ray,
 		sky: &S,
 		bvh: &A,
@@ -220,12 +215,7 @@ impl Ray {
 		(output, ray_count)
 	}
 
-	pub fn get_colour_naive<
-		A: AccelerationStructure<P, M>,
-		P: Primitive<M>,
-		M: Scatter,
-		S: NoHit,
-	>(
+	pub fn get_colour_naive<A: AccelerationStructure<P, M>, P: Primitive, M: Scatter, S: NoHit>(
 		ray: &mut Ray,
 		sky: &S,
 		bvh: &A,
