@@ -76,7 +76,7 @@ where
 		panic!("reference pdf doesn't integrate to 1: {pdf_sum}");
 	}
 
-	let expected_values: Vec<Float> = expected_values
+	let mut expected_values: Vec<Float> = expected_values
 		.into_iter()
 		.map(|v| v * SAMPLES as Float)
 		.collect();
@@ -117,7 +117,7 @@ where
 					.collect()
 			})
 			.collect();
-		let sampled_values: Vec<Float> = (0..SAMPLE_LEN)
+		let mut sampled_values: Vec<Float> = (0..SAMPLE_LEN)
 			.into_par_iter()
 			.map(|i| {
 				recursively_binary_average::<Float>(
@@ -130,6 +130,74 @@ where
 
 		let p_value = chi2_probability(df as f64, chi_squared as f64);
 		if p_value < threshold as f64 {
+			let expected_abs_max = expected_values
+				.iter()
+				.max_by(|x, y| x.abs().partial_cmp(&y.abs()).unwrap())
+				.unwrap()
+				.abs();
+
+			let sampled_abs_max = sampled_values
+				.iter()
+				.max_by(|x, y| x.abs().partial_cmp(&y.abs()).unwrap())
+				.unwrap()
+				.abs();
+
+			let get_colour = |value: Float, max_abs_value: Float| -> Vec3 {
+				if value > 0.0 {
+					let t = value / max_abs_value;
+
+					t * Vec3::new(1.0, 0.0, 0.0)
+				} else if value == 0.0 {
+					Vec3::new(0.0, 1.0, 0.0)
+				} else {
+					Vec3::new(0.0, 0.0, 1.0)
+				}
+			};
+
+			let transpose = |vec: &mut Vec<Float>| {
+				*vec = (0..(PHI_RES * THETA_RES))
+					.map(|i| {
+						let y = i % PHI_RES;
+						let x = i / PHI_RES;
+
+						vec[y * THETA_RES + x]
+					})
+					.collect::<Vec<Float>>();
+			};
+
+			transpose(&mut expected_values);
+			transpose(&mut sampled_values);
+
+			let mut image = expected_values
+				.into_iter()
+				.map(|v| get_colour(v, expected_abs_max))
+				.collect::<Vec<Vec3>>();
+			image.extend(
+				(0..PHI_RES)
+					.map(|_| Vec3::new(0.12, 0.95, 0.95))
+					.collect::<Vec<Vec3>>(),
+			);
+			image.extend(
+				sampled_values
+					.into_iter()
+					.map(|v| get_colour(v, sampled_abs_max))
+					.collect::<Vec<Vec3>>(),
+			);
+			let image = image
+				.into_iter()
+				.flat_map(|v| [v.x, v.y, v.z])
+				.map(|v| (v * 256.0).clamp(0.0, 255.0) as u8)
+				.collect::<Vec<u8>>();
+
+			image::save_buffer(
+				format!("{name}_failed_output_test_{i}.png"),
+				&image,
+				PHI_RES.try_into().unwrap(),
+				(THETA_RES * 2 + 1).try_into().unwrap(),
+				image::ColorType::Rgb8,
+			)
+			.unwrap();
+
 			panic!("{name}: recieved p value of {p_value} with {SAMPLES} samples averaged over {BATCHES} batches on test {i}/{NUMBER_TESTS}")
 		}
 	}

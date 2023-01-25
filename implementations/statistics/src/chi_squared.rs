@@ -7,7 +7,13 @@ pub fn chi2_probability(dof: f64, distance: f64) -> f64 {
 	match distance.partial_cmp(&0.0).unwrap() {
 		Less => panic!("distance < 0.0"),
 		Equal => 1.0,
-		Greater => gamma_ur(dof * 0.5, distance * 0.5),
+		Greater => {
+			if distance.is_infinite() {
+				0.0
+			} else {
+				gamma_ur(dof * 0.5, distance * 0.5)
+			}
+		}
 	}
 }
 

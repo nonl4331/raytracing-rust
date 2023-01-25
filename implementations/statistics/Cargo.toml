@@ -9,6 +9,7 @@ num_cpus = "1.15"
 statrs = "0.16.0"
 rayon = "1.5.1"
 rt_core = { path = "../../rt_core" }
+image = "0.24.5"
 
 [dev-dependencies]
 image = "0.24.5"
