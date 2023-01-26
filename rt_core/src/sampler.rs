@@ -13,7 +13,7 @@ pub trait Sampler {
 		P: Primitive + Sync + Send + 'static,
 		M: Scatter + Send + Sync + 'static,
 		F: Fn(&mut T, &SamplerProgress, u64),
-		A: AccelerationStructure<P, M> + Send + Sync,
+		A: AccelerationStructure<Object = P, Material = M> + Send + Sync,
 		S: NoHit + Send + Sync;
 }
 

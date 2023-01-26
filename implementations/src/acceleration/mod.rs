@@ -177,11 +177,13 @@ where
 	}
 }
 
-impl<P, M> AccelerationStructure<P, M> for Bvh<P, M>
+impl<P, M> AccelerationStructure for Bvh<P, M>
 where
 	P: Primitive<Material = M>,
 	M: Scatter,
 {
+	type Object = P;
+	type Material = M;
 	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)> {
 		let mut offset_len = Vec::new();
 

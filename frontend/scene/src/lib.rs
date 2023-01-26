@@ -1,4 +1,4 @@
-pub mod parse;
+//pub mod parse;
 
 pub use implementations::{self, rt_core};
 
@@ -6,7 +6,13 @@ use implementations::{SimpleCamera, Sky, Texture};
 use rt_core::*;
 use std::{marker::PhantomData, sync::Arc};
 
-pub struct Scene<P: Primitive, M: Scatter, S: Sampler, A: AccelerationStructure<P, M>, T: Texture> {
+pub struct Scene<
+	P: Primitive,
+	M: Scatter,
+	S: Sampler,
+	A: AccelerationStructure<Object = P, Material = M>,
+	T: Texture,
+> {
 	pub acceleration_structure: Arc<A>,
 	pub camera: Arc<SimpleCamera>,
 	pub sampler: Arc<S>,
@@ -19,7 +25,7 @@ where
 	P: Primitive + Send + Sync + 'static,
 	M: Scatter + Send + Sync + 'static,
 	S: Sampler,
-	A: AccelerationStructure<P, M> + Send + Sync,
+	A: AccelerationStructure<Object = P, Material = M> + Send + Sync,
 	T: Texture + Send + Sync,
 {
 	pub fn new(
