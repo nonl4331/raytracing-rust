@@ -269,9 +269,6 @@ fn get_scene(
 			"furnace" => {
 				scene!(furnace, bvh_type, aspect_ratio)
 			}
-			"coffee" => {
-				scene!(coffee, bvh_type, aspect_ratio)
-			}
 			"bxdf_testing" => {
 				scene!(bxdf_testing, bvh_type, aspect_ratio)
 			}
