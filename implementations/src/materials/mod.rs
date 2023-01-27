@@ -16,7 +16,7 @@ pub use crate::{
 	textures::Texture,
 };
 
-#[derive(Scatter, Debug)]
+#[derive(Scatter, Debug, Clone)]
 pub enum AllMaterials<T: Texture> {
 	Emit(Emit<T>),
 	Lambertian(Lambertian<T>),

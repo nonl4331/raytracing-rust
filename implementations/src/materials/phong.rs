@@ -5,7 +5,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Phong<T> {
     pub ks: Float,
     pub kd: Float,

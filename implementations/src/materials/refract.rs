@@ -6,7 +6,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Refract<T: Texture> {
 	pub texture: Arc<T>,
 	pub eta: Float,

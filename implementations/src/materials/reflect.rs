@@ -5,7 +5,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Reflect<T: Texture> {
 	pub texture: Arc<T>,
 	pub fuzz: Float,

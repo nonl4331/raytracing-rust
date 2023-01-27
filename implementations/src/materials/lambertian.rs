@@ -5,7 +5,7 @@ use crate::{
 };
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lambertian<T: Texture> {
 	pub texture: Arc<T>,
 	pub absorption: Float,

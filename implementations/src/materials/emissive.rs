@@ -1,7 +1,7 @@
 use crate::{rt_core::*, textures::Texture, utility::offset_ray};
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Emit<T> {
 	pub texture: Arc<T>,
 	pub strength: Float,

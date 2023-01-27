@@ -14,7 +14,7 @@ pub trait Texture {
 		false
 	}
 }
-#[derive(Texture, Debug)]
+#[derive(Texture, Debug, Clone)]
 pub enum AllTextures {
 	CheckeredTexture(CheckeredTexture),
 	SolidColour(SolidColour),
@@ -23,7 +23,7 @@ pub enum AllTextures {
 	Perlin(Box<Perlin>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CheckeredTexture {
 	colour_one: Vec3,
 	colour_two: Vec3,
@@ -72,7 +72,7 @@ impl Texture for CheckeredTexture {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Perlin {
 	ran_vecs: [Vec3; PERLIN_RVECS],
 	perm_x: [u32; PERLIN_RVECS],
@@ -179,7 +179,7 @@ impl Texture for Box<Perlin> {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SolidColour {
 	pub colour: Vec3,
 }
@@ -199,7 +199,7 @@ impl Texture for SolidColour {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ImageTexture {
 	pub data: Vec<Vec3>,
 	pub dim: (usize, usize),
@@ -265,7 +265,7 @@ impl Texture for ImageTexture {
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lerp {
 	pub colour_one: Vec3,
 	pub colour_two: Vec3,

@@ -7,7 +7,7 @@ use crate::{
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
 use std::sync::Arc;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TrowbridgeReitz<T: Texture> {
 	pub texture: Arc<T>,
 	pub alpha: Float,
