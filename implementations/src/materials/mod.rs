@@ -16,10 +16,10 @@ pub use crate::{
 };
 
 #[derive(Scatter, Debug, Clone)]
-pub enum AllMaterials<T: Texture> {
-	Emit(Emit<T>),
-	Lambertian(Lambertian<T>),
-	TrowbridgeReitz(TrowbridgeReitz<T>),
-	Reflect(Reflect<T>),
-	Refract(Refract<T>),
+pub enum AllMaterials<'a, T: Texture> {
+	Emit(Emit<'a, T>),
+	Lambertian(Lambertian<'a, T>),
+	TrowbridgeReitz(TrowbridgeReitz<'a, T>),
+	Reflect(Reflect<'a, T>),
+	Refract(Refract<'a, T>),
 }

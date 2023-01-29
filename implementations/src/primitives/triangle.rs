@@ -8,47 +8,47 @@ use rand::{thread_rng, Rng};
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
-pub struct Triangle<M: Scatter> {
+pub struct Triangle<'a, M: Scatter> {
 	pub points: [Vec3; 3],
 	pub normals: [Vec3; 3],
-	pub material: Arc<M>,
+	pub material: &'a M,
 }
 
-impl<M> Triangle<M>
+impl<'a, M> Triangle<'a, M>
 where
 	M: Scatter,
 {
-	pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &Arc<M>) -> Self {
+	pub fn new(points: [Vec3; 3], normals: [Vec3; 3], material: &'a M) -> Self {
 		Triangle {
 			points,
 			normals,
-			material: material.clone(),
+			material,
 		}
 	}
 }
 
 #[derive(Debug)]
-pub struct MeshTriangle<M: Scatter> {
+pub struct MeshTriangle<'a, M: Scatter> {
 	pub point_indices: [usize; 3],
 	pub normal_indices: [usize; 3],
-	pub material: Arc<M>,
+	pub material: &'a M,
 	pub mesh: Arc<MeshData>,
 }
 
-impl<M> MeshTriangle<M>
+impl<'a, M> MeshTriangle<'a, M>
 where
 	M: Scatter,
 {
 	pub fn new(
 		point_indices: [usize; 3],
 		normal_indices: [usize; 3],
-		material: &Arc<M>,
+		material: &'a M,
 		mesh: &Arc<MeshData>,
 	) -> Self {
 		MeshTriangle {
 			point_indices,
 			normal_indices,
-			material: material.clone(),
+			material,
 			mesh: mesh.clone(),
 		}
 	}
@@ -66,13 +66,13 @@ impl MeshData {
 	}
 }
 
-pub trait TriangleTrait<M: Scatter> {
+pub trait TriangleTrait<'a, M: Scatter> {
 	fn get_point(&self, index: usize) -> Vec3;
 	fn get_normal(&self, index: usize) -> Vec3;
-	fn get_material(&self) -> &Arc<M>;
+	fn get_material(&self) -> &'a M;
 }
 
-impl<M> TriangleTrait<M> for Triangle<M>
+impl<'a, M> TriangleTrait<'a, M> for Triangle<'a, M>
 where
 	M: Scatter,
 {
@@ -82,12 +82,12 @@ where
 	fn get_normal(&self, index: usize) -> Vec3 {
 		self.normals[index]
 	}
-	fn get_material(&self) -> &Arc<M> {
+	fn get_material(&self) -> &'a M {
 		&self.material
 	}
 }
 
-impl<M> TriangleTrait<M> for MeshTriangle<M>
+impl<'a, M> TriangleTrait<'a, M> for MeshTriangle<'a, M>
 where
 	M: Scatter,
 {
@@ -97,15 +97,15 @@ where
 	fn get_normal(&self, index: usize) -> Vec3 {
 		self.mesh.normals[self.normal_indices[index]]
 	}
-	fn get_material(&self) -> &Arc<M> {
+	fn get_material(&self) -> &'a M {
 		&self.material
 	}
 }
 
-pub fn triangle_intersection<T: TriangleTrait<M>, M: Scatter>(
-	triangle: &T,
+pub fn triangle_intersection<'a, T: TriangleTrait<'a, M>, M: Scatter>(
+	triangle: &'a T,
 	ray: &Ray,
-) -> Option<SurfaceIntersection<M>> {
+) -> Option<SurfaceIntersection<'a, M>> {
 	let mut p0t = triangle.get_point(0) - ray.origin;
 	let mut p1t = triangle.get_point(1) - ray.origin;
 	let mut p2t = triangle.get_point(2) - ray.origin;
@@ -215,7 +215,7 @@ pub fn triangle_intersection<T: TriangleTrait<M>, M: Scatter>(
 	))
 }
 
-impl<M> Primitive for Triangle<M>
+impl<'a, M> Primitive for Triangle<'a, M>
 where
 	M: Scatter,
 {
@@ -247,7 +247,7 @@ where
 	}
 }
 
-impl<M> Primitive for MeshTriangle<M>
+impl<'a, M> Primitive for MeshTriangle<'a, M>
 where
 	M: Scatter,
 {
@@ -282,7 +282,7 @@ where
 		self.material.is_light()
 	}
 }
-impl<M: Scatter> AABound for Triangle<M> {
+impl<'a, M: Scatter> AABound for Triangle<'a, M> {
 	fn get_aabb(&self) -> AABB {
 		AABB::new(
 			self.points[0].min_by_component(self.points[1].min_by_component(self.points[2])),
@@ -291,7 +291,7 @@ impl<M: Scatter> AABound for Triangle<M> {
 	}
 }
 
-impl<M: Scatter> AABound for MeshTriangle<M> {
+impl<'a, M: Scatter> AABound for MeshTriangle<'a, M> {
 	fn get_aabb(&self) -> AABB {
 		let points = [
 			self.mesh.vertices[self.point_indices[0]],

@@ -1,25 +1,21 @@
 use crate::{rt_core::*, textures::Texture, utility::offset_ray};
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct Emit<T> {
-	pub texture: Arc<T>,
+pub struct Emit<'a, T: Texture> {
+	pub texture: &'a T,
 	pub strength: Float,
 }
 
-impl<T> Emit<T>
+impl<'a, T> Emit<'a, T>
 where
 	T: Texture,
 {
-	pub fn new(texture: &Arc<T>, strength: Float) -> Self {
-		Emit {
-			texture: texture.clone(),
-			strength,
-		}
+	pub fn new(texture: &'a T, strength: Float) -> Self {
+		Emit { texture, strength }
 	}
 }
 
-impl<T> Scatter for Emit<T>
+impl<'a, T> Scatter for Emit<'a, T>
 where
 	T: Texture,
 {

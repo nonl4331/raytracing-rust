@@ -5,23 +5,22 @@ use crate::{
 	utility::{coord::Coordinate, offset_ray},
 };
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct TrowbridgeReitz<T: Texture> {
-	pub texture: Arc<T>,
+pub struct TrowbridgeReitz<'a, T: Texture> {
+	pub texture: &'a T,
 	pub alpha: Float,
 	pub ior: Vec3,
 	pub metallic: Float,
 }
 
-impl<T> TrowbridgeReitz<T>
+impl<'a, T> TrowbridgeReitz<'a, T>
 where
 	T: Texture,
 {
-	pub fn new(texture: &Arc<T>, roughness: Float, ior: Vec3, metallic: Float) -> Self {
+	pub fn new(texture: &'a T, roughness: Float, ior: Vec3, metallic: Float) -> Self {
 		Self {
-			texture: texture.clone(),
+			texture,
 			alpha: roughness * roughness,
 			ior,
 			metallic,
@@ -60,7 +59,7 @@ where
 	}
 }
 
-impl<T> Scatter for TrowbridgeReitz<T>
+impl<'a, T> Scatter for TrowbridgeReitz<'a, T>
 where
 	T: Texture,
 {

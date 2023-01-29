@@ -122,7 +122,7 @@ pub fn derive_primitive(tokens: TokenStream) -> TokenStream {
 
 	let func_names_primitive = [
 		(
-			quote!(get_int(&self, __one: &Ray) -> Option<SurfaceIntersection #ty_generics>),
+			quote!(get_int(&self, __one: &Ray) -> Option<SurfaceIntersection<Self::Material>>),
 			quote!(get_int(__one)),
 		),
 		(

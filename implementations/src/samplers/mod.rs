@@ -1,22 +1,19 @@
 use crate::{generate_values, next_float, random_float, rt_core::*, textures::Texture};
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
 use statistics::distributions::*;
-use std::sync::Arc;
 
 pub mod random_sampler;
 
 #[derive(Debug)]
-pub struct Sky<T: Texture> {
-	texture: Arc<T>,
+pub struct Sky<'a, T: Texture> {
+	texture: &'a T,
 	pub distribution: Option<Distribution2D>,
 	sampler_res: (usize, usize),
 }
 
-impl<T: Texture> Sky<T> {
-	pub fn new(texture: &Arc<T>, sampler_res: (usize, usize)) -> Self {
-		let texture = texture.clone();
-
-		let values = generate_values(&*texture, sampler_res);
+impl<'a, T: Texture> Sky<'a, T> {
+	pub fn new(texture: &'a T, sampler_res: (usize, usize)) -> Self {
+		let values = generate_values(texture, sampler_res);
 
 		let distribution = if sampler_res.0 | sampler_res.1 != 0 {
 			Some(Distribution2D::new(&values, sampler_res.0))
@@ -32,7 +29,7 @@ impl<T: Texture> Sky<T> {
 	}
 }
 
-impl<T: Texture> NoHit for Sky<T> {
+impl<'a, T: Texture> NoHit for Sky<'a, T> {
 	fn get_colour(&self, ray: &Ray) -> Vec3 {
 		self.texture.colour_value(ray.direction, ray.origin)
 	}
@@ -83,7 +80,7 @@ mod tests {
 
 	#[test]
 	fn sky_sampling() {
-		let tex = std::sync::Arc::new(AllTextures::Lerp(Lerp::new(Vec3::zero(), Vec3::one())));
+		let tex = AllTextures::Lerp(Lerp::new(Vec3::zero(), Vec3::one()));
 
 		let sky = Sky::new(&tex, (60, 30));
 

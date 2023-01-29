@@ -3,27 +3,23 @@ use crate::{
 	textures::Texture,
 	utility::{offset_ray, random_unit_vector},
 };
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct Reflect<T: Texture> {
-	pub texture: Arc<T>,
+pub struct Reflect<'a, T: Texture> {
+	pub texture: &'a T,
 	pub fuzz: Float,
 }
 
-impl<T> Reflect<T>
+impl<'a, T> Reflect<'a, T>
 where
 	T: Texture,
 {
-	pub fn new(texture: &Arc<T>, fuzz: Float) -> Self {
-		Reflect {
-			texture: texture.clone(),
-			fuzz,
-		}
+	pub fn new(texture: &'a T, fuzz: Float) -> Self {
+		Reflect { texture, fuzz }
 	}
 }
 
-impl<T> Scatter for Reflect<T>
+impl<'a, T> Scatter for Reflect<'a, T>
 where
 	T: Texture,
 {

@@ -10,9 +10,11 @@ image = "0.23.14"
 serde = { version = "1.0", features = [ "derive" ] }
 implementations = { path = "../../implementations" }
 toml = "0.5.10"
+rand = "0.8.5"
+rayon = "1.5.1"
 wavefront_obj = "10.0.0"
 ouroboros = "0.15.5"
-bumpalo = "3.12.0"
+bumpalo = {version="3.12.0", features=["collections"]}
 
 [features]
 f64 = ["implementations/f64"]

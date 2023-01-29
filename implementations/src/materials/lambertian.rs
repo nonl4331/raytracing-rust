@@ -3,11 +3,10 @@ use crate::{
 	textures::Texture,
 	utility::{coord::Coordinate, cosine_hemisphere_sampling, near_zero, offset_ray},
 };
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct Lambertian<T: Texture> {
-	pub texture: Arc<T>,
+pub struct Lambertian<'a, T: Texture> {
+	pub texture: &'a T,
 	pub absorption: Float,
 }
 
@@ -17,19 +16,19 @@ use std::f64::consts::PI;
 #[cfg(not(feature = "f64"))]
 use std::f32::consts::PI;
 
-impl<T> Lambertian<T>
+impl<'a, T> Lambertian<'a, T>
 where
 	T: Texture,
 {
-	pub fn new(texture: &Arc<T>, absorption: Float) -> Self {
+	pub fn new(texture: &'a T, absorption: Float) -> Self {
 		Lambertian {
-			texture: texture.clone(),
+			texture,
 			absorption,
 		}
 	}
 }
 
-impl<T> Scatter for Lambertian<T>
+impl<'a, T> Scatter for Lambertian<'a, T>
 where
 	T: Texture,
 {

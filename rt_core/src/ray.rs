@@ -162,8 +162,7 @@ impl Ray {
 		while depth < MAX_DEPTH {
 			if !mat.is_delta() {
 				// light sampling
-				if let Some((l_pos, le, l_pdf)) = Ray::sample_lights_test(bvh, &hit, sky, &mat, wo)
-				{
+				if let Some((l_pos, le, l_pdf)) = Ray::sample_lights_test(bvh, &hit, sky, mat, wo) {
 					let l_wi = (l_pos - hit.point).normalised();
 					let m_pdf = mat.scattering_pdf(&hit, wo, l_wi);
 					let mis_weight = power_heuristic(l_pdf, m_pdf);
@@ -174,7 +173,7 @@ impl Ray {
 			}
 
 			// material sample and bounce
-			let (m_wi, m_pdf) = match Ray::sample_material_test(bvh, &hit, sky, &mat, ray) {
+			let (m_wi, m_pdf) = match Ray::sample_material_test(bvh, &hit, sky, mat, ray) {
 				Some((m_wi, m_pdf)) => (m_wi, m_pdf),
 				None => break,
 			};

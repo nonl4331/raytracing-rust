@@ -38,29 +38,31 @@ impl PrimitiveInfo {
 	}
 }
 
-pub struct Bvh<P: Primitive, M: Scatter> {
+pub struct Bvh<'a, P: Primitive, M: Scatter> {
 	split_type: SplitType,
 	nodes: Vec<Node>,
-	pub primitives: Vec<P>,
+	pub primitives: &'a [P],
 	pub lights: Vec<usize>,
 	phantom: PhantomData<M>,
 }
 
-impl<P, M> Bvh<P, M>
+unsafe impl<'a, P: Primitive + AABound + Send, M: Scatter + Send> Sync for Bvh<'a, P, M> {}
+
+impl<'a, P, M> Bvh<'a, P, M>
 where
 	P: Primitive + AABound,
 	M: Scatter,
 {
-	pub fn new(primitives: Vec<P>, split_type: SplitType) -> Self {
+	pub fn new(mut primitives: bumpalo::collections::Vec<'a, P>, split_type: SplitType) -> Self {
 		let mut bvh = Self {
 			split_type,
 			nodes: Vec::new(),
-			primitives,
+			primitives: &[],
 			lights: Vec::new(),
 			phantom: PhantomData,
 		};
-		let mut primitives_info: Vec<PrimitiveInfo> = bvh
-			.primitives
+		//let prims =
+		let mut primitives_info: Vec<PrimitiveInfo> = primitives
 			.iter()
 			.enumerate()
 			.map(|(index, primitive)| PrimitiveInfo::new::<P, M>(index, primitive))
@@ -69,15 +71,17 @@ where
 		bvh.build_bvh(&mut Vec::new(), 0, &mut primitives_info);
 
 		sort_by_indices(
-			&mut bvh.primitives,
+			&mut primitives,
 			primitives_info.iter().map(|&info| info.index).collect(),
 		);
 
-		for (i, prim) in bvh.primitives.iter().enumerate() {
+		for (i, prim) in primitives.iter().enumerate() {
 			if prim.material_is_light() {
 				bvh.lights.push(i);
 			}
 		}
+
+		bvh.primitives = primitives.into_bump_slice();
 
 		bvh
 	}
@@ -177,7 +181,7 @@ where
 	}
 }
 
-impl<P, M> AccelerationStructure for Bvh<P, M>
+impl<'a, P, M> AccelerationStructure for Bvh<'a, P, M>
 where
 	P: Primitive<Material = M>,
 	M: Scatter,

@@ -12,10 +12,10 @@ pub mod sphere;
 pub mod triangle;
 
 #[derive(Primitive, Debug)]
-pub enum AllPrimitives<M: Scatter> {
-	Sphere(Sphere<M>),
-	Triangle(Triangle<M>),
-	MeshTriangle(MeshTriangle<M>),
+pub enum AllPrimitives<'a, M: Scatter> {
+	Sphere(Sphere<'a, M>),
+	Triangle(Triangle<'a, M>),
+	MeshTriangle(MeshTriangle<'a, M>),
 }
 
 #[derive(Clone, Debug)]

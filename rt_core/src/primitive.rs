@@ -1,5 +1,4 @@
 use crate::{Float, Ray, Scatter, Vec2, Vec3};
-use std::sync::Arc;
 
 pub struct Hit {
 	pub t: Float,
@@ -10,12 +9,12 @@ pub struct Hit {
 	pub out: bool,
 }
 
-pub struct SurfaceIntersection<M: Scatter> {
+pub struct SurfaceIntersection<'a, M: Scatter> {
 	pub hit: Hit,
-	pub material: Arc<M>,
+	pub material: &'a M,
 }
 
-impl<M> SurfaceIntersection<M>
+impl<'a, M> SurfaceIntersection<'a, M>
 where
 	M: Scatter,
 {
@@ -26,7 +25,7 @@ where
 		normal: Vec3,
 		uv: Option<Vec2>,
 		out: bool,
-		material: &Arc<M>,
+		material: &'a M,
 	) -> Self {
 		SurfaceIntersection {
 			hit: Hit {
@@ -37,7 +36,7 @@ where
 				uv,
 				out,
 			},
-			material: material.clone(),
+			material,
 		}
 	}
 }

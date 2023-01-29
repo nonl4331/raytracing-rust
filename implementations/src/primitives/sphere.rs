@@ -3,30 +3,29 @@ use crate::{
 	rt_core::*,
 	utility::{coord::Coordinate, random_float},
 };
-use std::sync::Arc;
 
 #[derive(Debug)]
-pub struct Sphere<M: Scatter> {
+pub struct Sphere<'a, M: Scatter> {
 	pub center: Vec3,
 	pub radius: Float,
-	pub material: Arc<M>,
+	pub material: &'a M,
 }
 
-impl<M> Sphere<M>
+impl<'a, M> Sphere<'a, M>
 where
 	M: Scatter,
 {
-	pub fn new(center: Vec3, radius: Float, material: &Arc<M>) -> Self {
+	pub fn new(center: Vec3, radius: Float, material: &'a M) -> Self {
 		Sphere {
 			center,
 			radius,
-			material: material.clone(),
+			material,
 		}
 	}
 }
 
 #[allow(clippy::suspicious_operation_groupings)]
-impl<M> Primitive for Sphere<M>
+impl<'a, M> Primitive for Sphere<'a, M>
 where
 	M: Scatter,
 {
@@ -173,7 +172,7 @@ where
 	}
 }
 
-impl<M: Scatter> AABound for Sphere<M> {
+impl<'a, M: Scatter> AABound for Sphere<'a, M> {
 	fn get_aabb(&self) -> AABB {
 		AABB::new(
 			self.center - self.radius * Vec3::one(),

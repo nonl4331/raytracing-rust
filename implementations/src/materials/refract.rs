@@ -4,27 +4,23 @@ use crate::{
 	textures::Texture,
 	utility::{offset_ray, random_float},
 };
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct Refract<T: Texture> {
-	pub texture: Arc<T>,
+pub struct Refract<'a, T: Texture> {
+	pub texture: &'a T,
 	pub eta: Float,
 }
 
-impl<T> Refract<T>
+impl<'a, T> Refract<'a, T>
 where
 	T: Texture,
 {
-	pub fn new(texture: &Arc<T>, eta: Float) -> Self {
-		Refract {
-			texture: texture.clone(),
-			eta,
-		}
+	pub fn new(texture: &'a T, eta: Float) -> Self {
+		Refract { texture, eta }
 	}
 }
 
-impl<T> Scatter for Refract<T>
+impl<'a, T> Scatter for Refract<'a, T>
 where
 	T: Texture,
 {
@@ -41,7 +37,7 @@ where
 		let f0 = (1.0 - eta_fraction) / (1.0 + eta_fraction);
 		let f0 = f0 * f0 * Vec3::one();
 		if cannot_refract || fresnel(cos_theta, f0).x > random_float() {
-			let ref_mat = Reflect::new(&self.texture.clone(), 0.0);
+			let ref_mat = Reflect::new(self.texture, 0.0);
 			return ref_mat.scatter_ray(ray, hit);
 		}
 
