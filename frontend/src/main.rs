@@ -1,6 +1,3 @@
-use crate::utility::{
-	get_progress_output, print_final_statistics, print_render_start, save_u8_to_image,
-};
 #[cfg(feature = "gui")]
 use {
 	gui::{Gui, RenderEvent},
@@ -20,7 +17,7 @@ use {
 	winit::event_loop::EventLoopProxy,
 };
 
-use scene::rt_core::{Float, SamplerProgress};
+//use scene::rt_core::{Float, SamplerProgress};
 use std::env;
 
 #[cfg(feature = "gui")]
@@ -32,6 +29,7 @@ mod rendering;
 //mod load_model;
 mod macros;
 //mod parameters;
+mod scene;
 mod utility;
 
 #[cfg(feature = "gui")]
@@ -81,7 +79,7 @@ impl Data {
 }
 
 fn main() {
-	let args: Vec<String> = env::args().collect();
+	let _args: Vec<String> = env::args().collect();
 
 	/*if let Some((scene, parameters)) = parameters::process_args(args) {
 		let (render_options, filename) = (parameters.render_options, parameters.filename.clone());

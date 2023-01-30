@@ -7,7 +7,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Lambertian<'a, T: Texture> {
 	pub texture: &'a T,
-	pub absorption: Float,
+	pub albedo: Float,
 }
 
 #[cfg(all(feature = "f64"))]
@@ -20,11 +20,8 @@ impl<'a, T> Lambertian<'a, T>
 where
 	T: Texture,
 {
-	pub fn new(texture: &'a T, absorption: Float) -> Self {
-		Lambertian {
-			texture,
-			absorption,
-		}
+	pub fn new(texture: &'a T, albedo: Float) -> Self {
+		Lambertian { texture, albedo }
 	}
 }
 
@@ -50,9 +47,9 @@ where
 		hit.normal.dot(wi).max(0.0) / PI
 	}
 	fn eval(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
-		self.texture.colour_value(wo, hit.point)
-			* (1.0 - self.absorption)
-			* hit.normal.dot(wi).max(0.0)
-			/ PI
+		self.texture.colour_value(wo, hit.point) * self.albedo * hit.normal.dot(wi).max(0.0) / PI
+	}
+	fn eval_over_scattering_pdf(&self, hit: &Hit, wo: Vec3, _: Vec3) -> Vec3 {
+		self.texture.colour_value(wo, hit.point) * self.albedo
 	}
 }
