@@ -1,6 +1,5 @@
-use crate::{
-	parameters::line_break,
-	utility::{get_progress_output, print_final_statistics, print_render_start, save_u8_to_image},
+use crate::utility::{
+	get_progress_output, print_final_statistics, print_render_start, save_u8_to_image,
 };
 #[cfg(feature = "gui")]
 use {
@@ -29,10 +28,10 @@ mod gui;
 #[cfg(feature = "gui")]
 mod rendering;
 
-mod generate;
-mod load_model;
+//mod generate;
+//mod load_model;
 mod macros;
-mod parameters;
+//mod parameters;
 mod utility;
 
 #[cfg(feature = "gui")]
@@ -84,7 +83,7 @@ impl Data {
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
-	if let Some((scene, parameters)) = parameters::process_args(args) {
+	/*if let Some((scene, parameters)) = parameters::process_args(args) {
 		let (render_options, filename) = (parameters.render_options, parameters.filename.clone());
 		if !parameters.gui {
 			let start = print_render_start(
@@ -244,7 +243,7 @@ fn main() {
 			#[cfg(not(feature = "gui"))]
 			println!("feature: gui not enabled");
 		}
-	}
+	}*/
 }
 
 #[cfg(feature = "gui")]

@@ -61,7 +61,7 @@ pub fn get_readable_duration(duration: Duration) -> String {
 	days_string + &hours_string + &minutes_string + &seconds_string
 }
 
-pub fn create_bvh_with_info<P: Primitive + AABound, M: Scatter>(
+/*pub fn create_bvh_with_info<P: Primitive + AABound, M: Scatter>(
 	primitives: Vec<P>,
 	bvh_type: SplitType,
 ) -> Arc<Bvh<P, M>> {
@@ -78,7 +78,7 @@ pub fn create_bvh_with_info<P: Primitive + AABound, M: Scatter>(
 	println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
 
 	bvh
-}
+}*/
 
 pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
 	progress_bar(samples_completed as f64 / total_samples as f64);
