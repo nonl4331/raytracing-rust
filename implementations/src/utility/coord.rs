@@ -1,4 +1,4 @@
-use crate::rt_core::Vec3;
+use rt_core::Vec3;
 
 pub struct Coordinate {
 	pub x: Vec3,

@@ -1,7 +1,7 @@
-use crate::rt_core::*;
 use image::{io::Reader, GenericImageView};
 use proc::Texture;
 use rand::{rngs::SmallRng, thread_rng, Rng, SeedableRng};
+use rt_core::*;
 use std::path::Path;
 
 const PERLIN_RVECS: usize = 256;

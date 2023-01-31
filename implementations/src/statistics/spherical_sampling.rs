@@ -1,10 +1,7 @@
-use crate::chi_squared::chi2_probability;
-use crate::chi_squared::chi_squared;
-use crate::integrators::integrate_solid_angle;
-use crate::utility::distribute_samples_over_threads;
-use crate::utility::recursively_binary_average;
-use crate::*;
-use crate::{Float, Vec3, PI};
+use crate::statistics::chi_squared::*;
+use crate::statistics::integrators::integrate_solid_angle;
+use crate::statistics::utility::*;
+use crate::statistics::*;
 use rand::rngs::ThreadRng;
 use rand::thread_rng;
 use rand::Rng;
@@ -205,7 +202,7 @@ where
 
 #[cfg(test)]
 pub mod test {
-	use crate::{spherical_sampling::*, Float, Vec3, TAU};
+	use super::*;
 	use rand::Rng;
 
 	pub fn to_vec(sin_theta: Float, cos_theta: Float, phi: Float) -> Vec3 {

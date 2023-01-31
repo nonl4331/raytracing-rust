@@ -1,5 +1,5 @@
-use crate::rt_core::{Float, Hit, Ray, Scatter, Vec3};
 use proc::Scatter;
+use rt_core::{Float, Hit, Ray, Scatter, Vec3};
 
 pub mod emissive;
 pub mod lambertian;

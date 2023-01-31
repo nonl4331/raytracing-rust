@@ -1,9 +1,9 @@
 use crate::{
 	materials::reflect::Reflect,
-	rt_core::*,
 	textures::Texture,
 	utility::{offset_ray, random_float},
 };
+use rt_core::*;
 
 #[derive(Debug, Clone)]
 pub struct Refract<'a, T: Texture> {

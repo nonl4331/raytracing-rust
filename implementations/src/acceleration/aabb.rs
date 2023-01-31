@@ -1,4 +1,5 @@
-use crate::{rt_core::*, utility::gamma};
+use crate::utility::gamma;
+use rt_core::*;
 
 pub trait AABound {
 	fn get_aabb(&self) -> AABB;

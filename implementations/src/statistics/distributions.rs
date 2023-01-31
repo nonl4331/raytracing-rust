@@ -1,4 +1,5 @@
-use crate::Float;
+use rt_core::Float;
+
 use rand::Rng;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -114,7 +115,7 @@ impl Distribution2D {
 
 #[cfg(test)]
 mod tests {
-	use crate::{chi_squared::*, distributions::*, utility::*};
+	use crate::statistics::{chi_squared::*, distributions::*, utility::*};
 	use rand::thread_rng;
 	use rayon::prelude::*;
 

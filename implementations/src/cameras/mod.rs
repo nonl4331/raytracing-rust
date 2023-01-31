@@ -1,4 +1,5 @@
-use crate::{rt_core::*, utility::random_float};
+use crate::utility::random_float;
+use rt_core::*;
 
 #[derive(Debug)]
 pub struct SimpleCamera {

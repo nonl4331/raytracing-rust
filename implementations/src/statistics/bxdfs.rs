@@ -1,5 +1,5 @@
 pub mod trowbridge_reitz {
-	use crate::*;
+	use crate::statistics::*;
 	use rand::Rng;
 	pub fn sample_h<R: Rng>(alpha: Float, rng: &mut R) -> Vec3 {
 		let r1: Float = rng.gen();
@@ -65,8 +65,8 @@ pub mod trowbridge_reitz {
 }
 
 pub mod trowbridge_reitz_vndf {
-	use crate::*;
 	use rand::Rng;
+	use rt_core::*;
 
 	// All in local frame
 	pub fn d_ansiotropic(a_x: Float, a_y: Float, h: Vec3) -> Float {
@@ -177,7 +177,7 @@ pub mod trowbridge_reitz_vndf {
 #[cfg(test)]
 pub mod test {
 	use super::*;
-	use crate::{spherical_sampling::*, *};
+	use crate::statistics::{spherical_sampling::*, *};
 	use rand::{rngs::ThreadRng, thread_rng, Rng};
 
 	#[test]

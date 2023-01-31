@@ -1,8 +1,8 @@
 use crate::{
-	rt_core::*,
 	textures::Texture,
 	utility::{offset_ray, random_unit_vector},
 };
+use rt_core::*;
 
 #[derive(Debug, Clone)]
 pub struct Reflect<'a, T: Texture> {

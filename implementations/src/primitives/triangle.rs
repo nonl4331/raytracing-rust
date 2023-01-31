@@ -1,10 +1,10 @@
 use crate::{
 	aabb::{AABound, AABB},
 	primitives::Axis,
-	rt_core::*,
 	utility::{check_side, gamma},
 };
 use rand::{thread_rng, Rng};
+use rt_core::*;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]

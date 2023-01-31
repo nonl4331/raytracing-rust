@@ -1,10 +1,10 @@
 use crate::{
 	aabb::{AABound, AABB},
 	acceleration::split::{Split, SplitType},
-	rt_core::*,
 	utility::sort_by_indices,
 	Axis,
 };
+use rt_core::*;
 use std::{collections::VecDeque, marker::PhantomData};
 
 #[cfg(all(feature = "f64"))]

@@ -1,6 +1,7 @@
-use crate::{generate_values, next_float, random_float, rt_core::*, textures::Texture};
+use crate::statistics::distributions::*;
+use crate::{generate_values, next_float, random_float, textures::Texture};
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
-use statistics::distributions::*;
+use rt_core::*;
 
 pub mod random_sampler;
 
@@ -73,10 +74,10 @@ impl<'a, T: Texture> NoHit for Sky<'a, T> {
 
 #[cfg(test)]
 mod tests {
+	use crate::statistics::spherical_sampling::test_spherical_pdf;
 	use crate::*;
 	use rand::rngs::ThreadRng;
 	use rt_core::*;
-	use statistics::spherical_sampling::test_spherical_pdf;
 
 	#[test]
 	fn sky_sampling() {

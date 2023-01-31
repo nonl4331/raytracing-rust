@@ -1,4 +1,5 @@
-use crate::{rt_core::*, textures::Texture, utility::offset_ray};
+use crate::{textures::Texture, utility::offset_ray};
+use rt_core::*;
 
 #[derive(Debug, Clone)]
 pub struct Emit<'a, T: Texture> {

@@ -1,7 +1,7 @@
-use implementations::{self, rt_core, SimpleCamera};
+use implementations::rt_core::*;
+use implementations::*;
 use rand::Rng;
 use rayon::prelude::*;
-use rt_core::*;
 
 use bumpalo::Bump;
 use ouroboros::self_referencing;
@@ -125,7 +125,6 @@ mod tests {
 	use super::*;
 	use implementations::random_sampler::RandomSampler;
 	use implementations::sphere::Sphere;
-	use implementations::*;
 	use std::collections::HashMap;
 
 	#[test]

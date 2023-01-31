@@ -1,4 +1,4 @@
-use crate::*;
+use crate::statistics::*;
 use rayon::prelude::*;
 use statrs::function::gamma::gamma_ur;
 

@@ -1,10 +1,11 @@
 use crate::{
 	materials::refract,
-	rt_core::*,
+	statistics,
 	textures::Texture,
 	utility::{coord::Coordinate, offset_ray},
 };
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
+use rt_core::*;
 
 #[derive(Debug, Clone)]
 pub struct TrowbridgeReitz<'a, T: Texture> {

@@ -1,8 +1,8 @@
 use crate::{
-	rt_core::*,
 	textures::Texture,
 	utility::{coord::Coordinate, cosine_hemisphere_sampling, near_zero, offset_ray},
 };
+use rt_core::*;
 
 #[derive(Debug, Clone)]
 pub struct Lambertian<'a, T: Texture> {

@@ -1,8 +1,9 @@
 use crate::{
 	aabb::{AABound, AABB},
-	rt_core::*,
 	utility::{coord::Coordinate, random_float},
 };
+
+use rt_core::*;
 
 #[derive(Debug)]
 pub struct Sphere<'a, M: Scatter> {
