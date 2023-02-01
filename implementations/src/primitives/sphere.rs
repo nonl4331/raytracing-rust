@@ -145,8 +145,8 @@ where
 
 			// get sphere point
 			let coord_system = Coordinate::new_from_z((in_point - self.center).normalised());
-			let mut vec = Vec3::new(sin_alpha * phi.cos(), sin_alpha * phi.sin(), cos_alpha);
-			coord_system.vec_to_coordinate(&mut vec);
+			let vec = Vec3::new(sin_alpha * phi.cos(), sin_alpha * phi.sin(), cos_alpha);
+			let vec = coord_system.vec_to_coordinate(vec);
 
 			self.center + self.radius * vec
 		};

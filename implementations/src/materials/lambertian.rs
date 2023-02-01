@@ -31,8 +31,8 @@ where
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
 		let coordinate_system = Coordinate::new_from_z(hit.normal);
-		let mut direction = cosine_hemisphere_sampling();
-		coordinate_system.vec_to_coordinate(&mut direction);
+		let direction = cosine_hemisphere_sampling();
+		let mut direction = coordinate_system.vec_to_coordinate(direction);
 
 		if near_zero(direction) {
 			direction = hit.normal;

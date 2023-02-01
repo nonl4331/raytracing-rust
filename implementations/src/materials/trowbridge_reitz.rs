@@ -67,12 +67,12 @@ where
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
 		let coord = Coordinate::new_from_z(hit.normal);
 
-		let mut h = statistics::bxdfs::trowbridge_reitz::sample_h(
+		let h = statistics::bxdfs::trowbridge_reitz::sample_h(
 			self.alpha,
 			&mut SmallRng::from_rng(thread_rng()).unwrap(),
 		);
 
-		coord.vec_to_coordinate(&mut h);
+		let h = coord.vec_to_coordinate(h);
 
 		let direction = ray.direction.reflected(h);
 

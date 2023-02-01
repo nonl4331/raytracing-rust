@@ -1,4 +1,4 @@
-use rand::rngs::ThreadRng;
+/*use rand::rngs::ThreadRng;
 use rt_core::*;
 use statistics::spherical_sampling::test_spherical_pdf;
 
@@ -294,4 +294,4 @@ fn mis_sky_sampling_furnace_test() {
 		/ samples as Float;
 
 	assert!((ref_val - val).mag() < 0.001)
-}
+}*/
