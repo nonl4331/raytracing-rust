@@ -1,3 +1,4 @@
+pub mod lambertian;
 pub mod trowbridge_reitz;
 pub mod trowbridge_reitz_vndf;
 

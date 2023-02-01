@@ -1,7 +1,5 @@
-use crate::{
-	textures::Texture,
-	utility::{coord::Coordinate, cosine_hemisphere_sampling, near_zero, offset_ray},
-};
+use crate::{textures::Texture, utility::offset_ray};
+use rand::{rngs::SmallRng, thread_rng, SeedableRng};
 use rt_core::*;
 
 #[derive(Debug, Clone)]
@@ -30,21 +28,19 @@ where
 	T: Texture,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let coordinate_system = Coordinate::new_from_z(hit.normal);
-		let direction = cosine_hemisphere_sampling();
-		let mut direction = coordinate_system.to_coord(direction);
-
-		if near_zero(direction) {
-			direction = hit.normal;
-		}
+		let direction = crate::statistics::bxdfs::lambertian::sample(
+			ray.direction,
+			hit.normal,
+			&mut SmallRng::from_rng(thread_rng()).unwrap(),
+		);
 
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
 		*ray = Ray::new(point, direction, ray.time);
 
 		false
 	}
-	fn scattering_pdf(&self, hit: &Hit, _: Vec3, wi: Vec3) -> Float {
-		hit.normal.dot(wi).max(0.0) / PI
+	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Float {
+		crate::statistics::bxdfs::lambertian::pdf(wo, wi, hit.normal)
 	}
 	fn eval(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
 		self.texture.colour_value(wo, hit.point) * self.albedo * hit.normal.dot(wi).max(0.0) / PI
