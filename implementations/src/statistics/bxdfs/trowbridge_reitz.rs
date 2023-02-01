@@ -1,5 +1,7 @@
+use crate::coord::Coordinate;
 use crate::statistics::*;
 use rand::Rng;
+
 pub fn sample_h<R: Rng>(alpha: Float, rng: &mut R) -> Vec3 {
 	let r1: Float = rng.gen();
 	let r2: Float = rng.gen();
@@ -42,22 +44,77 @@ pub fn alternative_d(alpha: Float, h: Vec3, cos_theta: Float) -> Float {
 	1.0 / (PI * a_sq * tmp * tmp)
 }
 
-pub fn pdf_h(h: Vec3, alpha: Float) -> Float {
+pub fn pdf_h(alpha: Float, h: Vec3) -> Float {
 	// technically the paper has an .abs() but it isn't needed since h.z < 0 => D(m) = 0
 	d(alpha, h.z) * h.z
 }
 
-pub fn sample<R: Rng>(alpha: Float, incoming: Vec3, rng: &mut R) -> Vec3 {
+pub fn sample_local<R: Rng>(alpha: Float, incoming: Vec3, rng: &mut R) -> Vec3 {
 	let h = sample_h(alpha, rng);
-	2.0 * incoming.dot(h) * h - incoming
+	incoming.reflected(h)
 }
 
-pub fn pdf_outgoing(alpha: Float, incoming: Vec3, outgoing: Vec3, normal: Vec3) -> Float {
-	let mut h = (incoming + outgoing).normalised();
-	if h.dot(normal) < 0.0 {
-		h = -(incoming + outgoing).normalised();
+pub fn pdf_local(alpha: Float, incoming: Vec3, outgoing: Vec3) -> Float {
+	let mut h = (outgoing - incoming).normalised();
+	if h.z < 0.0 {
+		h = (incoming - outgoing).normalised();
 	}
-	let cos_theta = normal.dot(h);
-	let d = d(alpha, cos_theta);
-	d * h.dot(normal).abs() / (4.0 * outgoing.dot(h).abs())
+	let d = d(alpha, h.z);
+	d * h.z.abs() / (4.0 * outgoing.dot(h).abs())
+}
+
+pub fn sample<R: Rng>(alpha: Float, incoming: Vec3, normal: Vec3, rng: &mut R) -> Vec3 {
+	let coord = Coordinate::new_from_z(normal);
+	let h = coord.to_coord(sample_h(alpha, rng));
+	incoming.reflected(h)
+}
+
+pub fn pdf(alpha: Float, incoming: Vec3, outgoing: Vec3, normal: Vec3) -> Float {
+	let inverse = Coordinate::new_from_z(normal).create_inverse();
+	let incoming = inverse.to_coord(incoming);
+	let outgoing = inverse.to_coord(outgoing);
+	let mut h = (outgoing - incoming).normalised();
+	if h.z < 0.0 {
+		h = (incoming - outgoing).normalised();
+	}
+	let d = d(alpha, h.z);
+	d * h.z.abs() / (4.0 * outgoing.dot(h).abs())
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+	use crate::statistics::spherical_sampling::*;
+	use rand::{rngs::ThreadRng, thread_rng, Rng};
+
+	#[test]
+	fn h() {
+		let mut rng = thread_rng();
+		let alpha = rng.gen();
+		let pdf = |outgoing: Vec3| pdf_h(alpha, outgoing);
+		let sample = |rng: &mut ThreadRng| sample_h(alpha, rng);
+		test_spherical_pdf("tr_h", &pdf, &sample, false);
+	}
+
+	#[test]
+	fn tr() {
+		let mut rng = thread_rng();
+		let incoming = generate_wi(&mut rng);
+		let alpha = rng.gen();
+		let pdf = |outgoing: Vec3| pdf_local(alpha, incoming, outgoing);
+		let sample = |rng: &mut ThreadRng| sample_local(alpha, incoming, rng);
+		test_spherical_pdf("tr", &pdf, &sample, false);
+	}
+
+	#[test]
+	fn non_local() {
+		let mut rng = thread_rng();
+		let normal = random_unit_vector(&mut rng);
+		let to_local = Coordinate::new_from_z(normal);
+		let incoming = to_local.to_coord(generate_wi(&mut rng));
+		let alpha = rng.gen();
+		let pdf = |outgoing: Vec3| pdf(alpha, incoming, outgoing, normal);
+		let sample = |rng: &mut ThreadRng| sample(alpha, incoming, normal, rng);
+		test_spherical_pdf("tr_nl", &pdf, &sample, false);
+	}
 }

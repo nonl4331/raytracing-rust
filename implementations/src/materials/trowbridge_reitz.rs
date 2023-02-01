@@ -1,9 +1,4 @@
-use crate::{
-	materials::refract,
-	statistics,
-	textures::Texture,
-	utility::{coord::Coordinate, offset_ray},
-};
+use crate::{materials::refract, textures::Texture, utility::offset_ray};
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
 use rt_core::*;
 
@@ -65,16 +60,12 @@ where
 	T: Texture,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let coord = Coordinate::new_from_z(hit.normal);
-
-		let h = statistics::bxdfs::trowbridge_reitz::sample_h(
+		let direction = crate::statistics::bxdfs::trowbridge_reitz::sample(
 			self.alpha,
+			ray.direction,
+			hit.normal,
 			&mut SmallRng::from_rng(thread_rng()).unwrap(),
 		);
-
-		let h = coord.vec_to_coordinate(h);
-
-		let direction = ray.direction.reflected(h);
 
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
 		*ray = Ray::new(point, direction, ray.time);
@@ -82,8 +73,7 @@ where
 		false
 	}
 	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Float {
-		let wo = -wo;
-		let a = statistics::bxdfs::trowbridge_reitz::pdf_outgoing(self.alpha, wo, wi, hit.normal);
+		let a = crate::statistics::bxdfs::trowbridge_reitz::pdf(self.alpha, wo, wi, hit.normal);
 		if a == 0.0 {
 			INFINITY
 		} else {

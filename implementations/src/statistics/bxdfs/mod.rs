@@ -1,29 +1,12 @@
 pub mod trowbridge_reitz;
 pub mod trowbridge_reitz_vndf;
 
-#[cfg(test)]
-pub mod test {
-	use super::*;
-	use crate::statistics::{spherical_sampling::*, *};
-	use rand::{rngs::ThreadRng, thread_rng, Rng};
-
-	#[test]
-	fn trowbridge_reitz_h() {
-		let alpha: Float = thread_rng().gen();
-		let pdf = |outgoing: Vec3| trowbridge_reitz::pdf_h(outgoing, alpha);
-		let sample = |rng: &mut ThreadRng| trowbridge_reitz::sample_h(alpha, rng);
-		test_spherical_pdf("trowbrige reitz h", &pdf, &sample, false);
-	}
-
-	#[test]
-	fn trowbridge_reitz() {
-		let mut rng = thread_rng();
-		let incoming: Vec3 = generate_wi(&mut rng);
-		let alpha: Float = rng.gen();
-		let pdf = |outgoing: Vec3| {
-			trowbridge_reitz::pdf_outgoing(alpha, incoming, outgoing, Vec3::new(0.0, 0.0, 1.0))
-		};
-		let sample = |rng: &mut ThreadRng| trowbridge_reitz::sample(alpha, incoming, rng);
-		test_spherical_pdf("trowbrige reitz h", &pdf, &sample, false);
-	}
-}
+// All modules should adhere to the following:
+// There should atleast provide the following functions
+// sample(incoming, normal, ...)
+// pdf(incoming, outgoing, normal, ...)
+// If implementations of the above are provided in local space as well
+// they must adhere to the same naming expect with _local and no normal parameter
+// For the forementioned functions incoming will be pointing towards the surface
+// outgoing will be pointing away from the surface and is the sampled direction
+// Note that auxillary function do not have to adhere to the above

@@ -37,7 +37,7 @@ impl Coordinate {
 		let z = one_over_det * Vec3::new(b * f - c * e, c * d - a * f, a * e - b * d);
 		Coordinate { x, y, z }
 	}
-	pub fn vec_to_coordinate(&self, vec: Vec3) -> Vec3 {
+	pub fn to_coord(&self, vec: Vec3) -> Vec3 {
 		vec.x * self.x + vec.y * self.y + vec.z * self.z
 	}
 }
@@ -55,8 +55,8 @@ mod tests {
 		let from = to.create_inverse();
 		let v = random_unit_vector();
 		assert!(
-			(v - from.vec_to_coordinate(to.vec_to_coordinate(v))).mag_sq() < 0.000001
-				&& (v - to.vec_to_coordinate(from.vec_to_coordinate(v))).mag_sq() < 0.000001
+			(v - from.to_coord(to.to_coord(v))).mag_sq() < 0.000001
+				&& (v - to.to_coord(from.to_coord(v))).mag_sq() < 0.000001
 		);
 	}
 }

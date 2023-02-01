@@ -1,5 +1,6 @@
 use crate::{Float, Hit, Ray, Vec3};
 
+// wo (and ray.direction in scatter_ray) points towards the surface and wi away by convention
 pub trait Scatter {
 	fn scatter_ray(&self, _ray: &mut Ray, _hit: &Hit) -> bool {
 		true
