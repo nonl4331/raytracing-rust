@@ -36,6 +36,31 @@ pub fn random_unit_vector<R: Rng>(rng: &mut R) -> Vec3 {
 	Vec3::new(x, y, z).normalised()
 }
 
+pub fn integrate_over_sphere<F: Fn(Vec3) -> Float>(function: &F) -> Float {
+	let mut values = Vec::new();
+
+	const THETA_RES: usize = 80;
+	const PHI_RES: usize = 160;
+
+	let theta_step = PI / THETA_RES as Float;
+	let phi_step = TAU / PHI_RES as Float;
+	for phi_i in 0..PHI_RES {
+		for theta_i in 0..THETA_RES {
+			let theta_start = theta_i as Float * theta_step;
+			let phi_start = phi_i as Float * phi_step;
+			values.push(integrate_solid_angle(
+				function,
+				theta_start,
+				theta_start + theta_step,
+				phi_start,
+				phi_start + phi_step,
+			));
+		}
+	}
+
+	values.iter().sum::<Float>()
+}
+
 pub fn test_spherical_pdf<P, S>(name: &str, pdf: &P, sample: &S, hemisphere: bool)
 where
 	P: Fn(Vec3) -> Float,

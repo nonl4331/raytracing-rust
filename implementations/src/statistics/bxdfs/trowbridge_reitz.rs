@@ -86,7 +86,6 @@ pub fn g1(alpha: Float, normal: Vec3, h: Vec3, v: Vec3) -> Float {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::integrators::integrate_solid_angle;
 	use crate::statistics::spherical_sampling::*;
 	use rand::{rngs::ThreadRng, thread_rng, Rng};
 
@@ -133,30 +132,8 @@ mod tests {
 				* d(alpha, h.z)
 		};
 
-		const THETA_RES: usize = 80;
-		const PHI_RES: usize = 160;
-
-		let mut expected_values = Vec::new();
-
-		let theta_step = PI / THETA_RES as Float;
-		let phi_step = TAU / PHI_RES as Float;
-		for phi_i in 0..PHI_RES {
-			for theta_i in 0..THETA_RES {
-				let theta_start = theta_i as Float * theta_step;
-				let phi_start = phi_i as Float * phi_step;
-				expected_values.push(integrate_solid_angle(
-					&test,
-					theta_start,
-					theta_start + theta_step,
-					phi_start,
-					phi_start + phi_step,
-				));
-			}
-		}
-
-		let pdf_sum = expected_values.iter().sum::<Float>();
-
-		assert!((pdf_sum - cos_theta).abs() < 0.0001);
+		let integral = integrate_over_sphere(&test);
+		assert!((integral - cos_theta).abs() < 0.0001);
 	}
 
 	#[test]
@@ -179,28 +156,29 @@ mod tests {
 			}
 		};
 
-		const THETA_RES: usize = 80;
-		const PHI_RES: usize = 160;
+		let integral = integrate_over_sphere(&test);
+		assert!((integral - 1.0).abs() < 0.0001);
+	}
 
-		let mut expected_values = Vec::new();
-
-		let theta_step = PI / THETA_RES as Float;
-		let phi_step = TAU / PHI_RES as Float;
-		for phi_i in 0..PHI_RES {
-			for theta_i in 0..THETA_RES {
-				let theta_start = theta_i as Float * theta_step;
-				let phi_start = phi_i as Float * phi_step;
-				expected_values.push(integrate_solid_angle(
-					&test,
-					theta_start,
-					theta_start + theta_step,
-					phi_start,
-					phi_start + phi_step,
-				));
+	#[test]
+	fn g2_test() {
+		let mut rng = thread_rng();
+		let a = -generate_wi(&mut rng);
+		let alpha = rng.gen();
+		let test = |b: Vec3| {
+			let mut h = (a + b).normalised();
+			if h.z < 0.0 {
+				h = -h;
 			}
-		}
+			let denom = 4.0 * a.z.abs();
+			if denom < 0.000000001 {
+				0.0
+			} else {
+				g2(alpha, Vec3::new(0.0, 0.0, 1.0), h, a, b) * d(alpha, h.z) / denom
+			}
+		};
 
-		let pdf_sum = expected_values.iter().sum::<Float>();
-		assert!((pdf_sum - 1.0).abs() < 0.0001);
+		let integral = integrate_over_sphere(&test);
+		assert!(integral <= 1.0);
 	}
 }
