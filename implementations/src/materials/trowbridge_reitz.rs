@@ -1,4 +1,6 @@
-use crate::{materials::refract, textures::Texture, utility::offset_ray};
+use crate::{
+	materials::refract, statistics::bxdfs::trowbridge_reitz, textures::Texture, utility::offset_ray,
+};
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
 use rt_core::*;
 
@@ -29,30 +31,6 @@ where
 		let f0 = lerp(f0, self.texture.colour_value(wi, hit.point), self.metallic);
 		refract::fresnel(wo.dot(h), f0)
 	}
-
-	fn geometry_partial_ggx(&self, h: Vec3, v: Vec3) -> Float {
-		1.0 / (1.0 + self.lambda_ggx(h, v))
-	}
-
-	fn geometry_ggx(&self, h: Vec3, wo: Vec3, wi: Vec3) -> Float {
-		1.0 / (1.0 + self.lambda_ggx(h, wo) + self.lambda_ggx(h, wi))
-	}
-
-	fn lambda_ggx(&self, h: Vec3, v: Vec3) -> Float {
-		let voh = v.dot(h);
-		let voh_sq = voh * voh;
-		let tan_sq = (1.0 - voh_sq) / voh_sq;
-
-		((1.0 + self.alpha * self.alpha * tan_sq).sqrt() - 1.0) * 0.5
-	}
-
-	fn microfacet_ndf_ggx(&self, hit: &Hit, h: Vec3) -> Float {
-		let noh = hit.normal.dot(h);
-		let alpha_sq = self.alpha * self.alpha;
-		let noh_sq = noh * noh;
-		let den = noh_sq * (alpha_sq - 1.0) + 1.0;
-		alpha_sq / (PI * den * den)
-	}
 }
 
 impl<'a, T> Scatter for TrowbridgeReitz<'a, T>
@@ -60,7 +38,7 @@ where
 	T: Texture,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let direction = crate::statistics::bxdfs::trowbridge_reitz::sample(
+		let direction = trowbridge_reitz::sample(
 			self.alpha,
 			ray.direction,
 			hit.normal,
@@ -73,7 +51,7 @@ where
 		false
 	}
 	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Float {
-		let a = crate::statistics::bxdfs::trowbridge_reitz::pdf(self.alpha, wo, wi, hit.normal);
+		let a = trowbridge_reitz::pdf(self.alpha, wo, wi, hit.normal);
 		if a == 0.0 {
 			INFINITY
 		} else {
@@ -88,12 +66,10 @@ where
 			return Vec3::zero();
 		}
 
-		let spec_component = self.fresnel(hit, wo, wi, h)
-			* self.geometry_ggx(h, wo, wi)
-			* self.microfacet_ndf_ggx(hit, h)
-			/ (4.0 * wo.dot(hit.normal) * wi.dot(hit.normal));
-
-		spec_component * hit.normal.dot(wi).abs()
+		self.fresnel(hit, wo, wi, h)
+			* trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi)
+			* trowbridge_reitz::d(self.alpha, hit.normal.dot(h))
+			/ (4.0 * wo.dot(hit.normal).abs())
 	}
 	fn eval_over_scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
 		let wo = -wo;
@@ -103,10 +79,9 @@ where
 			return Vec3::zero();
 		}
 
-		self.microfacet_ndf_ggx(hit, h);
-
-		self.fresnel(hit, wo, wi, h) * self.geometry_ggx(h, wo, wi)
-			/ self.geometry_partial_ggx(h, wo)
+		self.fresnel(hit, wo, wi, h)
+			* trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi)
+			* wo.dot(h) / (wo.dot(hit.normal) * h.dot(hit.normal)).abs()
 	}
 }
 
