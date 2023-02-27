@@ -4,31 +4,15 @@ use rt_core::*;
 
 pub mod isotropic {
 	use super::*;
-
-	pub fn d(a: Float, h: Vec3) -> Float {
-		let a_sq = a * a;
-
-		let tmp = (h.x * h.x + h.y * h.y) / a_sq + h.z * h.z;
-
-		1.0 / (PI * a_sq * tmp * tmp)
-	}
-
-	pub fn lambda(a: Float, incoming: Vec3) -> Float {
-		let tmp = 1.0
-			+ (a * a * (incoming.x * incoming.x + incoming.y * incoming.y))
-				/ (incoming.z * incoming.z);
-		0.5 * (tmp.sqrt() - 1.0)
-	}
-
-	pub fn g1(a: Float, incoming: Vec3) -> Float {
-		1.0 / (1.0 + lambda(a, incoming))
-	}
+	use crate::bxdfs::trowbridge_reitz::d;
+	use crate::bxdfs::trowbridge_reitz::g1;
 
 	pub fn vndf(a: Float, h: Vec3, incoming: Vec3) -> Float {
 		if h.z < 0.0 {
 			return 0.0;
 		}
-		g1(a, incoming) * incoming.dot(h).max(0.0) * d(a, h) / incoming.z
+		g1(a, Vec3::new(0.0, 0.0, 1.0), h, incoming) * incoming.dot(h).max(0.0) * d(a, h.z)
+			/ incoming.z
 	}
 
 	pub fn sample_vndf<R: Rng>(a: Float, incoming: Vec3, rng: &mut R) -> Vec3 {
