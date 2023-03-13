@@ -13,12 +13,12 @@ impl Sampler for RandomSampler {
 		acceleration_structure: &A,
 		mut presentation_update: Option<(&mut T, F)>,
 	) where
-		C: Camera + Send + Sync,
-		P: Primitive + Sync + Send + 'static,
-		M: Scatter + Send + Sync + 'static,
+		C: Camera,
+		P: Primitive,
+		M: Scatter,
 		F: Fn(&mut T, &SamplerProgress, u64),
-		A: AccelerationStructure<Object = P, Material = M> + Send + Sync,
-		S: NoHit + Send + Sync,
+		A: AccelerationStructure<Object = P, Material = M>,
+		S: NoHit,
 	{
 		let channels = 3;
 		let pixel_num = render_options.width * render_options.height;

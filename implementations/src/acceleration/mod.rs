@@ -4,6 +4,8 @@ use crate::{
 	utility::sort_by_indices,
 	Axis,
 };
+use region::RegionResSlice;
+
 use rt_core::*;
 use std::{collections::VecDeque, marker::PhantomData};
 
@@ -38,30 +40,29 @@ impl PrimitiveInfo {
 	}
 }
 
-pub struct Bvh<'a, P: Primitive, M: Scatter> {
+pub struct Bvh<P: Primitive, M: Scatter> {
 	split_type: SplitType,
 	nodes: Vec<Node>,
-	pub primitives: &'a [P],
+	pub primitives: RegionResSlice<P>,
 	pub lights: Vec<usize>,
 	phantom: PhantomData<M>,
 }
 
-unsafe impl<'a, P: Primitive + AABound + Send, M: Scatter + Send> Sync for Bvh<'a, P, M> {}
+//unsafe impl<'a, P: Primitive + AABound + Send, M: Scatter + Send> Sync for Bvh<'a, P, M> {}
 
-impl<'a, P, M> Bvh<'a, P, M>
+impl<P, M> Bvh<P, M>
 where
 	P: Primitive + AABound,
 	M: Scatter,
 {
-	pub fn new(mut primitives: bumpalo::collections::Vec<'a, P>, split_type: SplitType) -> Self {
+	pub fn new(mut primitives: region::RegionUniqSlice<'_, P>, split_type: SplitType) -> Self {
 		let mut bvh = Self {
 			split_type,
 			nodes: Vec::new(),
-			primitives: &[],
+			primitives: primitives.zero_slice(),
 			lights: Vec::new(),
 			phantom: PhantomData,
 		};
-		//let prims =
 		let mut primitives_info: Vec<PrimitiveInfo> = primitives
 			.iter()
 			.enumerate()
@@ -81,7 +82,7 @@ where
 			}
 		}
 
-		bvh.primitives = primitives.into_bump_slice();
+		bvh.primitives = primitives.shared(); //primitives.into_bump_slice();
 
 		bvh
 	}
@@ -181,7 +182,7 @@ where
 	}
 }
 
-impl<'a, P, M> AccelerationStructure for Bvh<'a, P, M>
+impl<P, M> AccelerationStructure for Bvh<P, M>
 where
 	P: Primitive<Material = M>,
 	M: Scatter,

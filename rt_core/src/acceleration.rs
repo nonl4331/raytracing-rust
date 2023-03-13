@@ -1,6 +1,6 @@
 use crate::{Primitive, Ray, Scatter, SurfaceIntersection};
 
-pub trait AccelerationStructure {
+pub trait AccelerationStructure: Sync {
 	type Object: Primitive;
 	type Material: Scatter;
 	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)>;

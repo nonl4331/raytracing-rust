@@ -11,7 +11,7 @@ use rt_core::*;
 pub mod sphere;
 pub mod triangle;
 
-#[derive(Primitive, Debug)]
+#[derive(Primitive, Debug, Clone)]
 pub enum AllPrimitives<'a, M: Scatter> {
 	Sphere(Sphere<'a, M>),
 	Triangle(Triangle<'a, M>),

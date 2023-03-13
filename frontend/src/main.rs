@@ -1,3 +1,7 @@
+use implementations::rt_core::*;
+
+use crate::utility::*;
+
 #[cfg(feature = "gui")]
 use {
 	gui::{Gui, RenderEvent},
@@ -17,18 +21,14 @@ use {
 	winit::event_loop::EventLoopProxy,
 };
 
-//use scene::rt_core::{Float, SamplerProgress};
-use std::env;
-
 #[cfg(feature = "gui")]
 mod gui;
 #[cfg(feature = "gui")]
 mod rendering;
 
-//mod generate;
 //mod load_model;
 mod macros;
-//mod parameters;
+mod parameters;
 mod scene;
 mod utility;
 
@@ -79,9 +79,7 @@ impl Data {
 }
 
 fn main() {
-	let _args: Vec<String> = env::args().collect();
-
-	/*if let Some((scene, parameters)) = parameters::process_args(args) {
+	if let Some((scene, parameters)) = parameters::process_args() {
 		let (render_options, filename) = (parameters.render_options, parameters.filename.clone());
 		if !parameters.gui {
 			let start = print_render_start(
@@ -106,14 +104,14 @@ fn main() {
 					get_progress_output(sp.samples_completed, render_options.samples_per_pixel);
 				};
 
-			scene.generate_image_threaded(render_options, Some((&mut image, progress_bar_output)));
+			scene.render(render_options, Some((&mut image, progress_bar_output)));
 
 			let output = &image;
 
 			let ray_count = output.rays_shot;
 
 			print_final_statistics(start, ray_count, None);
-			line_break();
+			println!("--------------------------------");
 
 			let output: Vec<u8> = output
 				.current_image
@@ -194,7 +192,7 @@ fn main() {
 					let buffer = data.buffer.clone();
 					let to_sc = data.to_sc.clone();
 
-					scene.generate_image_threaded(
+					scene.render(
 						render_options,
 						Some((
 							&mut data,
@@ -208,7 +206,7 @@ fn main() {
 					let samples = samples.load(Ordering::Relaxed);
 
 					print_final_statistics(start, ray_count, Some(samples));
-					line_break();
+					println!("--------------------------------");
 
 					moved_render_canceled.store(false, Ordering::Relaxed);
 
@@ -227,7 +225,7 @@ fn main() {
 					let samples = samples.load(Ordering::Relaxed);
 
 					print_final_statistics(start, ray_count, Some(samples));
-					line_break();
+					println!("--------------------------------");
 
 					save_file(
 						filename,
@@ -241,7 +239,7 @@ fn main() {
 			#[cfg(not(feature = "gui"))]
 			println!("feature: gui not enabled");
 		}
-	}*/
+	}
 }
 
 #[cfg(feature = "gui")]

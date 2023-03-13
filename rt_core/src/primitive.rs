@@ -41,7 +41,7 @@ where
 	}
 }
 
-pub trait Primitive {
+pub trait Primitive: Sync {
 	type Material: Scatter;
 
 	fn get_int(&self, _: &Ray) -> Option<SurfaceIntersection<Self::Material>>;

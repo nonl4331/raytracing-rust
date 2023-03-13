@@ -13,7 +13,10 @@ rayon = "1.5.1"
 rt_core = { path = "../rt_core" }
 bumpalo = {version="3.12.0", features=["collections"]}
 num_cpus = "1.15"
+region = { path = "../frontend/region"}
 statrs = "0.16.0"
+clap = { version = "4.1.8", features = [ "derive" ] }
+
 
 
 [dev-dependencies]

@@ -1,6 +1,7 @@
 use crate::{AccelerationStructure, Float, Primitive, Ray, Scatter, Vec3};
+use clap::ValueEnum;
 
-pub trait Sampler {
+pub trait Sampler: Sync {
 	fn sample_image<C, P, M, T, F, A, S>(
 		&self,
 		_render_options: RenderOptions,
@@ -9,12 +10,12 @@ pub trait Sampler {
 		_acceleration_structure: &A,
 		_update_function: Option<(&mut T, F)>,
 	) where
-		C: Camera + Send + Sync,
-		P: Primitive + Sync + Send + 'static,
-		M: Scatter + Send + Sync + 'static,
+		C: Camera,
+		P: Primitive,
+		M: Scatter,
 		F: Fn(&mut T, &SamplerProgress, u64),
-		A: AccelerationStructure<Object = P, Material = M> + Send + Sync,
-		S: NoHit + Send + Sync;
+		A: AccelerationStructure<Object = P, Material = M>,
+		S: NoHit;
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -36,7 +37,7 @@ impl Default for RenderOptions {
 	}
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, ValueEnum)]
 pub enum RenderMethod {
 	Naive,
 	MIS,
@@ -58,11 +59,11 @@ impl SamplerProgress {
 	}
 }
 
-pub trait Camera {
+pub trait Camera: Sync {
 	fn get_ray(&self, u: Float, v: Float) -> Ray;
 }
 
-pub trait NoHit {
+pub trait NoHit: Sync {
 	fn get_colour(&self, ray: &Ray) -> Vec3;
 	fn pdf(&self, _: Vec3) -> Float {
 		unimplemented!()

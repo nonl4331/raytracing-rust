@@ -1,4 +1,5 @@
 use crate::{aabb::AABB, acceleration::PrimitiveInfo, Axis};
+use clap::ValueEnum;
 use rt_core::*;
 
 const NUM_BUCKETS: usize = 12;
@@ -30,6 +31,7 @@ macro_rules! partition {
 	}};
 }
 
+#[derive(Debug, ValueEnum, Copy, Clone)]
 pub enum SplitType {
 	Sah,
 	Middle,

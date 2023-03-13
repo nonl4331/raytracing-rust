@@ -6,7 +6,7 @@ use std::path::Path;
 
 const PERLIN_RVECS: usize = 256;
 
-pub trait Texture {
+pub trait Texture: Sync {
 	fn colour_value(&self, _: Vec3, _: Vec3) -> Vec3 {
 		Vec3::new(1.0, 1.0, 1.0)
 	}

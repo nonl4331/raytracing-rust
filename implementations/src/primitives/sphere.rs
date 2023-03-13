@@ -5,7 +5,7 @@ use crate::{
 
 use rt_core::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Sphere<'a, M: Scatter> {
 	pub center: Vec3,
 	pub radius: Float,

@@ -27,7 +27,7 @@ where
 	}
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MeshTriangle<'a, M: Scatter> {
 	pub point_indices: [usize; 3],
 	pub normal_indices: [usize; 3],
