@@ -59,25 +59,6 @@ pub fn get_readable_duration(duration: Duration) -> String {
 	days_string + &hours_string + &minutes_string + &seconds_string
 }
 
-/*pub fn create_bvh_with_info<P: Primitive + AABound, M: Scatter>(
-	primitives: Vec<P>,
-	bvh_type: SplitType,
-) -> Arc<Bvh<P, M>> {
-	let time = Local::now();
-
-	println!("\n{} - Bvh construction started at", time.format("%X"));
-
-	let start = Instant::now();
-	let bvh = Arc::new(Bvh::new(primitives, bvh_type));
-	let end = Instant::now();
-	let duration = end.checked_duration_since(start).unwrap();
-
-	println!("\tBvh construction finished in: {}ms", duration.as_millis());
-	println!("\tNumber of BVH nodes: {}\n", bvh.number_nodes());
-
-	bvh
-}*/
-
 pub fn get_progress_output(samples_completed: u64, total_samples: u64) {
 	progress_bar(samples_completed as f64 / total_samples as f64);
 

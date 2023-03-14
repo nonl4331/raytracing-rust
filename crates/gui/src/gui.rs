@@ -1,4 +1,5 @@
-use crate::rendering::*;
+use crate::rendering::CpuRendering;
+use crate::rendering::RenderInfo;
 use std::sync::Arc;
 use vulkano::{
 	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},

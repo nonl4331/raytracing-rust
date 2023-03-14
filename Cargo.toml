@@ -23,6 +23,7 @@ region = { path = "./crates/region" }
 loader = { path = "./crates/loader" }
 simple_logger = "4.0"
 clap = { version = "4.1.8", features = ["derive", "wrap_help"] }
+gui = { path = "./crates/gui" }
 
 [features]
 f64 = ["implementations/f64"]
