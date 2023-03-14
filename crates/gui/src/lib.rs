@@ -2,6 +2,8 @@ mod gui;
 mod rendering;
 
 use implementations::SamplerProgress;
+use indicatif::ProgressBar;
+use indicatif::ProgressStyle;
 
 use {
 	std::sync::{
@@ -33,6 +35,7 @@ pub struct Data {
 	pub total_samples: u64,
 	pub rays_shot: Arc<AtomicU64>,
 	pub event_proxy: EventLoopProxy<RenderEvent>,
+	pub bar: ProgressBar,
 }
 
 impl Data {
@@ -61,6 +64,11 @@ impl Data {
 			total_samples,
 			rays_shot,
 			event_proxy,
+			bar: ProgressBar::new(total_samples).with_style(
+				ProgressStyle::default_bar()
+					.template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+					.unwrap(),
+			),
 		}
 	}
 }
@@ -158,7 +166,10 @@ pub fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) {
 		.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |x| Some(!x))
 		.unwrap();
 
-	//get_progress_output(i, data.total_samples);
+	data.bar.set_position(data.samples.load(Ordering::Relaxed));
+	if data.samples.load(Ordering::Relaxed) == data.total_samples {
+		data.bar.abandon()
+	}
 
 	// signal sample is ready to be presented
 	data.event_proxy

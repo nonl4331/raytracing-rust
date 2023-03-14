@@ -150,8 +150,8 @@ layout(set = 0, binding = 0, rgba32f) uniform readonly image2D cpu_input;
 layout(set = 0, binding = 1, rgba8) uniform writeonly image2D image_output;
 
 void main() {
-        vec4 data = sqrt(imageLoad(cpu_input, ivec2(gl_GlobalInvocationID.xy)));
-        imageStore(image_output, ivec2(gl_GlobalInvocationID.xy), data);
+	vec4 data = sqrt(imageLoad(cpu_input, ivec2(gl_GlobalInvocationID.xy)));
+	imageStore(image_output, ivec2(gl_GlobalInvocationID.xy), data);
 }"}
 		}
 
@@ -212,14 +212,13 @@ void main() {
 				Event::DeviceEvent {
 					event: winit::event::DeviceEvent::Key(key),
 					..
-				} => match key.virtual_keycode {
-					Some(code) => {
+				} => {
+					if let Some(code) = key.virtual_keycode {
 						if code == winit::event::VirtualKeyCode::Escape {
 							*control_flow = ControlFlow::Exit;
 						}
 					}
-					None => {}
-				},
+				}
 				Event::WindowEvent {
 					event: WindowEvent::CloseRequested,
 					..
@@ -245,9 +244,8 @@ void main() {
 	}
 
 	fn update(&mut self) {
-		match self.presentation_finished.as_mut() {
-			Some(future) => future.cleanup_finished(),
-			None => {}
+		if let Some(future) = self.presentation_finished.as_mut() {
+			future.cleanup_finished()
 		}
 		self.presentation_finished = Some(sync::now(self.device.clone()).boxed());
 
@@ -259,7 +257,7 @@ void main() {
 					return;
 				}
 				Err(e) => {
-					panic!("Failed to acquire next image: {:?}", e)
+					panic!("Failed to acquire next image: {e:?}")
 				}
 			};
 
@@ -327,7 +325,7 @@ void main() {
 				self.presentation_finished = Some(sync::now(self.device.clone()).boxed());
 			}
 			Err(e) => {
-				println!("Failed to flush future: {:?}", e);
+				println!("Failed to flush future: {e:?}");
 				self.presentation_finished = Some(sync::now(self.device.clone()).boxed());
 			}
 		}
@@ -338,7 +336,7 @@ void main() {
 			match self.swapchain.recreate().dimensions(dimensions).build() {
 				Ok(r) => r,
 				Err(SwapchainCreationError::UnsupportedDimensions) => return,
-				Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+				Err(e) => panic!("Failed to recreate swapchain: {e:?}"),
 			};
 		let extent: [u32; 2] = self.surface.window().inner_size().into();
 

@@ -2,6 +2,9 @@ use crate::parameters::Parameters;
 use crate::scene::Scene;
 use implementations::rt_core::*;
 use implementations::*;
+use indicatif::ProgressBar;
+use indicatif::ProgressStyle;
+use output::*;
 
 #[cfg(feature = "gui")]
 use {
@@ -10,8 +13,6 @@ use {
 	vulkano::{buffer::CpuAccessibleBuffer, instance::Instance},
 	winit::event_loop::EventLoopProxy,
 };
-
-use crate::utility::*;
 
 mod macros;
 mod parameters;
@@ -83,7 +84,11 @@ fn render_gui<M, P, C, S, A>(
 
 	let image_copy_finished = data.to_sc.clone();
 
-	let start = print_render_start(render_options.width, render_options.height, None);
+	let start = print_render_start(
+		render_options.width,
+		render_options.height,
+		Some(render_options.samples_per_pixel),
+	);
 
 	let render_canceled = Arc::new(AtomicBool::new(true));
 
@@ -110,7 +115,6 @@ fn render_gui<M, P, C, S, A>(
 		let samples = samples.load(Ordering::Relaxed);
 
 		print_final_statistics(start, ray_count, Some(samples));
-		println!("--------------------------------");
 
 		moved_render_canceled.store(false, Ordering::Relaxed);
 
@@ -129,7 +133,6 @@ fn render_gui<M, P, C, S, A>(
 		let samples = samples.load(Ordering::Relaxed);
 
 		print_final_statistics(start, ray_count, Some(samples));
-		println!("--------------------------------");
 
 		save_file(
 			filename,
@@ -158,31 +161,46 @@ fn render_tui<M, P, C, S, A>(
 		Some(render_options.samples_per_pixel),
 	);
 
-	let mut image = SamplerProgress::new(render_options.width * render_options.height, 3);
-	let progress_bar_output = |sp: &mut SamplerProgress, previous: &SamplerProgress, i: u64| {
-		sp.samples_completed += 1;
-		sp.rays_shot += previous.rays_shot;
+	struct Progress {
+		pub sampler_progress: SamplerProgress,
+		pub bar: ProgressBar,
+	}
 
-		sp.current_image
+	let mut image = Progress {
+		sampler_progress: SamplerProgress::new(render_options.width * render_options.height, 3),
+		bar: ProgressBar::new(render_options.samples_per_pixel).with_style(
+			ProgressStyle::default_bar()
+				.template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+				.unwrap(),
+		),
+	};
+	let progress_bar_output = |sp: &mut Progress, previous: &SamplerProgress, i: u64| {
+		sp.sampler_progress.samples_completed += 1;
+		sp.sampler_progress.rays_shot += previous.rays_shot;
+
+		sp.sampler_progress
+			.current_image
 			.iter_mut()
 			.zip(previous.current_image.iter())
 			.for_each(|(pres, acc)| {
 				*pres += (acc - *pres) / i as Float; // since copies first buffer when i=1
 			});
-
-		get_progress_output(sp.samples_completed, render_options.samples_per_pixel);
+		sp.bar.set_position(sp.sampler_progress.samples_completed);
+		if sp.sampler_progress.samples_completed == render_options.samples_per_pixel {
+			sp.bar.finish_and_clear()
+		}
 	};
 
 	scene.render(render_options, Some((&mut image, progress_bar_output)));
 
 	let output = &image;
 
-	let ray_count = output.rays_shot;
+	let ray_count = output.sampler_progress.rays_shot;
 
 	print_final_statistics(start, ray_count, None);
-	println!("--------------------------------");
 
 	let output: Vec<u8> = output
+		.sampler_progress
 		.current_image
 		.iter()
 		.map(|val| (val.sqrt() * 255.999) as u8)
@@ -200,6 +218,7 @@ fn render_tui<M, P, C, S, A>(
 }
 
 fn main() {
+	create_logger();
 	let (scene, parameters) = match parameters::process_args() {
 		Some(data) => data,
 		None => return,
