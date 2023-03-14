@@ -1,5 +1,5 @@
+use implementations::rt_core::Float;
 use nom::Finish;
-use rt_core::Float;
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -77,6 +77,7 @@ impl<'a> Default for Object<'a> {
 mod ver1 {
 	use super::{Object, ObjectKind, ObjectValue};
 
+	use implementations::rt_core::Float;
 	use nom::{
 		branch::alt,
 		bytes::complete::tag,
@@ -90,7 +91,6 @@ mod ver1 {
 		sequence::{delimited, pair, preceded, terminated, tuple},
 		IResult,
 	};
-	use rt_core::Float;
 	use std::collections::HashMap;
 
 	pub type Res<T, U> = IResult<T, U, VerboseError<T>>;

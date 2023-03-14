@@ -4,9 +4,9 @@ pub mod parser;
 pub mod primitives;
 pub mod textures;
 
-use implementations::Texture;
+use implementations::rt_core::{Float, NoHit, Primitive, Scatter, Vec2, Vec3};
+use implementations::{Camera, Texture};
 use region::{Region, RegionRes, RegionUniqSlice};
-use rt_core::{Camera, Float, NoHit, Primitive, Scatter, Vec2, Vec3};
 use std::{collections::HashMap, fmt};
 use thiserror::Error;
 
@@ -457,7 +457,7 @@ primitive (
 
 	#[test]
 	fn scene() {
-		let mut region = Region::new().unwrap();
+		let mut region = Region::new();
 		type Tex = AllTextures;
 		type Mat<'a> = AllMaterials<'a, Tex>;
 		type Prim<'a> = AllPrimitives<'a, Mat<'a>>;

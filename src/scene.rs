@@ -1,5 +1,6 @@
 use implementations::random_sampler::RandomSampler;
 use implementations::rt_core::*;
+use implementations::*;
 use region::Region;
 use std::mem::ManuallyDrop;
 
@@ -14,7 +15,7 @@ where
 	acceleration: A,
 	camera: C,
 	sky: S,
-	region: ManuallyDrop<Region>,
+	_region: ManuallyDrop<Region>,
 }
 
 impl<M, P, C, S, A> Scene<M, P, C, S, A>
@@ -30,7 +31,7 @@ where
 			acceleration,
 			camera,
 			sky,
-			region,
+			_region: region,
 		}
 	}
 	pub fn render<T>(
@@ -56,7 +57,6 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use implementations::*;
 	use loader::load_str_full;
 
 	const DATA: &str = "camera (
@@ -133,12 +133,7 @@ primitive (
 		let (p, camera, sky) = stuff;
 		let bvh: Bvh<Prim, Mat> = Bvh::new(p, split::SplitType::Sah);
 
-		let scene = Scene {
-			acceleration: bvh,
-			camera,
-			sky,
-			region,
-		};
+		let scene = Scene::new(bvh, camera, sky, region);
 
 		scene.render::<()>(
 			RenderOptions {

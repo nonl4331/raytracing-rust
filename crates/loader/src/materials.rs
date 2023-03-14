@@ -94,7 +94,7 @@ mod tests {
 
 	#[test]
 	fn lambertian() {
-		let mut region = Region::new().unwrap();
+		let mut region = Region::new();
 		let mut lookup = Lookup::new();
 		let file = "
 texture grey (
@@ -108,10 +108,7 @@ material ground (
 )";
 		let data = parser::from_str(file).unwrap();
 		let textures = load_textures::<AllTextures>(&data, &lookup).unwrap();
-		{
-			//let lookup = Arc::get_mut(&mut lookup).unwrap();
-			region_insert_with_lookup(&mut region, textures, |n, t| lookup.texture_insert(n, t));
-		}
+		region_insert_with_lookup(&mut region, textures, |n, t| lookup.texture_insert(n, t));
 		let _ = load_materials::<AllMaterials<AllTextures>>(&data, &lookup).unwrap();
 	}
 }

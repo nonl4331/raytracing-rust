@@ -1,4 +1,5 @@
 use crate::utility::random_float;
+use crate::Camera;
 use rt_core::*;
 
 #[derive(Debug)]

@@ -1,4 +1,7 @@
-use crate::{AccelerationStructure, Float, Primitive, Ray, Scatter, Vec3};
+use rt_core::*;
+
+pub mod random_sampler;
+
 use clap::ValueEnum;
 
 pub trait Sampler: Sync {
@@ -61,17 +64,4 @@ impl SamplerProgress {
 
 pub trait Camera: Sync {
 	fn get_ray(&self, u: Float, v: Float) -> Ray;
-}
-
-pub trait NoHit: Sync {
-	fn get_colour(&self, ray: &Ray) -> Vec3;
-	fn pdf(&self, _: Vec3) -> Float {
-		unimplemented!()
-	}
-	fn can_sample(&self) -> bool {
-		false
-	}
-	fn sample(&self) -> Vec3 {
-		unimplemented!()
-	}
 }

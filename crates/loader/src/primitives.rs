@@ -57,7 +57,7 @@ mod tests {
 
 	#[test]
 	fn sphere() {
-		let mut region = Region::new().unwrap();
+		let mut region = Region::new();
 		let mut lookup = Lookup::new();
 		let file = "
 texture grey (

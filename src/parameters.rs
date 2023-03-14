@@ -1,7 +1,7 @@
 use crate::scene::Scene;
 use clap::Parser;
 
-use implementations::{rt_core::*, split::SplitType, *};
+use implementations::{split::SplitType, *};
 use region::Region;
 
 type MaterialType<'a> = AllMaterials<'a, AllTextures>;

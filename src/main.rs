@@ -1,4 +1,5 @@
 use implementations::rt_core::*;
+use implementations::SamplerProgress;
 
 use crate::utility::*;
 
