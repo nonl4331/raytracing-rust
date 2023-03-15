@@ -137,6 +137,21 @@ impl Vec3 {
 	}
 
 	#[inline]
+	pub fn x() -> Self {
+		Vec3::new(1.0, 0.0, 0.0)
+	}
+
+	#[inline]
+	pub fn y() -> Self {
+		Vec3::new(0.0, 1.0, 0.0)
+	}
+
+	#[inline]
+	pub fn z() -> Self {
+		Vec3::new(0.0, 0.0, 1.0)
+	}
+
+	#[inline]
 	pub fn from_spherical(
 		sin_theta: Float,
 		cos_theta: Float,
@@ -246,6 +261,16 @@ impl Vec2 {
 	#[inline]
 	pub fn zero() -> Self {
 		Vec2::new(0.0, 0.0)
+	}
+
+	#[inline]
+	pub fn x() -> Self {
+		Vec2::new(1.0, 0.0)
+	}
+
+	#[inline]
+	pub fn y() -> Self {
+		Vec2::new(0.0, 1.0)
 	}
 
 	#[inline]

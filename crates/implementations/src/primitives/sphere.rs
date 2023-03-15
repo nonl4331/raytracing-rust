@@ -97,7 +97,7 @@ where
 				normal,
 				self.get_uv(point),
 				out,
-				&self.material,
+				self.material,
 			))
 		} else {
 			None

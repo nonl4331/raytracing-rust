@@ -43,13 +43,13 @@ where
 		point_indices: [usize; 3],
 		normal_indices: [usize; 3],
 		material: &'a M,
-		mesh: &Arc<MeshData>,
+		mesh: Arc<MeshData>,
 	) -> Self {
 		MeshTriangle {
 			point_indices,
 			normal_indices,
 			material,
-			mesh: mesh.clone(),
+			mesh,
 		}
 	}
 }
@@ -83,7 +83,7 @@ where
 		self.normals[index]
 	}
 	fn get_material(&self) -> &'a M {
-		&self.material
+		self.material
 	}
 }
 
@@ -98,7 +98,7 @@ where
 		self.mesh.normals[self.normal_indices[index]]
 	}
 	fn get_material(&self) -> &'a M {
-		&self.material
+		self.material
 	}
 }
 

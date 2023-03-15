@@ -12,6 +12,7 @@ pub enum ObjectKind {
 	Primitive,
 	Sky,
 	Texture,
+	Mesh,
 	Other,
 }
 
@@ -53,6 +54,10 @@ impl ObjectKind {
 
 	pub fn is_texture(&self) -> bool {
 		matches!(self, ObjectKind::Texture)
+	}
+
+	pub fn is_mesh(&self) -> bool {
+		matches!(self, ObjectKind::Mesh)
 	}
 }
 
@@ -146,6 +151,7 @@ mod ver1 {
 			map(tag("primitive"), |_| ObjectKind::Primitive),
 			map(tag("sky"), |_| ObjectKind::Sky),
 			map(tag("texture"), |_| ObjectKind::Texture),
+			map(tag("mesh"), |_| ObjectKind::Mesh),
 		))(i)
 	}
 

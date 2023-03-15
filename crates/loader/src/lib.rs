@@ -1,4 +1,5 @@
 pub mod materials;
+pub mod meshes;
 pub mod misc;
 pub mod parser;
 pub mod primitives;
@@ -192,6 +193,7 @@ where
 	P: Primitive + Load + Clone,
 	C: Camera + Load,
 	S: NoHit + Load,
+	Vec<P>: Load,
 {
 	let scene_file = match std::fs::read_to_string(file) {
 		Ok(s) => s,
@@ -217,9 +219,9 @@ where
 
 	log::info!("Loading primitives...");
 	let primitives = {
-		let primitives = load_primitives::<P>(&scene_conf, &lookup)?;
-		//let block_size = std::mem::size_of::<P>() * primitives.len();
-		//let block = region.allocate_block(block_size);
+		let mut primitives = load_primitives::<P>(&scene_conf, &lookup)?;
+		log::info!("Loading meshes...");
+		primitives.extend(load_meshes::<P>(&scene_conf, &lookup)?);
 		region.alloc_slice(&primitives)
 	};
 
@@ -240,6 +242,7 @@ where
 	P: Primitive + Load + Clone,
 	C: Camera + Load,
 	S: NoHit + Load,
+	Vec<P>: Load,
 {
 	let scene_conf = match parser::from_str(data) {
 		Ok(c) => c,
@@ -260,9 +263,9 @@ where
 
 	log::info!("Loading primitives...");
 	let primitives = {
-		let primitives = load_primitives::<P>(&scene_conf, &lookup)?;
-		//let block_size = std::mem::size_of::<P>() * primitives.len();
-		//let block = region.allocate_block(block_size);
+		let mut primitives = load_primitives::<P>(&scene_conf, &lookup)?;
+		log::info!("Loading meshes...");
+		primitives.extend(load_meshes::<P>(&scene_conf, &lookup)?);
 		region.alloc_slice(&primitives)
 	};
 
@@ -384,6 +387,21 @@ fn load_primitives<P: Primitive + Load>(
 	for obj in objects.iter().filter(|o| o.kind.is_primitive()) {
 		let props = Properties::new(lookup, obj);
 		primitives.push(<P as Load>::load(props)?.1);
+	}
+	Ok(primitives)
+}
+
+fn load_meshes<P: Primitive + Load>(
+	objects: &[parser::Object],
+	lookup: &Lookup,
+) -> Result<Vec<P>, LoadErr>
+where
+	Vec<P>: Load,
+{
+	let mut primitives = Vec::new();
+	for obj in objects.iter().filter(|o| o.kind.is_mesh()) {
+		let props = Properties::new(lookup, obj);
+		primitives.extend(<Vec<P> as Load>::load(props)?.1);
 	}
 	Ok(primitives)
 }
