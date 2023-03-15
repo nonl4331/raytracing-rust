@@ -17,7 +17,7 @@ impl Sampler for RandomSampler {
 		C: Camera,
 		P: Primitive,
 		M: Scatter,
-		F: Fn(&mut T, &SamplerProgress, u64),
+		F: Fn(&mut T, &SamplerProgress, u64) -> bool,
 		A: AccelerationStructure<Object = P, Material = M>,
 		S: NoHit,
 	{
@@ -81,7 +81,9 @@ impl Sampler for RandomSampler {
 			});
 			if i != 0 {
 				if let Some((ref mut data, f)) = presentation_update.as_mut() {
-					f(data, previous, i)
+					if f(data, previous, i) {
+						return;
+					}
 				};
 			}
 		}
@@ -92,7 +94,7 @@ impl Sampler for RandomSampler {
 			(&accumulator_buffers.1, &mut accumulator_buffers.0)
 		};
 		if let Some((ref mut data, f)) = presentation_update.as_mut() {
-			f(data, previous, render_options.samples_per_pixel)
+			f(data, previous, render_options.samples_per_pixel);
 		}
 	}
 }

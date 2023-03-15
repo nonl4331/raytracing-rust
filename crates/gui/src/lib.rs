@@ -35,6 +35,7 @@ pub struct Data {
 	pub total_samples: u64,
 	pub rays_shot: Arc<AtomicU64>,
 	pub event_proxy: EventLoopProxy<RenderEvent>,
+	pub exit: Arc<AtomicBool>,
 	pub bar: ProgressBar,
 }
 
@@ -50,6 +51,7 @@ impl Data {
 		samples: Arc<AtomicU64>,
 		total_samples: u64,
 		rays_shot: Arc<AtomicU64>,
+		exit: Arc<AtomicBool>,
 		event_proxy: EventLoopProxy<RenderEvent>,
 	) -> Self {
 		Data {
@@ -64,6 +66,7 @@ impl Data {
 			total_samples,
 			rays_shot,
 			event_proxy,
+			exit,
 			bar: ProgressBar::new(total_samples).with_style(
 				ProgressStyle::default_bar()
 					.template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
@@ -105,7 +108,10 @@ pub fn create_command_buffers(
 	]
 }
 
-pub fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) {
+pub fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) -> bool {
+	if data.exit.load(Ordering::Relaxed) {
+		return true;
+	}
 	// update infomation about the rays shot and samples completed in the current render
 	data.samples.fetch_add(1, Ordering::Relaxed);
 	data.rays_shot
@@ -174,5 +180,5 @@ pub fn sample_update(data: &mut Data, previous: &SamplerProgress, i: u64) {
 	// signal sample is ready to be presented
 	data.event_proxy
 		.send_event(RenderEvent::SampleCompleted)
-		.unwrap();
+		.is_err()
 }

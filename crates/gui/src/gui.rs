@@ -1,5 +1,6 @@
 use crate::rendering::CpuRendering;
 use crate::rendering::RenderInfo;
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 use vulkano::{
 	command_buffer::{AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer},
@@ -41,10 +42,11 @@ pub struct Gui {
 	render_info: RenderInfo,
 	combined_buffer: Arc<StorageImage>,
 	presentation_finished: Option<Box<dyn GpuFuture + 'static>>,
+	exit: Arc<AtomicBool>,
 }
 
 impl Gui {
-	pub fn new(instance: &Arc<Instance>, width: u32, height: u32) -> Self {
+	pub fn new(instance: &Arc<Instance>, width: u32, height: u32, exit: Arc<AtomicBool>) -> Self {
 		let event_loop: EventLoop<RenderEvent> = EventLoop::with_user_event();
 		let surface = WindowBuilder::new()
 			.build_vk_surface(&event_loop, instance.clone())
@@ -200,6 +202,7 @@ void main() {
 			presentation_command_buffers,
 			combined_buffer,
 			presentation_finished: None,
+			exit,
 		}
 	}
 
@@ -215,6 +218,7 @@ void main() {
 				} => {
 					if let Some(code) = key.virtual_keycode {
 						if code == winit::event::VirtualKeyCode::Escape {
+							self.exit.store(true, std::sync::atomic::Ordering::Relaxed);
 							*control_flow = ControlFlow::Exit;
 						}
 					}

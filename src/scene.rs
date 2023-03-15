@@ -37,7 +37,7 @@ where
 	pub fn render<T>(
 		&self,
 		opts: RenderOptions,
-		update: Option<(&mut T, impl Fn(&mut T, &SamplerProgress, u64))>,
+		update: Option<(&mut T, impl Fn(&mut T, &SamplerProgress, u64) -> bool)>,
 	) {
 		let sampler = RandomSampler {};
 		sampler.sample_image(opts, &self.camera, &self.sky, &self.acceleration, update);
@@ -142,7 +142,7 @@ primitive (
 				width: 1920,
 				height: 1080,
 			},
-			None as Option<(&mut (), fn(&mut (), &SamplerProgress, u64))>,
+			None as Option<(&mut (), fn(&mut (), &SamplerProgress, u64) -> bool)>,
 		);
 	}
 }

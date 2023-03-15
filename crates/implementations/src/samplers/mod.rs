@@ -16,7 +16,7 @@ pub trait Sampler: Sync {
 		C: Camera,
 		P: Primitive,
 		M: Scatter,
-		F: Fn(&mut T, &SamplerProgress, u64),
+		F: Fn(&mut T, &SamplerProgress, u64) -> bool,
 		A: AccelerationStructure<Object = P, Material = M>,
 		S: NoHit;
 }

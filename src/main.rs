@@ -39,10 +39,13 @@ fn render_gui<M, P, C, S, A>(
 		None,
 	)
 	.unwrap();
+	let exit = Arc::new(AtomicBool::new(false));
+
 	let gui = Gui::new(
 		&instance,
 		render_options.width as u32,
 		render_options.height as u32,
+		exit.clone(),
 	);
 
 	let event_loop_proxy: Option<EventLoopProxy<RenderEvent>> =
@@ -79,10 +82,9 @@ fn render_gui<M, P, C, S, A>(
 		samples.clone(),
 		render_options.samples_per_pixel,
 		ray_count.clone(),
+		exit,
 		event_loop_proxy.unwrap(),
 	);
-
-	let image_copy_finished = data.to_sc.clone();
 
 	let start = print_render_start(
 		render_options.width,
@@ -95,7 +97,7 @@ fn render_gui<M, P, C, S, A>(
 	let moved_render_canceled = render_canceled.clone();
 	let moved_filename = filename.clone();
 
-	std::thread::spawn(move || {
+	let handle = std::thread::spawn(move || {
 		let ray_count = data.rays_shot.clone();
 		let samples = data.samples.clone();
 		let buffer = data.buffer.clone();
@@ -105,8 +107,8 @@ fn render_gui<M, P, C, S, A>(
 			render_options,
 			Some((
 				&mut data,
-				|data: &mut Data, previous: &SamplerProgress, i: u64| {
-					sample_update(data, previous, i);
+				|data: &mut Data, previous: &SamplerProgress, i: u64| -> bool {
+					sample_update(data, previous, i)
 				},
 			)),
 		);
@@ -114,7 +116,7 @@ fn render_gui<M, P, C, S, A>(
 		let ray_count = ray_count.load(Ordering::Relaxed);
 		let samples = samples.load(Ordering::Relaxed);
 
-		print_final_statistics(start, ray_count, Some(samples));
+		print_final_statistics(start, ray_count, samples);
 
 		moved_render_canceled.store(false, Ordering::Relaxed);
 
@@ -128,20 +130,7 @@ fn render_gui<M, P, C, S, A>(
 	});
 
 	gui.run();
-	if render_canceled.load(Ordering::Relaxed) {
-		let ray_count = ray_count.load(Ordering::Relaxed);
-		let samples = samples.load(Ordering::Relaxed);
-
-		print_final_statistics(start, ray_count, Some(samples));
-
-		save_file(
-			filename,
-			render_options.width,
-			render_options.height,
-			&*buffer.read().unwrap(),
-			image_copy_finished,
-		);
-	}
+	handle.join().unwrap();
 }
 
 fn render_tui<M, P, C, S, A>(
@@ -174,7 +163,7 @@ fn render_tui<M, P, C, S, A>(
 				.unwrap(),
 		),
 	};
-	let progress_bar_output = |sp: &mut Progress, previous: &SamplerProgress, i: u64| {
+	let progress_bar_output = |sp: &mut Progress, previous: &SamplerProgress, i: u64| -> bool {
 		sp.sampler_progress.samples_completed += 1;
 		sp.sampler_progress.rays_shot += previous.rays_shot;
 
@@ -189,6 +178,7 @@ fn render_tui<M, P, C, S, A>(
 		if sp.sampler_progress.samples_completed == render_options.samples_per_pixel {
 			sp.bar.finish_and_clear()
 		}
+		false
 	};
 
 	scene.render(render_options, Some((&mut image, progress_bar_output)));
@@ -197,7 +187,7 @@ fn render_tui<M, P, C, S, A>(
 
 	let ray_count = output.sampler_progress.rays_shot;
 
-	print_final_statistics(start, ray_count, None);
+	print_final_statistics(start, ray_count, output.sampler_progress.samples_completed);
 
 	let output: Vec<u8> = output
 		.sampler_progress
@@ -260,7 +250,10 @@ fn save_file(
 			save_u8_to_image(
 				width,
 				height,
-				buffer.iter().map(|val| (val * 255.999) as u8).collect(),
+				buffer
+					.iter()
+					.map(|val| (val.sqrt() * 255.999) as u8)
+					.collect(),
 				filename,
 				true,
 			)
