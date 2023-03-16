@@ -39,17 +39,17 @@ impl<M: Scatter> Load for AllPrimitives<'_, M> {
 				let x = Sphere::load(props)?;
 				(x.0, Self::Sphere(x.1))
 			}
-			_ => todo!(),
-			/*o => {
+			"triangle" => todo!(),
+			o => {
 				return Err(LoadErr::MissingRequired(format!(
 					"required a known value for material type, found '{o}'"
 				)))
-			}*/
+			}
 		})
 	}
 }
 
-// TODO LOAD FOR TRIANGLE & MESH
+// TODO LOAD FOR TRIANGLE
 
 #[cfg(test)]
 mod tests {

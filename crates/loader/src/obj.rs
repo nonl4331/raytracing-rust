@@ -1,17 +1,17 @@
-use scene::implementations::{
-	rt_core::*,
+use crate::Float;
+use crate::Properties;
+use crate::Scatter;
+use crate::Vec3;
+use implementations::{
 	triangle::{MeshData, MeshTriangle},
-	AllMaterials, AllPrimitives, AllTextures,
+	AllPrimitives,
 };
 use std::sync::Arc;
 
-pub fn load_model_with_materials(
-	filepath: &str,
-	materials: &[(Arc<AllMaterials<AllTextures>>, &str)],
-) -> Vec<AllPrimitives<AllMaterials<AllTextures>>> {
+pub fn load_obj<'a, M: Scatter>(filepath: &str, props: Properties) -> Vec<AllPrimitives<'a, M>> {
 	let model = wavefront_obj::obj::parse(&std::fs::read_to_string(filepath).unwrap()).unwrap();
 
-	let mut primitives: Vec<AllPrimitives<AllMaterials<AllTextures>>> = Vec::new();
+	let mut primitives: Vec<AllPrimitives<'a, M>> = Vec::new();
 
 	for object in model.objects {
 		let mesh_data: Arc<MeshData> = Arc::new(MeshData::new(
@@ -34,48 +34,32 @@ pub fn load_model_with_materials(
 						panic!("Please export obj file with vertex normals!");
 					}
 
-					let mat = get_material(
-						materials,
-						geometric_object
-							.material_name
-							.as_ref()
-							.unwrap_or(&"default".to_owned()),
-					);
+					let mat: region::RegionRes<M> = props
+						.lookup_material(
+							geometric_object
+								.material_name
+								.as_ref()
+								.unwrap_or(&"default".to_owned()),
+						)
+						.unwrap_or_else(|| props.default_scatter());
 
-					let triangle: AllPrimitives<AllMaterials<AllTextures>> =
+					let triangle: AllPrimitives<'a, M> =
 						AllPrimitives::MeshTriangle(MeshTriangle::new(
 							[i1.0, i2.0, i3.0],
 							[i1.2.unwrap(), i2.2.unwrap(), i3.2.unwrap()],
-							&mat,
-							&mesh_data,
+							unsafe { &*(&*mat as *const _) },
+							mesh_data.clone(),
 						));
 
 					primitives.push(triangle)
 				}
 			}
 		}
+		std::mem::forget(mesh_data);
 	}
 	primitives
 }
 
 fn vertex_to_vec3(vertex: wavefront_obj::obj::Vertex) -> Vec3 {
 	Vec3::new(vertex.x as Float, vertex.y as Float, vertex.z as Float)
-}
-
-fn get_material(
-	materials: &[(Arc<AllMaterials<AllTextures>>, &str)],
-	name: &str,
-) -> Arc<AllMaterials<AllTextures>> {
-	let mat = materials.iter().find(|&v| v.1 == name);
-
-	match mat {
-		Some(mat) => mat.0.clone(),
-		None => {
-			let mat = materials.iter().find(|&v| v.1 == "default");
-			if let Some(mat) = mat {
-				return mat.0.clone();
-			}
-			panic!("{name} material not found");
-		}
-	}
 }

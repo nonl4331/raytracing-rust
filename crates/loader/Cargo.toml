@@ -9,6 +9,7 @@ nom = "7"
 region = { path = "../region" }
 implementations = { path = "../implementations" }
 thiserror = "1.0"
+wavefront_obj = "10.0.0"
 
 [features]
 f64 = ["implementations/f64"]

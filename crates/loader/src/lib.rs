@@ -1,6 +1,7 @@
 pub mod materials;
 pub mod meshes;
 pub mod misc;
+pub mod obj;
 pub mod parser;
 pub mod primitives;
 pub mod textures;
@@ -124,6 +125,9 @@ impl<'a> Properties<'a> {
 	}
 	pub fn scatter<S: Scatter>(&self, name: &str) -> Option<RegionRes<S>> {
 		self.lookup.scatter_lookup(self.text(name)?)
+	}
+	pub fn lookup_material<S: Scatter>(&self, name: &str) -> Option<RegionRes<S>> {
+		self.lookup.scatter_lookup(name)
 	}
 	pub fn vec3(&self, name: &str) -> Option<Vec3> {
 		match self.props.get(name) {
@@ -369,7 +373,7 @@ fn load_materials<S: Scatter + Load>(
 			values: [
 				("type", ObjectValue::Text("lambertian")),
 				("texture", ObjectValue::Text("__DEFAULT_TEX")),
-				("albedo", ObjectValue::Num1(1.0)),
+				("albedo", ObjectValue::Num1(0.25)),
 			]
 			.into(),
 		};

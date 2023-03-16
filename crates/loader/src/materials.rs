@@ -27,6 +27,10 @@ impl<T: Texture> Load for AllMaterials<'_, T> {
 				let x = Refract::load(props)?;
 				(x.0, Self::Refract(x.1))
 			}
+			"trowbridge_reitz" => {
+				let x = TrowbridgeReitz::load(props)?;
+				(x.0, Self::TrowbridgeReitz(x.1))
+			}
 			o => {
 				return Err(LoadErr::MissingRequired(format!(
 					"required a known value for material type, found '{o}'"
@@ -85,6 +89,24 @@ impl<T: Texture> Load for Refract<'_, T> {
 		let name = props.name();
 
 		Ok((name, Self::new(unsafe { &*(&*tex as *const _) }, eta)))
+	}
+}
+
+impl<T: Texture> Load for TrowbridgeReitz<'_, T> {
+	fn load(mut props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+		let tex = props
+			.texture("texture")
+			.unwrap_or_else(|| props.default_texture());
+		let alpha = props.float("alpha").unwrap_or(0.5);
+		let ior = props.vec3("ior").unwrap_or(Vec3::one());
+		let metallic = props.float("metallic").unwrap_or(0.0);
+
+		let name = props.name();
+
+		Ok((
+			name,
+			Self::new(unsafe { &*(&*tex as *const _) }, alpha, ior, metallic),
+		))
 	}
 }
 

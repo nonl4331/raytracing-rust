@@ -54,10 +54,10 @@ impl Sampler for RandomSampler {
 								let x = pixel_i % render_options.width;
 								let y = (pixel_i - x) / render_options.width;
 								let u = (rng.gen_range(0.0..1.0) + x as Float)
-									/ render_options.width as Float;
+									/ (render_options.width - 1) as Float;
 								let v = 1.0
 									- (rng.gen_range(0.0..1.0) + y as Float)
-										/ render_options.height as Float;
+										/ (render_options.height - 1) as Float;
 
 								let mut ray = camera.get_ray(u, v); // remember to add le DOF
 								let result = match render_options.render_method {

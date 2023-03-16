@@ -1,3 +1,4 @@
+use crate::obj::load_obj;
 use crate::Properties;
 use crate::*;
 use implementations::triangle::MeshData;
@@ -11,9 +12,7 @@ impl<M: Scatter> Load for Vec<AllPrimitives<'_, M>> {
 			None => return Err(LoadErr::MissingRequiredVariantType),
 		};
 		match kind {
-			"mesh" => {
-				unimplemented!()
-			}
+			"mesh" => mesh(props),
 			"aacuboid" => cuboid(props),
 			o => {
 				return Err(LoadErr::MissingRequired(format!(
@@ -100,4 +99,19 @@ fn cuboid<'a, M: Scatter>(
 	];
 
 	Ok((None, triangles))
+}
+
+fn mesh<'a, M: Scatter>(
+	props: Properties,
+) -> Result<(Option<String>, Vec<AllPrimitives<'a, M>>), LoadErr> {
+	let filepath = match props.text("obj") {
+		Some(c) => c.to_owned(),
+		None => {
+			return Err(LoadErr::MissingRequired(
+				"expected obj on mesh, found nothing".to_string(),
+			))
+		}
+	};
+	let prims = load_obj(&filepath, props);
+	Ok((None, prims))
 }
