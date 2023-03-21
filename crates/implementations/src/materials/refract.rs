@@ -30,7 +30,7 @@ where
 			eta_fraction = self.eta;
 		}
 
-		let cos_theta = ((-1.0 * ray.direction).dot(hit.normal)).min(1.0);
+		let cos_theta = ((-ray.direction).dot(hit.normal)).min(1.0);
 
 		let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 		let cannot_refract = eta_fraction * sin_theta > 1.0;

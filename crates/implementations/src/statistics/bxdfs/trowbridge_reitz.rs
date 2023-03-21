@@ -41,7 +41,9 @@ pub fn pdf_local(alpha: Float, incoming: Vec3, outgoing: Vec3) -> Float {
 
 pub fn sample<R: Rng>(alpha: Float, incoming: Vec3, normal: Vec3, rng: &mut R) -> Vec3 {
 	let coord = Coordinate::new_from_z(normal);
-	let h = coord.to_coord(sample_h(alpha, rng));
+	let local_h = sample_h(alpha, rng);
+	let h = coord.to_coord(local_h);
+
 	incoming.reflected(h)
 }
 
@@ -58,9 +60,13 @@ pub fn pdf(alpha: Float, incoming: Vec3, outgoing: Vec3, normal: Vec3) -> Float 
 }
 
 pub fn g2(alpha: Float, normal: Vec3, h: Vec3, incoming: Vec3, outgoing: Vec3) -> Float {
-	if incoming.dot(h) / incoming.z <= 0.0 || outgoing.dot(h) / outgoing.z <= 0.0 {
+	let incoming = -incoming;
+	if incoming.dot(h) / incoming.dot(normal) <= 0.0
+		|| outgoing.dot(h) / outgoing.dot(normal) <= 0.0
+	{
 		return 0.0;
 	}
+
 	let alpha_sq = alpha * alpha;
 	let one_minus_alpha_sq = 1.0 - alpha_sq;
 	let cos_i = normal.dot(incoming);
@@ -73,7 +79,7 @@ pub fn g2(alpha: Float, normal: Vec3, h: Vec3, incoming: Vec3, outgoing: Vec3) -
 }
 
 pub fn g1(alpha: Float, normal: Vec3, h: Vec3, v: Vec3) -> Float {
-	if v.dot(h) / v.z <= 0.0 {
+	if v.dot(h) / v.dot(normal) <= 0.0 {
 		return 0.0;
 	}
 	let cos = normal.dot(v);
@@ -137,6 +143,25 @@ mod tests {
 	}
 
 	#[test]
+	fn projected_area_test_local() {
+		let mut rng = thread_rng();
+		let alpha = rng.gen();
+		let test = |h: Vec3| d(alpha, h.z) * h.z;
+		let integral = integrate_over_sphere(&test);
+		assert!((integral - 1.0).abs() < 0.0001);
+	}
+
+	#[test]
+	fn projected_area_test_non_local() {
+		let mut rng = thread_rng();
+		let normal = random_unit_vector(&mut rng);
+		let alpha = rng.gen();
+		let test = |h: Vec3| d(alpha, h.dot(normal)) * h.dot(normal);
+		let integral = integrate_over_sphere(&test);
+		assert!((integral - 1.0).abs() < 0.0001);
+	}
+
+	#[test]
 	fn weak_furnace_test() {
 		let mut rng = thread_rng();
 		let wo = -generate_wi(&mut rng);
@@ -175,6 +200,29 @@ mod tests {
 				0.0
 			} else {
 				g2(alpha, Vec3::new(0.0, 0.0, 1.0), h, a, b) * d(alpha, h.z) / denom
+			}
+		};
+
+		let integral = integrate_over_sphere(&test);
+		assert!(integral <= 1.0);
+	}
+
+	#[test]
+	fn g2_test_non_local() {
+		let mut rng = thread_rng();
+		let a = -generate_wi(&mut rng);
+		let normal = random_unit_vector(&mut rng);
+		let alpha = rng.gen();
+		let test = |b: Vec3| {
+			let mut h = (a + b).normalised();
+			if h.dot(normal) < 0.0 {
+				h = -h;
+			}
+			let denom = 4.0 * a.dot(-normal).abs();
+			if denom < 0.000000001 {
+				0.0
+			} else {
+				g2(alpha, normal, h, a, b) * d(alpha, a.dot(-normal)) / denom
 			}
 		};
 
