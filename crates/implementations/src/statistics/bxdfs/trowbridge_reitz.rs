@@ -60,7 +60,6 @@ pub fn pdf(alpha: Float, incoming: Vec3, outgoing: Vec3, normal: Vec3) -> Float 
 }
 
 pub fn g2(alpha: Float, normal: Vec3, h: Vec3, incoming: Vec3, outgoing: Vec3) -> Float {
-	//let incoming = -incoming;
 	if incoming.dot(h) / incoming.dot(normal) <= 0.0
 		|| outgoing.dot(h) / outgoing.dot(normal) <= 0.0
 	{

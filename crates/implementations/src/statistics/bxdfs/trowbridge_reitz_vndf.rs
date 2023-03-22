@@ -4,8 +4,7 @@ use rt_core::*;
 
 pub mod isotropic {
 	use super::*;
-	use crate::bxdfs::trowbridge_reitz::d;
-	use crate::bxdfs::trowbridge_reitz::g1;
+	pub use crate::bxdfs::trowbridge_reitz::{d, g1, g2};
 
 	pub fn vndf(a: Float, h: Vec3, incoming: Vec3) -> Float {
 		if h.z < 0.0 {
@@ -27,7 +26,7 @@ pub mod isotropic {
 	pub fn pdf_local(alpha: Float, incoming: Vec3, outgoing: Vec3) -> Float {
 		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = -h; //(incoming + outgoing).normalised();
+			h = -h;
 		}
 		let vndf = vndf(alpha, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
@@ -46,9 +45,8 @@ pub mod isotropic {
 		let outgoing = inverse.to_coord(outgoing);
 		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = -h; //(incoming - outgoing).normalised();
+			h = -h;
 		}
-		//let incoming = -incoming;
 		let vndf = vndf(alpha, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}
@@ -117,9 +115,8 @@ pub mod ansiotropic {
 	pub fn pdf_local(a_x: Float, a_y: Float, incoming: Vec3, outgoing: Vec3) -> Float {
 		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = -h; //(incoming - outgoing).normalised();
+			h = -h;
 		}
-		//let incoming = -incoming;
 		let vndf = vndf(a_x, a_y, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}
@@ -143,9 +140,8 @@ pub mod ansiotropic {
 		let outgoing = inverse.to_coord(outgoing);
 		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = -h; //(incoming - outgoing).normalised();
+			h = -h;
 		}
-		//let incoming = -incoming;
 		let vndf = vndf(a_x, a_y, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}

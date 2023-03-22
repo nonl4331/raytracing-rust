@@ -1,6 +1,4 @@
-use crate::{
-	materials::refract, statistics::bxdfs::trowbridge_reitz, textures::Texture, utility::offset_ray,
-};
+use crate::{materials::refract, statistics::bxdfs::*, textures::Texture, utility::offset_ray};
 use rand::{rngs::SmallRng, thread_rng, SeedableRng};
 use rt_core::*;
 
@@ -38,7 +36,7 @@ where
 	T: Texture,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let direction = trowbridge_reitz::sample(
+		let direction = trowbridge_reitz_vndf::isotropic::sample(
 			self.alpha,
 			-ray.direction,
 			hit.normal,
@@ -52,7 +50,7 @@ where
 	}
 	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Float {
 		let wo = -wo;
-		let a = trowbridge_reitz::pdf(self.alpha, wo, wi, hit.normal);
+		let a = trowbridge_reitz_vndf::isotropic::pdf(self.alpha, wo, wi, hit.normal);
 		if a == 0.0 {
 			INFINITY
 		} else {
@@ -68,8 +66,8 @@ where
 		}
 
 		let f = self.fresnel(hit, wo, wi, h);
-		let g = trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi);
-		let d = trowbridge_reitz::d(self.alpha, hit.normal.dot(h));
+		let g = trowbridge_reitz_vndf::isotropic::g2(self.alpha, hit.normal, h, wo, wi);
+		let d = trowbridge_reitz_vndf::isotropic::d(self.alpha, hit.normal.dot(h));
 
 		f * g * d / (4.0 * wo.dot(hit.normal).abs() * wi.dot(hit.normal))
 	}
@@ -83,9 +81,9 @@ where
 
 		let f = self.fresnel(hit, wo, wi, h);
 
-		let g = trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi);
+		let g = trowbridge_reitz_vndf::isotropic::g2(self.alpha, hit.normal, h, wo, wi);
 
-		f * g * wo.dot(h) / (wo.dot(hit.normal) * h.dot(hit.normal)).abs()
+		f * g / trowbridge_reitz_vndf::isotropic::g1(self.alpha, hit.normal, h, wo)
 	}
 }
 
