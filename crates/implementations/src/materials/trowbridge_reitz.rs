@@ -29,7 +29,7 @@ where
 		let f0 = ((1.0 - self.ior) / (1.0 + self.ior)).abs();
 		let f0 = f0 * f0;
 		let f0 = lerp(f0, self.texture.colour_value(wi, hit.point), self.metallic);
-		refract::fresnel((-wo).dot(h), f0)
+		refract::fresnel(wo.dot(h), f0)
 	}
 }
 
@@ -40,7 +40,7 @@ where
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
 		let direction = trowbridge_reitz::sample(
 			self.alpha,
-			ray.direction,
+			-ray.direction,
 			hit.normal,
 			&mut SmallRng::from_rng(thread_rng()).unwrap(),
 		);
@@ -51,6 +51,7 @@ where
 		false
 	}
 	fn scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Float {
+		let wo = -wo;
 		let a = trowbridge_reitz::pdf(self.alpha, wo, wi, hit.normal);
 		if a == 0.0 {
 			INFINITY
@@ -59,9 +60,10 @@ where
 		}
 	}
 	fn eval(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
-		let h = (wi - wo).normalised();
+		let wo = -wo;
+		let h = (wi + wo).normalised();
 
-		if wi.dot(hit.normal) < 0.0 || h.dot(wo) > 0.0 {
+		if wi.dot(hit.normal) < 0.0 || h.dot(wo) < 0.0 {
 			return Vec3::zero();
 		}
 
@@ -69,19 +71,21 @@ where
 		let g = trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi);
 		let d = trowbridge_reitz::d(self.alpha, hit.normal.dot(h));
 
-		f * g * d / (4.0 * (-wo).dot(hit.normal).abs() * wi.dot(hit.normal))
+		f * g * d / (4.0 * wo.dot(hit.normal).abs() * wi.dot(hit.normal))
 	}
 	fn eval_over_scattering_pdf(&self, hit: &Hit, wo: Vec3, wi: Vec3) -> Vec3 {
-		let h = (wi - wo).normalised();
+		let wo = -wo;
+		let h = (wi + wo).normalised();
 
-		if wo.dot(h) > 0.0 || wi.dot(hit.normal) < 0.0 {
+		if wo.dot(h) < 0.0 || wi.dot(hit.normal) < 0.0 {
 			return Vec3::zero();
 		}
 
-		self.fresnel(hit, wo, wi, h)
-			* trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi)
-			* (-wo).dot(h)
-			/ (wo.dot(hit.normal) * h.dot(hit.normal)).abs()
+		let f = self.fresnel(hit, wo, wi, h);
+
+		let g = trowbridge_reitz::g2(self.alpha, hit.normal, h, wo, wi);
+
+		f * g * wo.dot(h) / (wo.dot(hit.normal) * h.dot(hit.normal)).abs()
 	}
 }
 

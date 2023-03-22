@@ -24,7 +24,7 @@ where
 	T: Texture,
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
-		let mut direction = ray.direction;
+		let mut direction = -ray.direction;
 		direction.reflect(hit.normal);
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
 		*ray = Ray::new(

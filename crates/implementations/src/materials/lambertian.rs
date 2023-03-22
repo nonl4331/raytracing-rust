@@ -29,7 +29,7 @@ where
 {
 	fn scatter_ray(&self, ray: &mut Ray, hit: &Hit) -> bool {
 		let direction = crate::statistics::bxdfs::lambertian::sample(
-			ray.direction,
+			ray.direction, // no negation since lambertian::sample doesn't use ray.direction
 			hit.normal,
 			&mut SmallRng::from_rng(thread_rng()).unwrap(),
 		);

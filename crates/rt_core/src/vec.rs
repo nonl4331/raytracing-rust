@@ -198,15 +198,15 @@ impl Vec3 {
 	pub fn abs(self) -> Self {
 		Vec3::new(self.x.abs(), self.y.abs(), self.z.abs())
 	}
-	// note: self is pointing towards surface and normal away
+	// note: self is pointing away from surface
 	#[inline]
 	pub fn reflect(&mut self, normal: Self) {
-		*self -= 2.0 * self.dot(normal) * normal
+		*self = self.reflected(normal)
 	}
 
 	#[inline]
 	pub fn reflected(&self, normal: Self) -> Self {
-		*self - 2.0 * self.dot(normal) * normal
+		2.0 * self.dot(normal) * normal - *self
 	}
 
 	#[inline]

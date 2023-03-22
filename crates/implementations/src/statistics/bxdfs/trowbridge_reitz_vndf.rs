@@ -20,16 +20,15 @@ pub mod isotropic {
 	}
 
 	pub fn sample_local<R: Rng>(a: Float, incoming: Vec3, rng: &mut R) -> Vec3 {
-		let h = sample_vndf(a, -incoming, rng);
+		let h = sample_vndf(a, incoming, rng);
 		incoming.reflected(h)
 	}
 
 	pub fn pdf_local(alpha: Float, incoming: Vec3, outgoing: Vec3) -> Float {
-		let mut h = (outgoing - incoming).normalised();
+		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = (incoming - outgoing).normalised();
+			h = -h; //(incoming + outgoing).normalised();
 		}
-		let incoming = -incoming;
 		let vndf = vndf(alpha, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}
@@ -37,7 +36,7 @@ pub mod isotropic {
 	pub fn sample<R: Rng>(a: Float, incoming: Vec3, normal: Vec3, rng: &mut R) -> Vec3 {
 		let coord = Coordinate::new_from_z(normal);
 		let inverse = coord.create_inverse();
-		let h = coord.to_coord(sample_vndf(a, -inverse.to_coord(incoming), rng));
+		let h = coord.to_coord(sample_vndf(a, inverse.to_coord(incoming), rng));
 		incoming.reflected(h)
 	}
 
@@ -45,11 +44,11 @@ pub mod isotropic {
 		let inverse = Coordinate::new_from_z(normal).create_inverse();
 		let incoming = inverse.to_coord(incoming);
 		let outgoing = inverse.to_coord(outgoing);
-		let mut h = (outgoing - incoming).normalised();
+		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = (incoming - outgoing).normalised();
+			h = -h; //(incoming - outgoing).normalised();
 		}
-		let incoming = -incoming;
+		//let incoming = -incoming;
 		let vndf = vndf(alpha, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}
@@ -111,16 +110,16 @@ pub mod ansiotropic {
 	}
 
 	pub fn sample_local<R: Rng>(a_x: Float, a_y: Float, incoming: Vec3, rng: &mut R) -> Vec3 {
-		let h = sample_vndf(a_x, a_y, -incoming, rng);
+		let h = sample_vndf(a_x, a_y, incoming, rng);
 		incoming.reflected(h)
 	}
 
 	pub fn pdf_local(a_x: Float, a_y: Float, incoming: Vec3, outgoing: Vec3) -> Float {
-		let mut h = (outgoing - incoming).normalised();
+		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = (incoming - outgoing).normalised();
+			h = -h; //(incoming - outgoing).normalised();
 		}
-		let incoming = -incoming;
+		//let incoming = -incoming;
 		let vndf = vndf(a_x, a_y, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}
@@ -134,7 +133,7 @@ pub mod ansiotropic {
 	) -> Vec3 {
 		let coord = Coordinate::new_from_z(normal);
 		let inverse = coord.create_inverse();
-		let h = coord.to_coord(sample_vndf(a_x, a_y, -inverse.to_coord(incoming), rng));
+		let h = coord.to_coord(sample_vndf(a_x, a_y, inverse.to_coord(incoming), rng));
 		incoming.reflected(h)
 	}
 
@@ -142,11 +141,11 @@ pub mod ansiotropic {
 		let inverse = Coordinate::new_from_z(normal).create_inverse();
 		let incoming = inverse.to_coord(incoming);
 		let outgoing = inverse.to_coord(outgoing);
-		let mut h = (outgoing - incoming).normalised();
+		let mut h = (outgoing + incoming).normalised();
 		if h.z < 0.0 {
-			h = (incoming - outgoing).normalised();
+			h = -h; //(incoming - outgoing).normalised();
 		}
-		let incoming = -incoming;
+		//let incoming = -incoming;
 		let vndf = vndf(a_x, a_y, h, incoming);
 		vndf / (4.0 * incoming.dot(h))
 	}
@@ -171,7 +170,7 @@ mod tests {
 	#[test]
 	fn isotropic() {
 		let mut rng = thread_rng();
-		let incoming = generate_wi(&mut rng);
+		let incoming = -generate_wi(&mut rng);
 		let alpha = rng.gen();
 		let pdf = |outgoing: Vec3| isotropic::pdf_local(alpha, incoming, outgoing);
 		let sample = |rng: &mut ThreadRng| isotropic::sample_local(alpha, incoming, rng);
@@ -183,7 +182,7 @@ mod tests {
 		let mut rng = thread_rng();
 		let normal = random_unit_vector(&mut rng);
 		let to_local = Coordinate::new_from_z(normal);
-		let incoming = to_local.to_coord(generate_wi(&mut rng));
+		let incoming = to_local.to_coord(-generate_wi(&mut rng));
 		let alpha = rng.gen();
 		let pdf = |outgoing: Vec3| isotropic::pdf(alpha, incoming, outgoing, normal);
 		let sample = |rng: &mut ThreadRng| isotropic::sample(alpha, incoming, normal, rng);
@@ -203,7 +202,7 @@ mod tests {
 	#[test]
 	fn ansiotropic() {
 		let mut rng = thread_rng();
-		let incoming = generate_wi(&mut rng);
+		let incoming = -generate_wi(&mut rng);
 		let (a_x, a_y) = (rng.gen(), rng.gen());
 		let pdf = |outgoing: Vec3| ansiotropic::pdf_local(a_x, a_y, incoming, outgoing);
 		let sample = |rng: &mut ThreadRng| ansiotropic::sample_local(a_x, a_y, incoming, rng);
@@ -215,7 +214,7 @@ mod tests {
 		let mut rng = thread_rng();
 		let normal = random_unit_vector(&mut rng);
 		let to_local = Coordinate::new_from_z(normal);
-		let incoming = to_local.to_coord(generate_wi(&mut rng));
+		let incoming = to_local.to_coord(-generate_wi(&mut rng));
 		let (a_x, a_y) = (rng.gen(), rng.gen());
 		let pdf = |outgoing: Vec3| ansiotropic::pdf(a_x, a_y, incoming, outgoing, normal);
 		let sample = |rng: &mut ThreadRng| ansiotropic::sample(a_x, a_y, incoming, normal, rng);

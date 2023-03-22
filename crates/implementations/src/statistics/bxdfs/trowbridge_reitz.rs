@@ -31,9 +31,9 @@ pub fn sample_local<R: Rng>(alpha: Float, incoming: Vec3, rng: &mut R) -> Vec3 {
 }
 
 pub fn pdf_local(alpha: Float, incoming: Vec3, outgoing: Vec3) -> Float {
-	let mut h = (outgoing - incoming).normalised();
+	let mut h = (outgoing + incoming).normalised();
 	if h.z < 0.0 {
-		h = (incoming - outgoing).normalised();
+		h = -h;
 	}
 	let d = d(alpha, h.z);
 	d * h.z.abs() / (4.0 * outgoing.dot(h).abs())
@@ -51,16 +51,16 @@ pub fn pdf(alpha: Float, incoming: Vec3, outgoing: Vec3, normal: Vec3) -> Float 
 	let inverse = Coordinate::new_from_z(normal).create_inverse();
 	let incoming = inverse.to_coord(incoming);
 	let outgoing = inverse.to_coord(outgoing);
-	let mut h = (outgoing - incoming).normalised();
+	let mut h = (outgoing + incoming).normalised();
 	if h.z < 0.0 {
-		h = (incoming - outgoing).normalised();
+		h = -h;
 	}
 	let d = d(alpha, h.z);
 	d * h.z.abs() / (4.0 * outgoing.dot(h).abs())
 }
 
 pub fn g2(alpha: Float, normal: Vec3, h: Vec3, incoming: Vec3, outgoing: Vec3) -> Float {
-	let incoming = -incoming;
+	//let incoming = -incoming;
 	if incoming.dot(h) / incoming.dot(normal) <= 0.0
 		|| outgoing.dot(h) / outgoing.dot(normal) <= 0.0
 	{
@@ -107,7 +107,7 @@ mod tests {
 	#[test]
 	fn tr() {
 		let mut rng = thread_rng();
-		let incoming = generate_wi(&mut rng);
+		let incoming = -generate_wi(&mut rng);
 		let alpha = rng.gen();
 		let pdf = |outgoing: Vec3| pdf_local(alpha, incoming, outgoing);
 		let sample = |rng: &mut ThreadRng| sample_local(alpha, incoming, rng);
@@ -119,7 +119,7 @@ mod tests {
 		let mut rng = thread_rng();
 		let normal = random_unit_vector(&mut rng);
 		let to_local = Coordinate::new_from_z(normal);
-		let incoming = to_local.to_coord(generate_wi(&mut rng));
+		let incoming = to_local.to_coord(-generate_wi(&mut rng));
 		let alpha = rng.gen();
 		let pdf = |outgoing: Vec3| pdf(alpha, incoming, outgoing, normal);
 		let sample = |rng: &mut ThreadRng| sample(alpha, incoming, normal, rng);
