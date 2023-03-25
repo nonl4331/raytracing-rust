@@ -117,10 +117,10 @@ pub fn print_final_statistics(start: Instant, ray_count: u64, samples: u64) {
 		)
 }
 
-pub fn print_render_start(width: u64, height: u64, samples: Option<u64>) -> Instant {
+pub fn print_render_start(width: u64, height: u64, gamma: f64, samples: Option<u64>) -> Instant {
 	match samples {
 		Some(samples) => log::info!(
-			"Render started:\n\tWidth:\t\t{width}\n\tHeight:\t\t{height}\n\tSamples:\t{samples}"
+			"Render started:\n\tWidth:\t\t{width}\n\tHeight:\t\t{height}\n\tGamma:\t\t{gamma:.3}\n\tSamples:\t{samples}"
 		),
 		None => {
 			log::info!("Render started:\n\tWidth:\t\t{width}\n\tHeight:\t\t{height}\n\tSamples:\t∞")

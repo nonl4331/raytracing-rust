@@ -1,4 +1,4 @@
-use crate::scene::Scene;
+use crate::{scene::Scene, Float};
 use clap::Parser;
 
 use implementations::{split::SplitType, *};
@@ -20,15 +20,15 @@ pub struct Parameters {
 #[derive(Parser, Debug)]
 #[command(about, long_about=None)]
 #[command(name = "Pathtracer")]
-#[command(about = "An expiremental pathtracer written in Rust")]
+#[command(about = "An experimental pathtracer written in Rust")]
 struct Cli {
 	#[arg(short, long, default_value_t = false)]
 	gui: bool,
 	#[arg(short, long, default_value_t = 128)]
 	samples: u64,
-	#[arg(short, long, default_value_t = 1920)]
+	#[arg(short = 'x', long, default_value_t = 1920)]
 	width: u64,
-	#[arg(short, long, default_value_t = 1080)]
+	#[arg(short = 'y', long, default_value_t = 1080)]
 	height: u64,
 	#[arg(short, long)]
 	filepath: String,
@@ -38,6 +38,8 @@ struct Cli {
 	render_method: RenderMethod,
 	#[arg(short, long)]
 	output: Option<String>,
+	#[arg(long, default_value_t = 2.2)]
+	gamma: Float,
 }
 
 pub fn process_args() -> Option<(SceneType<'static>, Parameters)> {
@@ -65,6 +67,7 @@ pub fn process_args() -> Option<(SceneType<'static>, Parameters)> {
 		height: cli.height,
 		samples_per_pixel: cli.samples,
 		render_method: cli.render_method,
+		gamma: cli.gamma,
 	};
 	let params = Parameters {
 		render_options: render_ops,

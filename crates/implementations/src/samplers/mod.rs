@@ -25,15 +25,17 @@ pub struct RenderOptions {
 	pub render_method: RenderMethod,
 	pub width: u64,
 	pub height: u64,
+	pub gamma: Float,
 }
 
 impl Default for RenderOptions {
 	fn default() -> Self {
 		Self {
-			samples_per_pixel: 100,
+			samples_per_pixel: 128,
 			render_method: RenderMethod::MIS,
 			width: 1920,
 			height: 1080,
+			gamma: 2.2,
 		}
 	}
 }

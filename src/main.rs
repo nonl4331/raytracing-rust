@@ -89,6 +89,7 @@ fn render_gui<M, P, C, S, A>(
 	let start = print_render_start(
 		render_options.width,
 		render_options.height,
+		render_options.gamma as f64,
 		Some(render_options.samples_per_pixel),
 	);
 
@@ -124,6 +125,7 @@ fn render_gui<M, P, C, S, A>(
 			moved_filename,
 			render_options.width,
 			render_options.height,
+			render_options.gamma,
 			&*buffer.read().unwrap(),
 			to_sc,
 		);
@@ -147,6 +149,7 @@ fn render_tui<M, P, C, S, A>(
 	let start = print_render_start(
 		render_options.width,
 		render_options.height,
+		render_options.gamma as f64,
 		Some(render_options.samples_per_pixel),
 	);
 
@@ -193,7 +196,7 @@ fn render_tui<M, P, C, S, A>(
 		.sampler_progress
 		.current_image
 		.iter()
-		.map(|val| (val.sqrt() * 255.999) as u8)
+		.map(|val| (val.powf(1.0 / render_options.gamma) * 255.999) as u8)
 		.collect();
 
 	if let Some(filename) = filename {
@@ -235,6 +238,7 @@ fn save_file(
 	filename: Option<String>,
 	width: u64,
 	height: u64,
+	gamma: Float,
 	buffer: &[f32],
 	image_fence: Future,
 ) {
@@ -252,7 +256,7 @@ fn save_file(
 				height,
 				buffer
 					.iter()
-					.map(|val| (val.sqrt() * 255.999) as u8)
+					.map(|val| (val.powf(1.0 / gamma) * 255.999) as u8)
 					.collect(),
 				filename,
 				true,
