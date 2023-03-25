@@ -5,11 +5,10 @@ pub mod random_sampler;
 use clap::ValueEnum;
 
 pub trait Sampler: Sync {
-	fn sample_image<C, P, M, T, F, A, S>(
+	fn sample_image<C, P, M, T, F, A>(
 		&self,
 		_render_options: RenderOptions,
 		_camera: &C,
-		_sky: &S,
 		_acceleration_structure: &A,
 		_update_function: Option<(&mut T, F)>,
 	) where
@@ -17,8 +16,7 @@ pub trait Sampler: Sync {
 		P: Primitive,
 		M: Scatter,
 		F: Fn(&mut T, &SamplerProgress, u64) -> bool,
-		A: AccelerationStructure<Object = P, Material = M>,
-		S: NoHit;
+		A: AccelerationStructure<Object = P, Material = M>;
 }
 
 #[derive(Copy, Clone, Debug)]

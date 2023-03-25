@@ -28,8 +28,8 @@ fn render_gui<M, P, C, S, A>(
 	M: Scatter + 'static,
 	P: Primitive + 'static,
 	C: Camera + 'static,
-	S: NoHit + 'static,
-	A: AccelerationStructure<Object = P, Material = M> + 'static,
+	S: NoHit<M> + 'static,
+	A: AccelerationStructure<Object = P, Material = M, Sky = S> + 'static,
 {
 	let required_extensions = vulkano_win::required_extensions();
 	let instance = Instance::new(
@@ -141,8 +141,8 @@ fn render_tui<M, P, C, S, A>(
 	M: Scatter,
 	P: Primitive,
 	C: Camera,
-	S: NoHit,
-	A: AccelerationStructure<Object = P, Material = M>,
+	S: NoHit<M>,
+	A: AccelerationStructure<Object = P, Material = M, Sky = S>,
 {
 	let start = print_render_start(
 		render_options.width,

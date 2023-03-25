@@ -4,7 +4,7 @@ use implementations::emissive::Emit;
 use implementations::*;
 
 impl<T: Texture> Load for AllMaterials<'_, T> {
-	fn load(props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(props: Properties, region: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let kind = match props.text("type") {
 			Some(k) => k,
 			None => return Err(LoadErr::MissingRequiredVariantType),
@@ -12,23 +12,23 @@ impl<T: Texture> Load for AllMaterials<'_, T> {
 
 		Ok(match kind {
 			"emissive" => {
-				let x = Emit::load(props)?;
+				let x = Emit::load(props, region)?;
 				(x.0, Self::Emit(x.1))
 			}
 			"lambertian" => {
-				let x = Lambertian::load(props)?;
+				let x = Lambertian::load(props, region)?;
 				(x.0, Self::Lambertian(x.1))
 			}
 			"reflect" => {
-				let x = Reflect::load(props)?;
+				let x = Reflect::load(props, region)?;
 				(x.0, Self::Reflect(x.1))
 			}
 			"refract" => {
-				let x = Refract::load(props)?;
+				let x = Refract::load(props, region)?;
 				(x.0, Self::Refract(x.1))
 			}
 			"trowbridge_reitz" => {
-				let x = TrowbridgeReitz::load(props)?;
+				let x = TrowbridgeReitz::load(props, region)?;
 				(x.0, Self::TrowbridgeReitz(x.1))
 			}
 			o => {
@@ -41,7 +41,7 @@ impl<T: Texture> Load for AllMaterials<'_, T> {
 }
 
 impl<T: Texture> Load for Lambertian<'_, T> {
-	fn load(mut props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(mut props: Properties, _: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let tex = props
 			.texture("texture")
 			.unwrap_or_else(|| props.default_texture());
@@ -54,7 +54,7 @@ impl<T: Texture> Load for Lambertian<'_, T> {
 }
 
 impl<T: Texture> Load for Emit<'_, T> {
-	fn load(mut props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(mut props: Properties, _: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let tex = props
 			.texture("texture")
 			.unwrap_or_else(|| props.default_texture());
@@ -67,7 +67,7 @@ impl<T: Texture> Load for Emit<'_, T> {
 }
 
 impl<T: Texture> Load for Reflect<'_, T> {
-	fn load(mut props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(mut props: Properties, _: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let tex = props
 			.texture("texture")
 			.unwrap_or_else(|| props.default_texture());
@@ -80,7 +80,7 @@ impl<T: Texture> Load for Reflect<'_, T> {
 }
 
 impl<T: Texture> Load for Refract<'_, T> {
-	fn load(mut props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(mut props: Properties, _: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let tex = props
 			.texture("texture")
 			.unwrap_or_else(|| props.default_texture());
@@ -93,7 +93,7 @@ impl<T: Texture> Load for Refract<'_, T> {
 }
 
 impl<T: Texture> Load for TrowbridgeReitz<'_, T> {
-	fn load(mut props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(mut props: Properties, _: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let tex = props
 			.texture("texture")
 			.unwrap_or_else(|| props.default_texture());
@@ -129,8 +129,8 @@ material ground (
 	albedo 0.5
 )";
 		let data = parser::from_str(file).unwrap();
-		let textures = load_textures::<AllTextures>(&data, &lookup).unwrap();
+		let textures = load_textures::<AllTextures>(&data, &lookup, &mut region).unwrap();
 		region_insert_with_lookup(&mut region, textures, |n, t| lookup.texture_insert(n, t));
-		let _ = load_materials::<AllMaterials<AllTextures>>(&data, &lookup).unwrap();
+		let _ = load_materials::<AllMaterials<AllTextures>>(&data, &lookup, &mut region).unwrap();
 	}
 }

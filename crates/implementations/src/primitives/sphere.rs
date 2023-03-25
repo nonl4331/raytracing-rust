@@ -150,7 +150,6 @@ where
 
 			self.center + self.radius * vec
 		};
-
 		(point - in_point).normalised()
 	}
 	fn scattering_pdf(&self, hit_point: Vec3, wi: Vec3, sampled_hit: &Hit) -> Float {

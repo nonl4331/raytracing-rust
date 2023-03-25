@@ -40,25 +40,30 @@ impl PrimitiveInfo {
 	}
 }
 
-pub struct Bvh<P: Primitive, M: Scatter> {
+pub struct Bvh<P: Primitive, M: Scatter, S: NoHit<M>> {
 	split_type: SplitType,
 	nodes: Vec<Node>,
+	sky: S,
 	pub primitives: RegionResSlice<P>,
 	pub lights: Vec<usize>,
 	phantom: PhantomData<M>,
 }
 
-//unsafe impl<'a, P: Primitive + AABound + Send, M: Scatter + Send> Sync for Bvh<'a, P, M> {}
-
-impl<P, M> Bvh<P, M>
+impl<P, M, S> Bvh<P, M, S>
 where
 	P: Primitive + AABound,
 	M: Scatter,
+	S: NoHit<M>,
 {
-	pub fn new(mut primitives: region::RegionUniqSlice<'_, P>, split_type: SplitType) -> Self {
+	pub fn new(
+		mut primitives: region::RegionUniqSlice<'_, P>,
+		sky: S,
+		split_type: SplitType,
+	) -> Self {
 		let mut bvh = Self {
 			split_type,
 			nodes: Vec::new(),
+			sky,
 			primitives: primitives.zero_slice(),
 			lights: Vec::new(),
 			phantom: PhantomData,
@@ -82,7 +87,7 @@ where
 			}
 		}
 
-		bvh.primitives = primitives.shared(); //primitives.into_bump_slice();
+		bvh.primitives = primitives.shared();
 
 		bvh
 	}
@@ -182,13 +187,15 @@ where
 	}
 }
 
-impl<P, M> AccelerationStructure for Bvh<P, M>
+impl<P, M, S> AccelerationStructure for Bvh<P, M, S>
 where
 	P: Primitive<Material = M>,
 	M: Scatter,
+	S: NoHit<M>,
 {
 	type Object = P;
 	type Material = M;
+	type Sky = S;
 	fn get_intersection_candidates(&self, ray: &Ray) -> Vec<(usize, usize)> {
 		let mut offset_len = Vec::new();
 
@@ -255,7 +262,7 @@ where
 		intersection
 	}
 
-	fn check_hit(&self, ray: &Ray) -> Option<(SurfaceIntersection<M>, usize)> {
+	fn check_hit(&self, ray: &Ray) -> (SurfaceIntersection<M>, usize) {
 		let offset_lens = self.get_intersection_candidates(ray);
 
 		let mut hit: Option<(SurfaceIntersection<M>, usize)> = None;
@@ -284,13 +291,39 @@ where
 				}
 			}
 		}
-		hit
+		match hit {
+			None => (self.sky.get_si(ray), usize::MAX),
+			Some(hit) => hit,
+		}
+	}
+	fn get_pdf_from_index(
+		&self,
+		last_hit: &Hit,
+		light_hit: &Hit,
+		sampled_dir: Vec3,
+		index: usize,
+	) -> Float {
+		let sky_samplable = self.sky.can_sample();
+		let divisor = if sky_samplable {
+			self.lights.len() + 1
+		} else {
+			self.lights.len()
+		} as Float;
+
+		if index == usize::MAX {
+			self.sky.pdf(sampled_dir) / divisor
+		} else {
+			self.primitives[index].scattering_pdf(last_hit.point, sampled_dir, light_hit) / divisor
+		}
 	}
 	fn get_samplable(&self) -> &[usize] {
 		&self.lights
 	}
 	fn get_object(&self, index: usize) -> Option<&P> {
 		self.primitives.get(index)
+	}
+	fn sky(&self) -> &S {
+		&self.sky
 	}
 }
 

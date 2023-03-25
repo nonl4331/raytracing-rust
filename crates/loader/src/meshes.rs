@@ -6,14 +6,14 @@ use implementations::triangle::MeshTriangle;
 use implementations::*;
 
 impl<M: Scatter> Load for Vec<AllPrimitives<'_, M>> {
-	fn load(props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(props: Properties, region: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let kind = match props.text("type") {
 			Some(k) => k,
 			None => return Err(LoadErr::MissingRequiredVariantType),
 		};
 		match kind {
-			"mesh" => mesh(props),
-			"aacuboid" => cuboid(props),
+			"mesh" => mesh(props, region),
+			"aacuboid" => cuboid(props, region),
 			o => {
 				return Err(LoadErr::MissingRequired(format!(
 					"required a known value for mesh type, found '{o}'"
@@ -25,6 +25,7 @@ impl<M: Scatter> Load for Vec<AllPrimitives<'_, M>> {
 
 fn cuboid<'a, M: Scatter>(
 	props: Properties,
+	_: &mut Region,
 ) -> Result<(Option<String>, Vec<AllPrimitives<'a, M>>), LoadErr> {
 	let mat: region::RegionRes<M> = props
 		.scatter("material")
@@ -103,6 +104,7 @@ fn cuboid<'a, M: Scatter>(
 
 fn mesh<'a, M: Scatter>(
 	props: Properties,
+	_: &mut Region,
 ) -> Result<(Option<String>, Vec<AllPrimitives<'a, M>>), LoadErr> {
 	let filepath = match props.text("obj") {
 		Some(c) => c.to_owned(),

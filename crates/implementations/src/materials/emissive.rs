@@ -20,9 +20,12 @@ impl<'a, T> Scatter for Emit<'a, T>
 where
 	T: Texture,
 {
-	fn get_emission(&self, hit: &Hit, _: Vec3) -> Vec3 {
+	fn get_emission(&self, hit: &Hit, wo: Vec3) -> Vec3 {
 		let point = offset_ray(hit.point, hit.normal, hit.error, true);
-		self.strength * self.texture.colour_value(Vec3::zero(), point)
+		self.strength * self.texture.colour_value(wo, point)
+	}
+	fn scattering_pdf(&self, _hit: &Hit, _wo: Vec3, _wi: Vec3) -> Float {
+		unreachable!()
 	}
 	fn is_light(&self) -> bool {
 		true

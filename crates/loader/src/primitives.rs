@@ -6,7 +6,7 @@ use implementations::*;
 use rt_core::Scatter;
 
 impl<M: Scatter> Load for Sphere<'_, M> {
-	fn load(props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(props: Properties, _: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let mat: region::RegionRes<M> = props
 			.scatter("material")
 			.unwrap_or_else(|| props.default_scatter());
@@ -28,7 +28,7 @@ impl<M: Scatter> Load for Sphere<'_, M> {
 }
 
 impl<M: Scatter> Load for AllPrimitives<'_, M> {
-	fn load(props: Properties) -> Result<(Option<String>, Self), LoadErr> {
+	fn load(props: Properties, region: &mut Region) -> Result<(Option<String>, Self), LoadErr> {
 		let kind = match props.text("type") {
 			Some(k) => k,
 			None => return Err(LoadErr::MissingRequiredVariantType),
@@ -36,13 +36,13 @@ impl<M: Scatter> Load for AllPrimitives<'_, M> {
 
 		Ok(match kind {
 			"sphere" => {
-				let x = Sphere::load(props)?;
+				let x = Sphere::load(props, region)?;
 				(x.0, Self::Sphere(x.1))
 			}
 			"triangle" => todo!(),
 			o => {
 				return Err(LoadErr::MissingRequired(format!(
-					"required a known value for material type, found '{o}'"
+					"required a known value for primitive type, found '{o}'"
 				)))
 			}
 		})
@@ -76,14 +76,16 @@ primitive (
 	radius 1000
 )";
 		let data = parser::from_str(file).unwrap();
-		let textures = load_textures::<AllTextures>(&data, &lookup).unwrap();
+		let textures = load_textures::<AllTextures>(&data, &lookup, &mut region).unwrap();
 
 		region_insert_with_lookup(&mut region, textures, |n, t| lookup.texture_insert(n, t));
 
-		let materials = load_materials::<AllMaterials<AllTextures>>(&data, &lookup).unwrap();
+		let materials =
+			load_materials::<AllMaterials<AllTextures>>(&data, &lookup, &mut region).unwrap();
 
 		region_insert_with_lookup(&mut region, materials, |n, t| lookup.scatter_insert(n, t));
 
-		load_primitives::<AllPrimitives<AllMaterials<AllTextures>>>(&data, &lookup).unwrap();
+		load_primitives::<AllPrimitives<AllMaterials<AllTextures>>>(&data, &lookup, &mut region)
+			.unwrap();
 	}
 }

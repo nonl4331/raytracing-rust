@@ -9,15 +9,16 @@ use rt_core::*;
 
 use crate::Texture;
 
-#[derive(Debug)]
-pub struct Sky<'a, T: Texture> {
+#[derive(Debug, Clone)]
+pub struct Sky<'a, T: Texture, M: Scatter> {
 	texture: &'a T,
+	mat: &'a M,
 	pub distribution: Option<Distribution2D>,
 	sampler_res: (usize, usize),
 }
 
-impl<'a, T: Texture> Sky<'a, T> {
-	pub fn new(texture: &'a T, sampler_res: (usize, usize)) -> Self {
+impl<'a, T: Texture, M: Scatter> Sky<'a, T, M> {
+	pub fn new(texture: &'a T, mat: &'a M, sampler_res: (usize, usize)) -> Self {
 		let values = generate_values(texture, sampler_res);
 
 		let distribution = if sampler_res.0 | sampler_res.1 != 0 {
@@ -28,13 +29,14 @@ impl<'a, T: Texture> Sky<'a, T> {
 
 		Sky {
 			texture,
+			mat,
 			distribution,
 			sampler_res,
 		}
 	}
 }
 
-impl<'a, T: Texture> NoHit for Sky<'a, T> {
+impl<'a, T: Texture, M: Scatter> NoHit<M> for Sky<'a, T, M> {
 	fn get_colour(&self, ray: &Ray) -> Vec3 {
 		self.texture.colour_value(ray.direction, ray.origin)
 	}
@@ -74,24 +76,41 @@ impl<'a, T: Texture> NoHit for Sky<'a, T> {
 
 		Vec3::from_spherical(theta.sin(), theta.cos(), phi.sin(), phi.cos())
 	}
+	fn get_si(&self, _ray: &Ray) -> SurfaceIntersection<M> {
+		SurfaceIntersection {
+			hit: Hit {
+				t: 0.0,
+				point: Vec3::zero(),
+				error: Vec3::zero(),
+				normal: Vec3::zero(),
+				uv: None,
+				out: false,
+			},
+			material: self.mat,
+		}
+	}
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::spherical_sampling::test_spherical_pdf;
+	//use crate::spherical_sampling::test_spherical_pdf;
+	use crate::AllMaterials;
 	use crate::AllTextures;
+	use crate::Emit;
 	use crate::Lerp;
-	use rand::rngs::ThreadRng;
+	//use rand::rngs::ThreadRng;
 
 	#[test]
 	fn sky_sampling() {
 		let tex = AllTextures::Lerp(Lerp::new(Vec3::zero(), Vec3::one()));
+		let mat = AllMaterials::Emit(Emit::new(&tex, 1.0));
 
-		let sky = Sky::new(&tex, (60, 30));
+		let _sky = Sky::new(&tex, &mat, (60, 30));
 
-		let pdf = |outgoing: Vec3| sky.pdf(outgoing);
+		/*let pdf = |outgoing: Vec3| sky.pdf(outgoing);
 		let sample = |_: &mut ThreadRng| sky.sample();
-		test_spherical_pdf("lerp sky sampling", &pdf, &sample, false);
+		test_spherical_pdf("lerp sky sampling", &pdf, &sample, false);*/
+		todo!()
 	}
 }

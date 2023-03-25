@@ -6,9 +6,10 @@ use region::Region;
 
 type MaterialType<'a> = AllMaterials<'a, AllTextures>;
 type PrimitiveType<'a> = AllPrimitives<'a, MaterialType<'a>>;
-type BvhType<'a> = Bvh<PrimitiveType<'a>, MaterialType<'a>>;
+type SkyType<'a> = Sky<'a, AllTextures, MaterialType<'a>>;
+type BvhType<'a> = Bvh<PrimitiveType<'a>, MaterialType<'a>, SkyType<'a>>;
 pub type SceneType<'a> =
-	Scene<MaterialType<'a>, PrimitiveType<'a>, SimpleCamera, Sky<'a, AllTextures>, BvhType<'a>>;
+	Scene<MaterialType<'a>, PrimitiveType<'a>, SimpleCamera, SkyType<'a>, BvhType<'a>>;
 
 pub struct Parameters {
 	pub render_options: RenderOptions,
@@ -48,16 +49,16 @@ pub fn process_args() -> Option<(SceneType<'static>, Parameters)> {
 		MaterialType,
 		PrimitiveType,
 		SimpleCamera,
-		Sky<'_, AllTextures>,
+		SkyType,
 	>(&mut region, &cli.filepath)
 	{
 		Ok(a) => a,
 		Err(e) => panic!("{e:?}"),
 	};
 
-	let bvh = Bvh::new(primitives, cli.bvh_type);
+	let bvh = Bvh::new(primitives, sky, cli.bvh_type);
 
-	let scene = Scene::new(bvh, camera, sky, region);
+	let scene = Scene::new(bvh, camera, region);
 
 	let render_ops = RenderOptions {
 		width: cli.width,

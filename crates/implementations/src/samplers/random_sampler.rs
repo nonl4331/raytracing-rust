@@ -6,11 +6,10 @@ use rt_core::*;
 pub struct RandomSampler;
 
 impl Sampler for RandomSampler {
-	fn sample_image<C, P, M, T, F, A, S>(
+	fn sample_image<C, P, M, T, F, A>(
 		&self,
 		render_options: RenderOptions,
 		camera: &C,
-		sky: &S,
 		acceleration_structure: &A,
 		mut presentation_update: Option<(&mut T, F)>,
 	) where
@@ -19,7 +18,6 @@ impl Sampler for RandomSampler {
 		M: Scatter,
 		F: Fn(&mut T, &SamplerProgress, u64) -> bool,
 		A: AccelerationStructure<Object = P, Material = M>,
-		S: NoHit,
 	{
 		let channels = 3;
 		let pixel_num = render_options.width * render_options.height;
@@ -62,10 +60,10 @@ impl Sampler for RandomSampler {
 								let mut ray = camera.get_ray(u, v); // remember to add le DOF
 								let result = match render_options.render_method {
 									RenderMethod::Naive => {
-										Ray::get_colour_naive(&mut ray, sky, acceleration_structure)
+										Ray::get_colour_naive(&mut ray, acceleration_structure)
 									}
 									RenderMethod::MIS => {
-										Ray::get_colour(&mut ray, sky, acceleration_structure)
+										Ray::get_colour(&mut ray, acceleration_structure)
 									}
 								};
 

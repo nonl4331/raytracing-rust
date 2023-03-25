@@ -7,16 +7,22 @@ pub mod primitives;
 pub mod textures;
 
 use implementations::rt_core::{Float, NoHit, Primitive, Scatter, Vec2, Vec3};
-use implementations::{Camera, Texture};
+use implementations::*;
 use region::{Region, RegionRes, RegionUniqSlice};
 use std::{collections::HashMap, fmt};
 use thiserror::Error;
+
+type TextureType = AllTextures;
+type MaterialType<'a> = AllMaterials<'a, TextureType>;
+type PrimitiveType<'a> = AllPrimitives<'a, MaterialType<'a>>;
+type SkyType<'a> = Sky<'a, TextureType, AllMaterials<'a, TextureType>>;
 
 pub trait Load: Sized {
 	/// Take a set of properties and load an object from, optionally also
 	/// provide a resource name for this object. Such as a texture name
 	/// or material ID.
-	fn load(props: Properties) -> Result<(Option<String>, Self), LoadErr>;
+	/// Also take a region if load needs to allocate
+	fn load(props: Properties, region: &mut Region) -> Result<(Option<String>, Self), LoadErr>;
 }
 
 #[derive(Default)]
@@ -196,7 +202,7 @@ where
 	M: Scatter + Load,
 	P: Primitive + Load + Clone,
 	C: Camera + Load,
-	S: NoHit + Load,
+	S: NoHit<M> + Load,
 	Vec<P>: Load,
 {
 	let scene_file = match std::fs::read_to_string(file) {
@@ -212,26 +218,26 @@ where
 	let mut lookup = Lookup::new();
 
 	log::info!("Loading textures...");
-	let textures = load_textures::<T>(&scene_conf, &lookup)?;
+	let textures = load_textures::<T>(&scene_conf, &lookup, region)?;
 
 	region_insert_with_lookup(region, textures, |n, t| lookup.texture_insert(n, t));
 
 	log::info!("Loading materials...");
-	let materials = load_materials::<M>(&scene_conf, &lookup)?;
+	let materials = load_materials::<M>(&scene_conf, &lookup, region)?;
 
 	region_insert_with_lookup(region, materials, |n, s| lookup.scatter_insert(n, s));
 
+	log::info!("Loading other objects...");
+	let camera = load_scene_camera(&scene_conf, &lookup, region)?;
+	let sky = load_scene_sky(&scene_conf, &lookup, region)?;
+
 	log::info!("Loading primitives...");
 	let primitives = {
-		let mut primitives = load_primitives::<P>(&scene_conf, &lookup)?;
+		let mut primitives = load_primitives::<P>(&scene_conf, &lookup, region)?;
 		log::info!("Loading meshes...");
-		primitives.extend(load_meshes::<P>(&scene_conf, &lookup)?);
+		primitives.extend(load_meshes::<P>(&scene_conf, &lookup, region)?);
 		region.alloc_slice(&primitives)
 	};
-
-	log::info!("Loading other objects...");
-	let camera = load_scene_camera(&scene_conf, &lookup)?;
-	let sky = load_scene_sky(&scene_conf, &lookup)?;
 
 	Ok((primitives, camera, sky))
 }
@@ -239,14 +245,14 @@ where
 pub fn load_str_full<'a, T, M, P, C, S>(
 	region: &'a mut Region,
 	data: &str,
-) -> Result<(RegionUniqSlice<'a, P>, C, S), LoadErr>
+) -> Result<(RegionUniqSlice<'a, PrimitiveType<'a>>, C, SkyType<'a>), LoadErr>
 where
 	T: Texture + Load,
 	M: Scatter + Load,
-	P: Primitive + Load + Clone,
 	C: Camera + Load,
-	S: NoHit + Load,
+	S: NoHit<M> + Load,
 	Vec<P>: Load,
+	SkyType<'a>: implementations::rt_core::NoHit<M>,
 {
 	let scene_conf = match parser::from_str(data) {
 		Ok(c) => c,
@@ -256,31 +262,35 @@ where
 	let mut lookup = Lookup::new();
 
 	log::info!("Loading textures...");
-	let textures = load_textures::<T>(&scene_conf, &lookup)?;
+	let textures = load_textures::<T>(&scene_conf, &lookup, region)?;
 
 	region_insert_with_lookup(region, textures, |n, t| lookup.texture_insert(n, t));
 
 	log::info!("Loading materials...");
-	let materials = load_materials::<M>(&scene_conf, &lookup)?;
+	let materials = load_materials::<M>(&scene_conf, &lookup, region)?;
 
 	region_insert_with_lookup(region, materials, |n, s| lookup.scatter_insert(n, s));
 
+	log::info!("Loading other objects...");
+	let camera = load_scene_camera(&scene_conf, &lookup, region)?;
+	let sky = load_scene_sky::<SkyType, M>(&scene_conf, &lookup, region)?;
+
 	log::info!("Loading primitives...");
 	let primitives = {
-		let mut primitives = load_primitives::<P>(&scene_conf, &lookup)?;
+		let mut primitives = load_primitives::<PrimitiveType>(&scene_conf, &lookup, region)?;
 		log::info!("Loading meshes...");
-		primitives.extend(load_meshes::<P>(&scene_conf, &lookup)?);
+		primitives.extend(load_meshes::<PrimitiveType>(&scene_conf, &lookup, region)?);
 		region.alloc_slice(&primitives)
 	};
-
-	log::info!("Loading other objects...");
-	let camera = load_scene_camera(&scene_conf, &lookup)?;
-	let sky = load_scene_sky(&scene_conf, &lookup)?;
 
 	Ok((primitives, camera, sky))
 }
 
-pub fn load_scene_camera<C>(objects: &[parser::Object], lookup: &Lookup) -> Result<C, LoadErr>
+pub fn load_scene_camera<C>(
+	objects: &[parser::Object],
+	lookup: &Lookup,
+	region: &mut Region,
+) -> Result<C, LoadErr>
 where
 	C: Camera + Load,
 {
@@ -292,12 +302,17 @@ where
 			.find(|o| o.kind.is_camera())
 			.ok_or(LoadErr::MissingCamera)?,
 	);
-	Ok(C::load(props)?.1)
+	Ok(C::load(props, region)?.1)
 }
 
-pub fn load_scene_sky<S>(objects: &[parser::Object], lookup: &Lookup) -> Result<S, LoadErr>
+pub fn load_scene_sky<S, M>(
+	objects: &[parser::Object],
+	lookup: &Lookup,
+	region: &mut Region,
+) -> Result<S, LoadErr>
 where
-	S: NoHit + Load,
+	S: NoHit<M> + Load,
+	M: Scatter,
 {
 	// Find a sky object, if none warn and use a default
 	let obj = objects.iter().find(|o| o.kind.is_sky());
@@ -308,7 +323,7 @@ where
 			Properties::new(lookup, &Default::default())
 		}
 	};
-	Ok(S::load(props)?.1)
+	Ok(S::load(props, region)?.1)
 }
 
 fn region_insert_with_lookup<T: Sync>(
@@ -316,8 +331,6 @@ fn region_insert_with_lookup<T: Sync>(
 	items: Vec<(Option<String>, T)>,
 	mut insert_fn: impl FnMut(&str, RegionRes<T>) -> Option<RegionRes<T>>,
 ) {
-	//let block_size = std::alloc::Layout::array::<T>(items.len()).unwrap().size();
-	//let block = region.allocate_block(block_size);
 	for (name, item) in items.into_iter() {
 		let uniq = region.alloc(item);
 		if let Some(name) = name {
@@ -331,11 +344,12 @@ fn region_insert_with_lookup<T: Sync>(
 fn load_textures<T: Texture + Load>(
 	objects: &[parser::Object],
 	lookup: &Lookup,
+	region: &mut Region,
 ) -> Result<Vec<(Option<String>, T)>, LoadErr> {
 	let mut textures = Vec::new();
 	for obj in objects.iter().filter(|o| o.kind.is_texture()) {
 		let props = Properties::new(lookup, obj);
-		textures.push(<T as Load>::load(props)?);
+		textures.push(<T as Load>::load(props, region)?);
 	}
 	// Load default texture, assumes that T contains SolidColor
 	{
@@ -350,7 +364,7 @@ fn load_textures<T: Texture + Load>(
 			.into(),
 		};
 		let props = Properties::new(lookup, &def_obj);
-		textures.push(<T as Load>::load(props)?);
+		textures.push(<T as Load>::load(props, region)?);
 	}
 	Ok(textures)
 }
@@ -358,11 +372,12 @@ fn load_textures<T: Texture + Load>(
 fn load_materials<S: Scatter + Load>(
 	objects: &[parser::Object],
 	lookup: &Lookup,
+	region: &mut Region,
 ) -> Result<Vec<(Option<String>, S)>, LoadErr> {
 	let mut materials = Vec::new();
 	for obj in objects.iter().filter(|o| o.kind.is_material()) {
 		let props = Properties::new(lookup, obj);
-		materials.push(<S as Load>::load(props)?);
+		materials.push(<S as Load>::load(props, region)?);
 	}
 	// Load default material, assumes that S contains Lambertian
 	{
@@ -378,7 +393,7 @@ fn load_materials<S: Scatter + Load>(
 			.into(),
 		};
 		let props = Properties::new(lookup, &def_obj);
-		materials.push(<S as Load>::load(props)?);
+		materials.push(<S as Load>::load(props, region)?);
 	}
 	Ok(materials)
 }
@@ -386,11 +401,12 @@ fn load_materials<S: Scatter + Load>(
 fn load_primitives<P: Primitive + Load>(
 	objects: &[parser::Object],
 	lookup: &Lookup,
+	region: &mut Region,
 ) -> Result<Vec<P>, LoadErr> {
 	let mut primitives = Vec::new();
 	for obj in objects.iter().filter(|o| o.kind.is_primitive()) {
 		let props = Properties::new(lookup, obj);
-		primitives.push(<P as Load>::load(props)?.1);
+		primitives.push(<P as Load>::load(props, region)?.1);
 	}
 	Ok(primitives)
 }
@@ -398,6 +414,7 @@ fn load_primitives<P: Primitive + Load>(
 fn load_meshes<P: Primitive + Load>(
 	objects: &[parser::Object],
 	lookup: &Lookup,
+	region: &mut Region,
 ) -> Result<Vec<P>, LoadErr>
 where
 	Vec<P>: Load,
@@ -405,7 +422,7 @@ where
 	let mut primitives = Vec::new();
 	for obj in objects.iter().filter(|o| o.kind.is_mesh()) {
 		let props = Properties::new(lookup, obj);
-		primitives.extend(<Vec<P> as Load>::load(props)?.1);
+		primitives.extend(<Vec<P> as Load>::load(props, region)?.1);
 	}
 	Ok(primitives)
 }
@@ -413,8 +430,6 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-
-	use implementations::*;
 
 	const DATA: &str = "camera (
 	origin   -5 3 -3
@@ -483,11 +498,11 @@ primitive (
 		type Tex = AllTextures;
 		type Mat<'a> = AllMaterials<'a, Tex>;
 		type Prim<'a> = AllPrimitives<'a, Mat<'a>>;
-		type SkyType<'a> = Sky<'a, Tex>;
+		type SkyType<'a> = Sky<'a, Tex, Mat<'a>>;
 		let stuff =
 			load_str_full::<Tex, Mat, Prim, SimpleCamera, SkyType>(&mut region, DATA).unwrap();
 
-		let (p, _, _) = stuff;
-		let _: Bvh<Prim, Mat> = Bvh::new(p, split::SplitType::Sah);
+		let (p, _, s) = stuff;
+		let _: Bvh<Prim, Mat, SkyType> = Bvh::new(p, s, split::SplitType::Sah);
 	}
 }

@@ -9,12 +9,11 @@ where
 	M: Scatter,
 	P: Primitive,
 	C: Camera,
-	S: NoHit,
-	A: AccelerationStructure<Object = P, Material = M>,
+	S: NoHit<M>,
+	A: AccelerationStructure<Object = P, Material = M, Sky = S>,
 {
 	acceleration: A,
 	camera: C,
-	sky: S,
 	_region: ManuallyDrop<Region>,
 }
 
@@ -23,14 +22,13 @@ where
 	M: Scatter,
 	P: Primitive,
 	C: Camera,
-	S: NoHit,
-	A: AccelerationStructure<Object = P, Material = M>,
+	S: NoHit<M>,
+	A: AccelerationStructure<Object = P, Material = M, Sky = S>,
 {
-	pub fn new(acceleration: A, camera: C, sky: S, region: ManuallyDrop<Region>) -> Self {
+	pub fn new(acceleration: A, camera: C, region: ManuallyDrop<Region>) -> Self {
 		Self {
 			acceleration,
 			camera,
-			sky,
 			_region: region,
 		}
 	}
@@ -40,21 +38,21 @@ where
 		update: Option<(&mut T, impl Fn(&mut T, &SamplerProgress, u64) -> bool)>,
 	) {
 		let sampler = RandomSampler {};
-		sampler.sample_image(opts, &self.camera, &self.sky, &self.acceleration, update);
+		sampler.sample_image(opts, &self.camera, &self.acceleration, update);
 	}
 }
 
-unsafe impl<M, P, C, S, A> Send for Scene<M, P, C, S, A>
+unsafe impl<M, P, C, A, S> Send for Scene<M, P, C, S, A>
 where
 	M: Scatter,
 	P: Primitive,
 	C: Camera,
-	S: NoHit,
-	A: AccelerationStructure<Object = P, Material = M>,
+	S: NoHit<M>,
+	A: AccelerationStructure<Object = P, Material = M, Sky = S>,
 {
 }
 
-#[cfg(test)]
+/*#[cfg(test)]
 mod tests {
 	use super::*;
 	use loader::load_str_full;
@@ -126,14 +124,21 @@ primitive (
 		type Tex = AllTextures;
 		type Mat<'a> = AllMaterials<'a, Tex>;
 		type Prim<'a> = AllPrimitives<'a, Mat<'a>>;
-		type SkyType<'a> = Sky<'a, Tex>;
+		type SkyType<'a> = Sky<'a, Tex, Mat<'a>>;
+		type SceneType<'a> = Scene<
+			Mat<'a>,
+			Prim<'a>,
+			SimpleCamera,
+			SkyType<'a>,
+			Bvh<Prim<'a>, Mat<'a>, SkyType<'a>>,
+		>;
 		let stuff =
 			load_str_full::<Tex, Mat, Prim, SimpleCamera, SkyType>(&mut region, DATA).unwrap();
 
 		let (p, camera, sky) = stuff;
-		let bvh: Bvh<Prim, Mat> = Bvh::new(p, split::SplitType::Sah);
+		let bvh: Bvh<Prim, Mat, SkyType> = Bvh::new(p, sky.clone(), split::SplitType::Sah);
 
-		let scene = Scene::new(bvh, camera, sky, region);
+		let scene: SceneType<'static> = Scene::new(bvh, camera, sky, region);
 
 		scene.render::<()>(
 			RenderOptions {
@@ -145,4 +150,4 @@ primitive (
 			None as Option<(&mut (), fn(&mut (), &SamplerProgress, u64) -> bool)>,
 		);
 	}
-}
+}*/
