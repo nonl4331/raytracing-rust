@@ -20,21 +20,9 @@ impl Coordinate {
 		}
 	}
 	pub fn create_inverse(&self) -> Self {
-		let a = self.x.x;
-		let b = self.y.x;
-		let c = self.z.x;
-		let d = self.x.y;
-		let e = self.y.y;
-		let f = self.z.y;
-		let g = self.x.z;
-		let h = self.y.z;
-		let i = self.z.z;
-
-		let tmp = Vec3::new(e * i - f * h, f * g - d * i, d * h - e * g);
-		let one_over_det = 1.0 / (a * tmp.x + b * tmp.y + c * tmp.z);
-		let x = one_over_det * tmp;
-		let y = one_over_det * Vec3::new(c * h - b * i, a * i - c * g, b * g - a * h);
-		let z = one_over_det * Vec3::new(b * f - c * e, c * d - a * f, a * e - b * d);
+		let x = Vec3::new(self.x.x, self.y.x, self.z.x);
+		let y = Vec3::new(self.x.y, self.y.y, self.z.y);
+		let z = Vec3::new(self.x.z, self.y.z, self.z.z);
 		Coordinate { x, y, z }
 	}
 	pub fn to_coord(&self, vec: Vec3) -> Vec3 {
