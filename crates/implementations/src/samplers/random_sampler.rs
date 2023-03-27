@@ -1,3 +1,4 @@
+use crate::integrators::*;
 use crate::*;
 use rand::Rng;
 use rayon::prelude::*;
@@ -59,11 +60,12 @@ impl Sampler for RandomSampler {
 
 								let mut ray = camera.get_ray(u, v); // remember to add le DOF
 								let result = match render_options.render_method {
-									RenderMethod::Naive => {
-										Ray::get_colour_naive(&mut ray, acceleration_structure)
-									}
+									RenderMethod::Naive => NaiveIntegrator::get_colour(
+										&mut ray,
+										acceleration_structure,
+									),
 									RenderMethod::MIS => {
-										Ray::get_colour(&mut ray, acceleration_structure)
+										MisIntegrator::get_colour(&mut ray, acceleration_structure)
 									}
 								};
 

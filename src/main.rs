@@ -14,10 +14,8 @@ use {
 	winit::event_loop::EventLoopProxy,
 };
 
-mod macros;
 mod parameters;
 mod scene;
-mod utility;
 
 #[cfg(feature = "gui")]
 fn render_gui<M, P, C, S, A>(

@@ -1,5 +1,6 @@
 mod acceleration;
 mod camera;
+mod integrators;
 mod materials;
 mod primitives;
 mod samplers;
