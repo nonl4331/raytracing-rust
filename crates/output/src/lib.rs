@@ -1,9 +1,9 @@
 use fern::colors::{Color, ColoredLevelConfig};
+use rt_core::Float;
 
 use std::process;
 use std::time::Instant;
 
-use std::io::Write;
 use std::time::Duration;
 
 pub fn create_logger() {
@@ -62,7 +62,22 @@ pub fn get_readable_duration(duration: Duration) -> String {
 	days_string + &hours_string + &minutes_string + &seconds_string
 }
 
-pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: String, alpha: bool) {
+pub fn rgba_to_rgb(data: &[Float]) -> Vec<Float> {
+	data.iter()
+		.enumerate()
+		.filter(|(i, _)| i % 4 != 0)
+		.map(|(_, v)| *v)
+		.collect::<Vec<_>>()
+}
+
+#[allow(clippy::unnecessary_cast)]
+pub fn save_data_to_image(
+	filename: String,
+	width: u32,
+	height: u32,
+	image: Vec<Float>,
+	gamma: Float,
+) {
 	let split = filename.split('.').collect::<Vec<_>>();
 	if split.len() != 2 {
 		println!("Invalid filename: {filename}");
@@ -72,38 +87,29 @@ pub fn save_u8_to_image(width: u64, height: u64, image: Vec<u8>, filename: Strin
 	let extension = split[1];
 
 	match extension {
-		"png" | "jpg" | "jpeg" | "exr" | "tiff" => {
-			image::save_buffer(
-				filename,
-				&image,
-				width.try_into().unwrap(),
-				height.try_into().unwrap(),
-				if alpha {
-					image::ColorType::Rgba8
-				} else {
-					image::ColorType::Rgb8
-				},
-			)
-			.unwrap();
+		// TODO HDR
+		"png" | "jpg" | "jpeg" | "tiff" | "ppm" | "bmp" => {
+			let data: Vec<u8> = image
+				.into_iter()
+				.map(|val| (val.powf(1.0 / gamma) * 255.999) as u8)
+				.collect();
+
+			image::save_buffer(&filename, &data, width, height, image::ColorType::Rgb8).unwrap();
 		}
-		"ppm" => {
-			let mut data = format!("P3\n{width} {height}\n255\n").as_bytes().to_owned();
+		"exr" => {
+			// gamma is ignored because of exr
+			let data: Vec<f32> = image.into_iter().map(|val| (val as f32)).collect();
 
-			image.iter().enumerate().for_each(|(i, &v)| {
-				if i % 3 == 0 {
-					data.extend_from_slice(format!("{v}\n").as_bytes())
-				} else {
-					data.extend_from_slice(format!("{v} ").as_bytes())
-				}
-			});
-
-			let mut file = std::fs::File::create(filename).unwrap();
-			file.write_all(&data).unwrap();
+			let image_buf: image::Rgb32FImage =
+				image::ImageBuffer::from_raw(width, height, data).unwrap();
+			image_buf.save(&filename).unwrap();
 		}
 		_ => {
-			println!("Unknown filetype: .{extension}");
+			log::error!("Unable to save file: (unknown filetype .{extension})");
+			return;
 		}
-	}
+	};
+	log::info!("Image {filename} saved");
 }
 
 pub fn print_final_statistics(start: Instant, ray_count: u64, samples: u64) {

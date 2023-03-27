@@ -9,5 +9,10 @@ edition = "2021"
 indicatif = "0.17.3"
 log = { version = "^0.4.14", features = ["std"] }
 chrono = "0.4.19"
-image = "0.23.14"
+image = "0.24"
 fern = { version = "0.6", features = ["colored"] }
+rt_core = { path = "../rt_core" }
+
+
+[features]
+f64 = ["rt_core/f64"]

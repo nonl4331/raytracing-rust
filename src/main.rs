@@ -121,14 +121,22 @@ fn render_gui<M, P, C, S, A>(
 
 		moved_render_canceled.store(false, Ordering::Relaxed);
 
-		save_file(
-			moved_filename,
-			render_options.width,
-			render_options.height,
-			render_options.gamma,
-			&*buffer.read().unwrap(),
-			to_sc,
-		);
+		if let Some(filename) = moved_filename {
+			match &*to_sc.lock().unwrap() {
+				Some(future) => {
+					future.wait(None).unwrap();
+				}
+				None => {}
+			}
+
+			save_data_to_image(
+				filename,
+				render_options.width as u32,
+				render_options.height as u32,
+				rgba_to_rgb(&*buffer.read().unwrap()),
+				render_options.gamma,
+			);
+		}
 	});
 
 	gui.run();
@@ -186,26 +194,17 @@ fn render_tui<M, P, C, S, A>(
 
 	scene.render(render_options, Some((&mut image, progress_bar_output)));
 
-	let output = &image;
+	let ray_count = image.sampler_progress.rays_shot;
 
-	let ray_count = output.sampler_progress.rays_shot;
-
-	print_final_statistics(start, ray_count, output.sampler_progress.samples_completed);
-
-	let output: Vec<u8> = output
-		.sampler_progress
-		.current_image
-		.iter()
-		.map(|val| (val.powf(1.0 / render_options.gamma) * 255.999) as u8)
-		.collect();
+	print_final_statistics(start, ray_count, image.sampler_progress.samples_completed);
 
 	if let Some(filename) = filename {
-		save_u8_to_image(
-			render_options.width,
-			render_options.height,
-			output,
+		save_data_to_image(
 			filename,
-			false,
+			render_options.width as u32,
+			render_options.height as u32,
+			image.sampler_progress.current_image,
+			render_options.gamma,
 		);
 	}
 }
@@ -230,38 +229,5 @@ fn main() {
 		render_gui(render_options, filename, scene);
 		#[cfg(not(feature = "gui"))]
 		println!("feature: gui not enabled");
-	}
-}
-
-#[cfg(feature = "gui")]
-fn save_file(
-	filename: Option<String>,
-	width: u64,
-	height: u64,
-	gamma: Float,
-	buffer: &[f32],
-	image_fence: Future,
-) {
-	match filename {
-		Some(filename) => {
-			match &*image_fence.lock().unwrap() {
-				Some(future) => {
-					future.wait(None).unwrap();
-				}
-				None => {}
-			}
-
-			save_u8_to_image(
-				width,
-				height,
-				buffer
-					.iter()
-					.map(|val| (val.powf(1.0 / gamma) * 255.999) as u8)
-					.collect(),
-				filename,
-				true,
-			)
-		}
-		None => {}
 	}
 }
