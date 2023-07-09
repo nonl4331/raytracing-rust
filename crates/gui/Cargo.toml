@@ -1,0 +1,12 @@
+[package]
+name = "gui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vulkano = { version = "0.28.0" }
+vulkano-shaders = { version = "0.28.0" }
+vulkano-win = { version = "0.28.0" }
+winit = { version = "0.26.1" }
+implementations = { path = "../implementations" }
+indicatif = "0.17.3"

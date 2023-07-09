@@ -1,0 +1,18 @@
+[package]
+name = "output"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+indicatif = "0.17.3"
+log = { version = "^0.4.14", features = ["std"] }
+chrono = "0.4.19"
+image = "0.24"
+fern = { version = "0.6", features = ["colored"] }
+rt_core = { path = "../rt_core" }
+
+
+[features]
+f64 = ["rt_core/f64"]

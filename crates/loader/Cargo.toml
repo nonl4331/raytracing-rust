@@ -1,0 +1,15 @@
+[package]
+name = "loader"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = "0.4"
+nom = "7"
+region = { path = "../region" }
+implementations = { path = "../implementations" }
+thiserror = "1.0"
+wavefront_obj = "10.0.0"
+
+[features]
+f64 = ["implementations/f64"]
